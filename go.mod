@@ -1,4 +1,4 @@
-module github/appleboy/queue
+module github.com/appleboy/queue
 
 go 1.16
 
