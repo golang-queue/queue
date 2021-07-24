@@ -121,6 +121,7 @@ func (q *Queue) work() {
 			atomic.AddInt32(&q.runningWorkers, -1)
 			if err := recover(); err != nil {
 				q.logger.Error(err)
+				q.logger.Infof("restart the new worker: %d", num)
 				go q.work()
 			}
 		}()

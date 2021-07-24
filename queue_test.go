@@ -93,3 +93,31 @@ func TestWorkerStatus(t *testing.T) {
 	q.Shutdown()
 	q.Wait()
 }
+
+func TestWorkerPanic(t *testing.T) {
+	w := &queueWorker{
+		messages: make(chan QueuedMessage, 10),
+	}
+	q, err := NewQueue(
+		WithWorker(w),
+		WithWorkerCount(2),
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, q)
+
+	q.Queue(mockMessage{
+		message: "foobar",
+	})
+	q.Queue(mockMessage{
+		message: "foobar",
+	})
+	q.Queue(mockMessage{
+		message: "panic",
+	})
+	q.Start()
+	time.Sleep(30 * time.Millisecond)
+	assert.Equal(t, 2, q.Workers())
+	q.Shutdown()
+	q.Wait()
+	assert.Equal(t, 0, q.Workers())
+}

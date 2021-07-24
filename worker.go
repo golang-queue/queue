@@ -44,6 +44,9 @@ func (w *queueWorker) AfterRun() error  { return nil }
 func (w *queueWorker) Run(chan struct{}) error {
 	for msg := range w.messages {
 		log.Println("got message", msg)
+		if string(msg.Bytes()) == "panic" {
+			panic("show panic")
+		}
 		time.Sleep(100 * time.Millisecond)
 	}
 	return nil
