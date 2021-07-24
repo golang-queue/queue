@@ -1,5 +1,11 @@
 package queue
 
+import (
+	"errors"
+	"log"
+	"time"
+)
+
 // Worker interface
 type Worker interface {
 	BeforeRun() error
@@ -28,3 +34,33 @@ func (w *emptyWorker) Shutdown() error               { return nil }
 func (w *emptyWorker) Queue(job QueuedMessage) error { return nil }
 func (w *emptyWorker) Capacity() int                 { return 0 }
 func (w *emptyWorker) Usage() int                    { return 0 }
+
+type queueWorker struct {
+	messages chan QueuedMessage
+}
+
+func (w *queueWorker) BeforeRun() error { return nil }
+func (w *queueWorker) AfterRun() error  { return nil }
+func (w *queueWorker) Run(chan struct{}) error {
+	for msg := range w.messages {
+		log.Println("got message", msg)
+		time.Sleep(100 * time.Millisecond)
+	}
+	return nil
+}
+
+func (w *queueWorker) Shutdown() error {
+	close(w.messages)
+	return nil
+}
+
+func (w *queueWorker) Queue(job QueuedMessage) error {
+	select {
+	case w.messages <- job:
+		return nil
+	default:
+		return errors.New("max capacity reached")
+	}
+}
+func (w *queueWorker) Capacity() int { return cap(w.messages) }
+func (w *queueWorker) Usage() int    { return len(w.messages) }
