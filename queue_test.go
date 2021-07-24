@@ -26,6 +26,10 @@ func TestNewQueue(t *testing.T) {
 	)
 	assert.NoError(t, err)
 	assert.NotNil(t, q)
+
+	q.Start()
+	q.Shutdown()
+	q.Wait()
 }
 
 func TestWorkerNum(t *testing.T) {
