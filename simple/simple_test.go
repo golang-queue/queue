@@ -23,7 +23,7 @@ func TestQueueUsage(t *testing.T) {
 	assert.Equal(t, runtime.NumCPU()<<1, w.Capacity())
 	assert.Equal(t, 0, w.Usage())
 
-	w.Queue(&mockMessage{})
+	assert.NoError(t, w.Queue(&mockMessage{}))
 	assert.Equal(t, 1, w.Usage())
 }
 
@@ -60,10 +60,10 @@ func TestCustomFuncAndWait(t *testing.T) {
 	assert.NoError(t, err)
 	q.Start()
 	time.Sleep(100 * time.Millisecond)
-	q.Queue(m)
-	q.Queue(m)
-	q.Queue(m)
-	q.Queue(m)
+	assert.NoError(t, w.Queue(m))
+	assert.NoError(t, w.Queue(m))
+	assert.NoError(t, w.Queue(m))
+	assert.NoError(t, w.Queue(m))
 	time.Sleep(600 * time.Millisecond)
 	q.Shutdown()
 	q.Wait()
