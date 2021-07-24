@@ -115,7 +115,7 @@ func TestWorkerPanic(t *testing.T) {
 		message: "panic",
 	}))
 	q.Start()
-	time.Sleep(30 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	assert.Equal(t, 2, q.Workers())
 	q.Shutdown()
 	q.Wait()
