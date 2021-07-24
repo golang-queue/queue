@@ -87,7 +87,9 @@ func (q *Queue) Start() {
 // Shutdown stops all queues.
 func (q *Queue) Shutdown() {
 	q.stopOnce.Do(func() {
-		q.worker.Shutdown()
+		if err := q.worker.Shutdown(); err != nil {
+			q.logger.Error(err)
+		}
 		close(q.quit)
 	})
 }
@@ -123,7 +125,9 @@ func (q *Queue) work() {
 			}
 		}()
 		q.logger.Infof("start the worker num: %d", num)
-		q.worker.Run(q.quit)
+		if err := q.worker.Run(q.quit); err != nil {
+			q.logger.Error(err)
+		}
 		q.logger.Infof("stop the worker num: %d", num)
 	})
 	if err := q.worker.AfterRun(); err != nil {
