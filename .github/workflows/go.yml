@@ -62,5 +62,5 @@ jobs:
           go test -v -covermode=atomic -coverprofile=coverage.out .
           go test -v -covermode=atomic -coverprofile=coverage.out ./simple/...
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v1
