@@ -16,6 +16,23 @@ jobs:
         go: [1.13, 1.14, 1.15, 1.16]
     name: ${{ matrix.os }} @ Go ${{ matrix.go }}
     runs-on: ${{ matrix.os }}
+
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      redis:
+        # Docker Hub image
+        image: redis
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      nsq:
+        image: nsqio/nsq
+
     env:
       GO111MODULE: on
       TESTTAGS: ${{ matrix.test-tags }}
