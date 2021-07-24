@@ -132,9 +132,7 @@ func (s *Worker) Run(quit chan struct{}) error {
 	}))
 
 	// wait close signal
-	select {
-	case <-quit:
-	}
+	<-quit
 
 	// wait job completed
 	wg.Wait()

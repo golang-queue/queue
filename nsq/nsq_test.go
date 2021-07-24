@@ -20,10 +20,6 @@ func (m mockMessage) Bytes() []byte {
 	return []byte(m.msg)
 }
 
-func TestMain(m *testing.M) {
-	m.Run()
-}
-
 func TestShutdown(t *testing.T) {
 	w := NewWorker(
 		WithAddr(host+":4150"),
@@ -62,10 +58,10 @@ func TestCustomFuncAndWait(t *testing.T) {
 	assert.NoError(t, err)
 	q.Start()
 	time.Sleep(100 * time.Millisecond)
-	q.Queue(m)
-	q.Queue(m)
-	q.Queue(m)
-	q.Queue(m)
+	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.Queue(m))
 	time.Sleep(600 * time.Millisecond)
 	q.Shutdown()
 	q.Wait()
