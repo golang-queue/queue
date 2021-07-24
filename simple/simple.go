@@ -33,7 +33,7 @@ func (s *Worker) AfterRun() error {
 // Run start the worker
 func (s *Worker) Run(_ chan struct{}) error {
 	for notification := range s.queueNotification {
-		s.runFunc(notification)
+		_ = s.runFunc(notification)
 	}
 	return nil
 }
