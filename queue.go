@@ -53,7 +53,7 @@ func NewQueue(opts ...Option) (*Queue, error) {
 		workerCount:  runtime.NumCPU(),
 		routineGroup: newRoutineGroup(),
 		quit:         make(chan struct{}),
-		logger:       new(defaultLogger),
+		logger:       newLogger(),
 	}
 
 	// Loop through each option

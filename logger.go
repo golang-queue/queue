@@ -2,8 +2,8 @@ package queue
 
 import (
 	"fmt"
-
-	"github.com/rs/zerolog/log"
+	"log"
+	"os"
 )
 
 // Logger interface is used throughout gorush
@@ -16,28 +16,40 @@ type Logger interface {
 	Fatal(args ...interface{})
 }
 
-type defaultLogger struct{}
+func newLogger() Logger {
+	return defaultLogger{
+		infoLogger:  log.New(os.Stderr, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile),
+		errorLogger: log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
+		fatalLogger: log.New(os.Stderr, "FATAL: ", log.Ldate|log.Ltime|log.Lshortfile),
+	}
+}
+
+type defaultLogger struct {
+	infoLogger  *log.Logger
+	errorLogger *log.Logger
+	fatalLogger *log.Logger
+}
 
 func (l defaultLogger) Infof(format string, args ...interface{}) {
-	log.Info().Msgf(format, args...)
+	l.infoLogger.Printf(format, args...)
 }
 
 func (l defaultLogger) Errorf(format string, args ...interface{}) {
-	log.Error().Msgf(format, args...)
+	l.errorLogger.Printf(format, args...)
 }
 
 func (l defaultLogger) Fatalf(format string, args ...interface{}) {
-	log.Fatal().Msgf(format, args...)
+	l.fatalLogger.Fatalf(format, args...)
 }
 
 func (l defaultLogger) Info(args ...interface{}) {
-	log.Info().Msg(fmt.Sprint(args...))
+	l.infoLogger.Println(fmt.Sprint(args...))
 }
 
 func (l defaultLogger) Error(args ...interface{}) {
-	log.Error().Msg(fmt.Sprint(args...))
+	l.errorLogger.Println(fmt.Sprint(args...))
 }
 
 func (l defaultLogger) Fatal(args ...interface{}) {
-	log.Fatal().Msg(fmt.Sprint(args...))
+	l.fatalLogger.Println(fmt.Sprint(args...))
 }
