@@ -121,3 +121,23 @@ func TestWorkerPanic(t *testing.T) {
 	q.Wait()
 	assert.Equal(t, 0, q.Workers())
 }
+
+func TestCapacityReached(t *testing.T) {
+	w := &queueWorker{
+		messages: make(chan QueuedMessage, 1),
+	}
+	q, err := NewQueue(
+		WithWorker(w),
+		WithWorkerCount(5),
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, q)
+
+	assert.NoError(t, q.Queue(mockMessage{
+		message: "foobar",
+	}))
+	// max capacity reached
+	assert.Error(t, q.Queue(mockMessage{
+		message: "foobar",
+	}))
+}
