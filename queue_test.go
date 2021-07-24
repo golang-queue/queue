@@ -100,7 +100,7 @@ func TestWorkerPanic(t *testing.T) {
 	}
 	q, err := NewQueue(
 		WithWorker(w),
-		WithWorkerCount(2),
+		WithWorkerCount(5),
 	)
 	assert.NoError(t, err)
 	assert.NotNil(t, q)
@@ -116,7 +116,7 @@ func TestWorkerPanic(t *testing.T) {
 	}))
 	q.Start()
 	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, 2, q.Workers())
+	assert.Equal(t, 5, q.Workers())
 	q.Shutdown()
 	q.Wait()
 	assert.Equal(t, 0, q.Workers())
