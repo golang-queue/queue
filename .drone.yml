@@ -1,0 +1,37 @@
+---
+kind: pipeline
+name: testing
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: test
+  pull: always
+  image: golang:1.16
+  commands:
+  - go test -v -covermode=atomic -coverprofile=coverage.out ./...
+  volumes:
+  - name: gopath
+    path: /go
+
+- name: codecov
+  pull: always
+  image: robertstettner/drone-codecov
+  settings:
+    token:
+      from_secret: codecov_token
+
+services:
+- name: redis
+  image: redis
+
+- name: nsq
+  image: nsqio/nsq
+  commands:
+  - /nsqd
+
+volumes:
+- name: gopath
+  temp: {}
