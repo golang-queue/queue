@@ -11,14 +11,6 @@ import (
 
 var host = "nsq"
 
-type mockMessage struct {
-	msg string
-}
-
-func (m mockMessage) Bytes() []byte {
-	return []byte(m.msg)
-}
-
 func TestShutdown(t *testing.T) {
 	w := NewWorker(
 		WithAddr(host+":4150"),
@@ -38,8 +30,8 @@ func TestShutdown(t *testing.T) {
 }
 
 func TestCustomFuncAndWait(t *testing.T) {
-	m := mockMessage{
-		msg: "foo",
+	m := &Job{
+		Body: []byte("foo"),
 	}
 	w := NewWorker(
 		WithAddr(host+":4150"),
