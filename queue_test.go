@@ -82,10 +82,10 @@ func TestWorkerStatus(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, q)
 
-	q.Queue(m)
-	q.Queue(m)
-	q.Queue(m)
-	q.Queue(m)
+	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.Queue(m))
 	assert.Equal(t, 100, q.Capacity())
 	assert.Equal(t, 4, q.Usage())
 	q.Start()
@@ -105,15 +105,15 @@ func TestWorkerPanic(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, q)
 
-	q.Queue(mockMessage{
+	assert.NoError(t, q.Queue(mockMessage{
 		message: "foobar",
-	})
-	q.Queue(mockMessage{
+	}))
+	assert.NoError(t, q.Queue(mockMessage{
 		message: "foobar",
-	})
-	q.Queue(mockMessage{
+	}))
+	assert.NoError(t, q.Queue(mockMessage{
 		message: "panic",
-	})
+	}))
 	q.Start()
 	time.Sleep(30 * time.Millisecond)
 	assert.Equal(t, 2, q.Workers())
