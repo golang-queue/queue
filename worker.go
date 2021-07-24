@@ -11,7 +11,6 @@ type Worker interface {
 	BeforeRun() error
 	Run(chan struct{}) error
 	AfterRun() error
-
 	Shutdown() error
 	Queue(job QueuedMessage) error
 	Capacity() int
@@ -23,7 +22,10 @@ type QueuedMessage interface {
 	Bytes() []byte
 }
 
-var _ Worker = (*emptyWorker)(nil)
+var (
+	_ Worker = (*emptyWorker)(nil)
+	_ Worker = (*queueWorker)(nil)
+)
 
 type emptyWorker struct{}
 
