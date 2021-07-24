@@ -6,7 +6,6 @@ import (
 
 	"github.com/appleboy/queue"
 
-	"github.com/nsqio/go-nsq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,7 +45,7 @@ func TestCustomFuncAndWait(t *testing.T) {
 		WithAddr(host+":4150"),
 		WithTopic("test"),
 		WithMaxInFlight(2),
-		WithRunFunc(func(msg *nsq.Message) error {
+		WithRunFunc(func(msg queue.QueuedMessage) error {
 			time.Sleep(500 * time.Millisecond)
 			return nil
 		}),

@@ -15,6 +15,16 @@ var _ queue.Worker = (*Worker)(nil)
 // Option for queue system
 type Option func(*Worker)
 
+// Job with NSQ message
+type Job struct {
+	Body []byte
+}
+
+// Bytes get bytes format
+func (j *Job) Bytes() []byte {
+	return j.Body
+}
+
 // Worker for NSQ
 type Worker struct {
 	q           *nsq.Consumer
@@ -24,7 +34,7 @@ type Worker struct {
 	addr        string
 	topic       string
 	channel     string
-	runFunc     func(msg *nsq.Message) error
+	runFunc     func(queue.QueuedMessage) error
 }
 
 // WithAddr setup the addr of NSQ
@@ -49,7 +59,7 @@ func WithChannel(channel string) Option {
 }
 
 // WithRunFunc setup the run func of queue
-func WithRunFunc(fn func(msg *nsq.Message) error) Option {
+func WithRunFunc(fn func(queue.QueuedMessage) error) Option {
 	return func(w *Worker) {
 		w.runFunc = fn
 	}
@@ -69,13 +79,7 @@ func NewWorker(opts ...Option) *Worker {
 		topic:       "gorush",
 		channel:     "ch",
 		maxInFlight: runtime.NumCPU(),
-		runFunc: func(msg *nsq.Message) error {
-			if len(msg.Body) == 0 {
-				// Returning nil will automatically send a FIN command to NSQ to mark the message as processed.
-				// In this case, a message with an empty body is simply ignored/discarded.
-				return nil
-			}
-
+		runFunc: func(queue.QueuedMessage) error {
 			return nil
 		},
 	}
@@ -127,8 +131,18 @@ func (s *Worker) Run(quit chan struct{}) error {
 	s.q.AddHandler(nsq.HandlerFunc(func(msg *nsq.Message) error {
 		wg.Add(1)
 		defer wg.Done()
-		// run custom func
-		return s.runFunc(msg)
+		if len(msg.Body) == 0 {
+			// Returning nil will automatically send a FIN command to NSQ to mark the message as processed.
+			// In this case, a message with an empty body is simply ignored/discarded.
+			return nil
+		}
+
+		job := &Job{
+			Body: msg.Body,
+		}
+
+		// run custom process function
+		return s.runFunc(job)
 	}))
 
 	// wait close signal
