@@ -35,6 +35,7 @@ jobs:
 
       nsq:
         image: nsqio/nsq
+        options: /nsqd
         ports:
           # Maps port 6379 on service container to the host
           - 4150:4150
