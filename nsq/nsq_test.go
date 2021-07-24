@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var host = "127.0.0.1"
+var host = "nsq"
 
 type mockMessage struct {
 	msg string
