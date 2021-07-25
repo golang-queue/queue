@@ -18,6 +18,7 @@ func TestDefaultFlow(t *testing.T) {
 	w := NewWorker(
 		WithAddr(host+":4150"),
 		WithTopic("test"),
+		WithChannel("test"),
 	)
 	q, err := queue.NewQueue(
 		queue.WithWorker(w),
