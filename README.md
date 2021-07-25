@@ -9,6 +9,7 @@ Queue is a Golang library for spawning and managing a Goroutine pool, Alloowing 
 
 * [x] Support [buffered channel](https://gobyexample.com/channel-buffering) queue.
 * [x] Support [NSQ](https://nsq.io/) (A realtime distributed messaging platform) as backend.
+* [ ] Support [NATS](https://nats.io/) (Connective Technology for Adaptive Edge & Distributed Systems) as backend.
 
 ## Installation
 
