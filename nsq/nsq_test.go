@@ -6,19 +6,10 @@ import (
 
 	"github.com/appleboy/queue"
 
-	"github.com/nsqio/go-nsq"
 	"github.com/stretchr/testify/assert"
 )
 
 var host = "nsq"
-
-type mockMessage struct {
-	msg string
-}
-
-func (m mockMessage) Bytes() []byte {
-	return []byte(m.msg)
-}
 
 func TestShutdown(t *testing.T) {
 	w := NewWorker(
@@ -39,14 +30,14 @@ func TestShutdown(t *testing.T) {
 }
 
 func TestCustomFuncAndWait(t *testing.T) {
-	m := mockMessage{
-		msg: "foo",
+	m := &Job{
+		Body: []byte("foo"),
 	}
 	w := NewWorker(
 		WithAddr(host+":4150"),
 		WithTopic("test"),
 		WithMaxInFlight(2),
-		WithRunFunc(func(msg *nsq.Message) error {
+		WithRunFunc(func(msg queue.QueuedMessage) error {
 			time.Sleep(500 * time.Millisecond)
 			return nil
 		}),
