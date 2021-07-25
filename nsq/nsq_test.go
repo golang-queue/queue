@@ -11,6 +11,28 @@ import (
 
 var host = "nsq"
 
+func TestDefaultFlow(t *testing.T) {
+	m := &Job{
+		Body: []byte("foo"),
+	}
+	w := NewWorker(
+		WithAddr(host+":4150"),
+		WithTopic("test"),
+	)
+	q, err := queue.NewQueue(
+		queue.WithWorker(w),
+		queue.WithWorkerCount(2),
+	)
+	assert.NoError(t, err)
+	q.Start()
+	time.Sleep(100 * time.Millisecond)
+	assert.NoError(t, q.Queue(m))
+	m.Body = []byte("new message")
+	assert.NoError(t, q.Queue(m))
+	q.Shutdown()
+	q.Wait()
+}
+
 func TestShutdown(t *testing.T) {
 	w := NewWorker(
 		WithAddr(host+":4150"),
