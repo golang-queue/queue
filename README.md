@@ -23,11 +23,11 @@ First to create new job as `QueueMessage` interface:
 
 ```go
 type job struct {
-	message string
+	Message string
 }
 
 func (j *job) Bytes() []byte {
-	return []byte(j.message)
+	return []byte(j.Message)
 }
 ```
 
@@ -94,7 +94,7 @@ Third to create queue and initialize multiple worker, receive all job message:
 	for i := 0; i < taskN; i++ {
 		go func(i int) {
 			q.Queue(&job{
-				message: fmt.Sprintf("handle the job: %d", i+1),
+				Message: fmt.Sprintf("handle the job: %d", i+1),
 			})
 		}(i)
 	}
@@ -109,7 +109,7 @@ Third to create queue and initialize multiple worker, receive all job message:
 	q.Wait()
 ```
 
-Full example code as below or [try it in playground](https://play.golang.org/p/xuR4WhcFdoQ).
+Full example code as below or [try it in playground](https://play.golang.org/p/ZM3XAnYcAs7).
 
 ```go
 package main
