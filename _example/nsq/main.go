@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/appleboy/queue"
-	"github.com/appleboy/queue/simple"
+	"github.com/appleboy/queue/nsq"
 )
 
 type job struct {
@@ -15,7 +15,11 @@ type job struct {
 }
 
 func (j *job) Bytes() []byte {
-	return []byte(j.Message)
+	b, err := json.Marshal(j)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 func main() {
@@ -23,9 +27,13 @@ func main() {
 	rets := make(chan string, taskN)
 
 	// define the worker
-	w := simple.NewWorker(
-		simple.WithQueueNum(taskN),
-		simple.WithRunFunc(func(m queue.QueuedMessage) error {
+	w := nsq.NewWorker(
+		nsq.WithAddr("127.0.0.1:4150"),
+		nsq.WithTopic("example"),
+		nsq.WithChannel("foobar"),
+		// concurrent job number
+		nsq.WithMaxInFlight(10),
+		nsq.WithRunFunc(func(m queue.QueuedMessage) error {
 			v, ok := m.(*job)
 			if !ok {
 				if err := json.Unmarshal(m.Bytes(), &v); err != nil {
@@ -40,7 +48,7 @@ func main() {
 
 	// define the queue
 	q, err := queue.NewQueue(
-		queue.WithWorkerCount(5),
+		queue.WithWorkerCount(10),
 		queue.WithWorker(w),
 	)
 	if err != nil {
