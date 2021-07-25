@@ -74,6 +74,7 @@ func WithMaxInFlight(num int) Option {
 
 // NewWorker for struc
 func NewWorker(opts ...Option) *Worker {
+	var err error
 	w := &Worker{
 		addr:        "127.0.0.1:4150",
 		topic:       "gorush",
@@ -92,17 +93,15 @@ func NewWorker(opts ...Option) *Worker {
 
 	cfg := nsq.NewConfig()
 	cfg.MaxInFlight = w.maxInFlight
-	q, err := nsq.NewConsumer(w.topic, w.channel, cfg)
+	w.q, err = nsq.NewConsumer(w.topic, w.channel, cfg)
 	if err != nil {
 		panic(err)
 	}
-	w.q = q
 
-	p, err := nsq.NewProducer(w.addr, cfg)
+	w.p, err = nsq.NewProducer(w.addr, cfg)
 	if err != nil {
 		panic(err)
 	}
-	w.p = p
 
 	return w
 }
