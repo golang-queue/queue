@@ -37,12 +37,38 @@ Second to create the new worker, use buffered channel as example:
 	w := simple.NewWorker(
 		simple.WithQueueNum(taskN),
 		simple.WithRunFunc(func(m queue.QueuedMessage) error {
-			j, ok := m.(*job)
+			v, ok := m.(*job)
 			if !ok {
-				return errors.New("message is not job type")
+				if err := json.Unmarshal(m.Bytes(), &v); err != nil {
+					return err
+				}
 			}
 
-			rets <- j.message
+			rets <- v.Message
+			return nil
+		}),
+	)
+```
+
+or you can use the [NSQ](https://nsq.io/) as backend, see the worker example:
+
+```go
+	// define the worker
+	w := nsq.NewWorker(
+		nsq.WithAddr("127.0.0.1:4150"),
+		nsq.WithTopic("example"),
+		nsq.WithChannel("foobar"),
+		// concurrent job number
+		nsq.WithMaxInFlight(10),
+		nsq.WithRunFunc(func(m queue.QueuedMessage) error {
+			v, ok := m.(*job)
+			if !ok {
+				if err := json.Unmarshal(m.Bytes(), &v); err != nil {
+					return err
+				}
+			}
+
+			rets <- v.Message
 			return nil
 		}),
 	)
