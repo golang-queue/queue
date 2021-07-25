@@ -109,13 +109,13 @@ Third to create queue and initialize multiple worker, receive all job message:
 	q.Wait()
 ```
 
-Full example code as below or [try it in playground](https://play.golang.org/p/DlhCQgZZ1Bb).
+Full example code as below or [try it in playground](https://play.golang.org/p/xuR4WhcFdoQ).
 
 ```go
 package main
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -125,11 +125,11 @@ import (
 )
 
 type job struct {
-	message string
+	Message string
 }
 
 func (j *job) Bytes() []byte {
-	return []byte(j.message)
+	return []byte(j.Message)
 }
 
 func main() {
@@ -140,12 +140,14 @@ func main() {
 	w := simple.NewWorker(
 		simple.WithQueueNum(taskN),
 		simple.WithRunFunc(func(m queue.QueuedMessage) error {
-			j, ok := m.(*job)
+			v, ok := m.(*job)
 			if !ok {
-				return errors.New("message is not job type")
+				if err := json.Unmarshal(m.Bytes(), &v); err != nil {
+					return err
+				}
 			}
 
-			rets <- j.message
+			rets <- v.Message
 			return nil
 		}),
 	)
@@ -166,7 +168,7 @@ func main() {
 	for i := 0; i < taskN; i++ {
 		go func(i int) {
 			q.Queue(&job{
-				message: fmt.Sprintf("handle the job: %d", i+1),
+				Message: fmt.Sprintf("handle the job: %d", i+1),
 			})
 		}(i)
 	}
