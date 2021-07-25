@@ -27,7 +27,7 @@ func TestDefaultFlow(t *testing.T) {
 	q.Start()
 	time.Sleep(100 * time.Millisecond)
 	assert.NoError(t, q.Queue(m))
-	m.Body = []byte("")
+	m.Body = []byte("new message")
 	assert.NoError(t, q.Queue(m))
 	q.Shutdown()
 	q.Wait()
