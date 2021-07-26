@@ -1,7 +1,6 @@
 package simple
 
 import (
-	"runtime"
 	"testing"
 	"time"
 
@@ -20,7 +19,7 @@ func (m mockMessage) Bytes() []byte {
 
 func TestQueueUsage(t *testing.T) {
 	w := NewWorker()
-	assert.Equal(t, runtime.NumCPU()<<1, w.Capacity())
+	assert.Equal(t, defaultQueueSize, w.Capacity())
 	assert.Equal(t, 0, w.Usage())
 
 	assert.NoError(t, w.Queue(&mockMessage{}))
