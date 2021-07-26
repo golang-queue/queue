@@ -12,7 +12,7 @@ import (
 
 var host = "nats"
 
-func TestDefaultFlow(t *testing.T) {
+func TestNATSDefaultFlow(t *testing.T) {
 	m := &Job{
 		Body: []byte("foo"),
 	}
@@ -35,7 +35,7 @@ func TestDefaultFlow(t *testing.T) {
 	q.Wait()
 }
 
-func TestShutdown(t *testing.T) {
+func TestNATSShutdown(t *testing.T) {
 	w := NewWorker(
 		WithAddr(host+":4222"),
 		WithSubj("test"),
@@ -54,7 +54,7 @@ func TestShutdown(t *testing.T) {
 	q.Wait()
 }
 
-func TestCustomFuncAndWait(t *testing.T) {
+func TestNATSCustomFuncAndWait(t *testing.T) {
 	m := &Job{
 		Body: []byte("foo"),
 	}
@@ -79,7 +79,7 @@ func TestCustomFuncAndWait(t *testing.T) {
 	assert.NoError(t, q.Queue(m))
 	assert.NoError(t, q.Queue(m))
 	assert.NoError(t, q.Queue(m))
-	time.Sleep(600 * time.Millisecond)
+	time.Sleep(700 * time.Millisecond)
 	q.Shutdown()
 	q.Wait()
 	// you will see the execute time > 1000ms

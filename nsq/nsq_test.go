@@ -12,7 +12,7 @@ import (
 
 var host = "nsq"
 
-func TestDefaultFlow(t *testing.T) {
+func TestNSQDefaultFlow(t *testing.T) {
 	m := &Job{
 		Body: []byte("foo"),
 	}
@@ -35,7 +35,7 @@ func TestDefaultFlow(t *testing.T) {
 	q.Wait()
 }
 
-func TestShutdown(t *testing.T) {
+func TestNSQShutdown(t *testing.T) {
 	w := NewWorker(
 		WithAddr(host+":4150"),
 		WithTopic("test2"),
@@ -53,7 +53,7 @@ func TestShutdown(t *testing.T) {
 	q.Wait()
 }
 
-func TestCustomFuncAndWait(t *testing.T) {
+func TestNSQCustomFuncAndWait(t *testing.T) {
 	m := &Job{
 		Body: []byte("foo"),
 	}
