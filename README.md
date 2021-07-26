@@ -42,81 +42,81 @@ func (j *job) Bytes() []byte {
 The second step to create the new worker, use the buffered channel as an example, you can use the `stop` channel to terminate the job immediately after shutdown the queue service if need.
 
 ```go
-  // define the worker
-  w := simple.NewWorker(
-    simple.WithQueueNum(taskN),
-    simple.WithRunFunc(func(m queue.QueuedMessage, stop <-chan struct{}) error {
-      v, ok := m.(*job)
-      if !ok {
-        if err := json.Unmarshal(m.Bytes(), &v); err != nil {
-          return err
-        }
+// define the worker
+w := simple.NewWorker(
+  simple.WithQueueNum(taskN),
+  simple.WithRunFunc(func(m queue.QueuedMessage, stop <-chan struct{}) error {
+    v, ok := m.(*job)
+    if !ok {
+      if err := json.Unmarshal(m.Bytes(), &v); err != nil {
+        return err
       }
+    }
 
-      rets <- v.Message
-      return nil
-    }),
-  )
+    rets <- v.Message
+    return nil
+  }),
+)
 ```
 
 or use the [NSQ](https://nsq.io/) as backend, see the worker example:
 
 ```go
-  // define the worker
-  w := nsq.NewWorker(
-    nsq.WithAddr("127.0.0.1:4150"),
-    nsq.WithTopic("example"),
-    nsq.WithChannel("foobar"),
-    // concurrent job number
-    nsq.WithMaxInFlight(10),
-    nsq.WithRunFunc(func(m queue.QueuedMessage, stop <-chan struct{}) error {
-      v, ok := m.(*job)
-      if !ok {
-        if err := json.Unmarshal(m.Bytes(), &v); err != nil {
-          return err
-        }
+// define the worker
+w := nsq.NewWorker(
+  nsq.WithAddr("127.0.0.1:4150"),
+  nsq.WithTopic("example"),
+  nsq.WithChannel("foobar"),
+  // concurrent job number
+  nsq.WithMaxInFlight(10),
+  nsq.WithRunFunc(func(m queue.QueuedMessage, stop <-chan struct{}) error {
+    v, ok := m.(*job)
+    if !ok {
+      if err := json.Unmarshal(m.Bytes(), &v); err != nil {
+        return err
       }
+    }
 
-      rets <- v.Message
-      return nil
-    }),
-  )
+    rets <- v.Message
+    return nil
+  }),
+)
 ```
 
 The third step to create a queue and initialize multiple workers, receive all job messages:
 
 ```go
-  // define the queue
-  q, err := queue.NewQueue(
-    queue.WithWorkerCount(5),
-    queue.WithWorker(w),
-  )
-  if err != nil {
-    log.Fatal(err)
-  }
+// define the queue
+q, err := queue.NewQueue(
+  queue.WithWorkerCount(5),
+  queue.WithWorker(w),
+)
+if err != nil {
+  log.Fatal(err)
+}
 
-  // start the five worker
-  q.Start()
+// start the five worker
+q.Start()
 
-  // assign tasks in queue
-  for i := 0; i < taskN; i++ {
-    go func(i int) {
-      q.Queue(&job{
-        Message: fmt.Sprintf("handle the job: %d", i+1),
-      })
-    }(i)
-  }
+// assign tasks in queue
+for i := 0; i < taskN; i++ {
+  go func(i int) {
+    q.Queue(&job{
+      Message: fmt.Sprintf("handle the job: %d", i+1),
+    })
+  }(i)
+}
 
-  // wait until all tasks done
-  for i := 0; i < taskN; i++ {
-    fmt.Println("message:", <-rets)
-    time.Sleep(50 * time.Millisecond)
-  }
+// wait until all tasks done
+for i := 0; i < taskN; i++ {
+  fmt.Println("message:", <-rets)
+  time.Sleep(50 * time.Millisecond)
+}
 
-  // shutdown the service and notify all the worker
-  q.Shutdown()
-  // wait all jobs are complete.
-  q.Wait()
+// shutdown the service and notify all the worker
+q.Shutdown()
+// wait all jobs are complete.
+q.Wait()
 ```
 
 Full example code as below or [try it in playground](https://play.golang.org/p/yaTUoYxdcaK).
