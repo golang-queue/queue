@@ -2,11 +2,12 @@ package simple
 
 import (
 	"errors"
-	"runtime"
 	"sync"
 
 	"github.com/appleboy/queue"
 )
+
+const defaultQueueSize = 4096
 
 var _ queue.Worker = (*Worker)(nil)
 
@@ -88,7 +89,7 @@ func WithRunFunc(fn func(queue.QueuedMessage, <-chan struct{}) error) Option {
 // NewWorker for struc
 func NewWorker(opts ...Option) *Worker {
 	w := &Worker{
-		queueNotification: make(chan queue.QueuedMessage, runtime.NumCPU()<<1),
+		queueNotification: make(chan queue.QueuedMessage, defaultQueueSize),
 		stop:              make(chan struct{}),
 		runFunc: func(queue.QueuedMessage, <-chan struct{}) error {
 			return nil
