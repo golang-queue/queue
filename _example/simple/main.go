@@ -25,7 +25,7 @@ func main() {
 	// define the worker
 	w := simple.NewWorker(
 		simple.WithQueueNum(taskN),
-		simple.WithRunFunc(func(m queue.QueuedMessage) error {
+		simple.WithRunFunc(func(m queue.QueuedMessage, _ <-chan struct{}) error {
 			v, ok := m.(*job)
 			if !ok {
 				if err := json.Unmarshal(m.Bytes(), &v); err != nil {

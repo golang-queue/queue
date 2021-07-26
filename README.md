@@ -13,13 +13,21 @@ Queue is a Golang library for spawning and managing a Goroutine pool, Alloowing 
 
 ## Installation
 
+Install the stable version:
+
 ```sh
 go get github.com/appleboy/queue
 ```
 
+Install the latest verison:
+
+```sh
+go get github.com/appleboy/queue@master
+```
+
 ## Usage
 
-First to create new job as `QueueMessage` interface:
+The first step to create a new job as `QueueMessage` interface:
 
 ```go
 type job struct {
@@ -31,13 +39,13 @@ func (j *job) Bytes() []byte {
 }
 ```
 
-Second to create the new worker, use buffered channel as example:
+The second step to create the new worker, use the buffered channel as an example, you can use the `stop` channel to terminate the job immediately after shutdown the queue service if need.
 
 ```go
 	// define the worker
 	w := simple.NewWorker(
 		simple.WithQueueNum(taskN),
-		simple.WithRunFunc(func(m queue.QueuedMessage) error {
+		simple.WithRunFunc(func(m queue.QueuedMessage, stop <-chan struct{}) error {
 			v, ok := m.(*job)
 			if !ok {
 				if err := json.Unmarshal(m.Bytes(), &v); err != nil {
@@ -51,7 +59,7 @@ Second to create the new worker, use buffered channel as example:
 	)
 ```
 
-or you can use the [NSQ](https://nsq.io/) as backend, see the worker example:
+or use the [NSQ](https://nsq.io/) as backend, see the worker example:
 
 ```go
 	// define the worker
@@ -61,7 +69,7 @@ or you can use the [NSQ](https://nsq.io/) as backend, see the worker example:
 		nsq.WithChannel("foobar"),
 		// concurrent job number
 		nsq.WithMaxInFlight(10),
-		nsq.WithRunFunc(func(m queue.QueuedMessage) error {
+		nsq.WithRunFunc(func(m queue.QueuedMessage, stop <-chan struct{}) error {
 			v, ok := m.(*job)
 			if !ok {
 				if err := json.Unmarshal(m.Bytes(), &v); err != nil {
@@ -75,7 +83,7 @@ or you can use the [NSQ](https://nsq.io/) as backend, see the worker example:
 	)
 ```
 
-Third to create queue and initialize multiple worker, receive all job message:
+The third step to create a queue and initialize multiple workers, receive all job messages:
 
 ```go
 	// define the queue
@@ -109,7 +117,7 @@ Third to create queue and initialize multiple worker, receive all job message:
 	q.Wait()
 ```
 
-Full example code as below or [try it in playground](https://play.golang.org/p/ZM3XAnYcAs7).
+Full example code as below or [try it in playground](https://play.golang.org/p/yaTUoYxdcaK).
 
 ```go
 package main
@@ -139,7 +147,7 @@ func main() {
 	// define the worker
 	w := simple.NewWorker(
 		simple.WithQueueNum(taskN),
-		simple.WithRunFunc(func(m queue.QueuedMessage) error {
+		simple.WithRunFunc(func(m queue.QueuedMessage, _ <-chan struct{}) error {
 			v, ok := m.(*job)
 			if !ok {
 				if err := json.Unmarshal(m.Bytes(), &v); err != nil {
