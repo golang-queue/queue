@@ -1,4 +1,4 @@
-package nsq
+package nats
 
 import (
 	"log"
@@ -10,16 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var host = "nsq"
+var host = "nats"
 
-func TestNSQDefaultFlow(t *testing.T) {
+func TestNATSDefaultFlow(t *testing.T) {
 	m := &Job{
 		Body: []byte("foo"),
 	}
 	w := NewWorker(
-		WithAddr(host+":4150"),
-		WithTopic("test1"),
-		WithChannel("test1"),
+		WithAddr(host+":4222"),
+		WithSubj("test"),
+		WithQueue("test"),
 	)
 	q, err := queue.NewQueue(
 		queue.WithWorker(w),
@@ -35,10 +35,11 @@ func TestNSQDefaultFlow(t *testing.T) {
 	q.Wait()
 }
 
-func TestNSQShutdown(t *testing.T) {
+func TestNATSShutdown(t *testing.T) {
 	w := NewWorker(
-		WithAddr(host+":4150"),
-		WithTopic("test2"),
+		WithAddr(host+":4222"),
+		WithSubj("test"),
+		WithQueue("test"),
 	)
 	q, err := queue.NewQueue(
 		queue.WithWorker(w),
@@ -53,14 +54,14 @@ func TestNSQShutdown(t *testing.T) {
 	q.Wait()
 }
 
-func TestNSQCustomFuncAndWait(t *testing.T) {
+func TestNATSCustomFuncAndWait(t *testing.T) {
 	m := &Job{
 		Body: []byte("foo"),
 	}
 	w := NewWorker(
-		WithAddr(host+":4150"),
-		WithTopic("test3"),
-		WithMaxInFlight(2),
+		WithAddr(host+":4222"),
+		WithSubj("test"),
+		WithQueue("test"),
 		WithRunFunc(func(msg queue.QueuedMessage, s <-chan struct{}) error {
 			log.Println("show message: " + string(msg.Bytes()))
 			time.Sleep(500 * time.Millisecond)
