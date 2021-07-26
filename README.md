@@ -84,6 +84,27 @@ w := nsq.NewWorker(
 )
 ```
 
+or use the [NATS](https://nats.io/) as backend, see the worker example:
+
+```go
+w := nats.NewWorker(
+  nats.WithAddr("127.0.0.1:4222"),
+  nats.WithSubj("example"),
+  nats.WithQueue("foobar"),
+  nats.WithRunFunc(func(m queue.QueuedMessage, _ <-chan struct{}) error {
+    v, ok := m.(*job)
+    if !ok {
+      if err := json.Unmarshal(m.Bytes(), &v); err != nil {
+        return err
+      }
+    }
+
+    rets <- v.Message
+    return nil
+  }),
+)
+```
+
 The third step to create a queue and initialize multiple workers, receive all job messages:
 
 ```go
