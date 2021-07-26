@@ -60,7 +60,7 @@ func TestCustomFuncAndWait(t *testing.T) {
 		WithAddr(host+":4150"),
 		WithTopic("test"),
 		WithMaxInFlight(2),
-		WithRunFunc(func(msg queue.QueuedMessage) error {
+		WithRunFunc(func(msg queue.QueuedMessage, s <-chan struct{}) error {
 			time.Sleep(500 * time.Millisecond)
 			return nil
 		}),

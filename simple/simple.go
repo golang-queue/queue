@@ -3,6 +3,7 @@ package simple
 import (
 	"errors"
 	"runtime"
+	"sync"
 
 	"github.com/appleboy/queue"
 )
@@ -17,7 +18,9 @@ var errMaxCapacity = errors.New("max capacity reached")
 // Worker for simple queue using channel
 type Worker struct {
 	queueNotification chan queue.QueuedMessage
-	runFunc           func(queue.QueuedMessage) error
+	runFunc           func(queue.QueuedMessage, <-chan struct{}) error
+	stop              chan struct{}
+	stopOnce          sync.Once
 }
 
 // BeforeRun run script before start worker
@@ -31,17 +34,20 @@ func (s *Worker) AfterRun() error {
 }
 
 // Run start the worker
-func (s *Worker) Run(_ chan struct{}) error {
+func (s *Worker) Run() error {
 	for notification := range s.queueNotification {
 		// run custom process function
-		_ = s.runFunc(notification)
+		_ = s.runFunc(notification, s.stop)
 	}
 	return nil
 }
 
 // Shutdown worker
 func (s *Worker) Shutdown() error {
-	close(s.queueNotification)
+	s.stopOnce.Do(func() {
+		close(s.queueNotification)
+		close(s.stop)
+	})
 	return nil
 }
 
@@ -73,7 +79,7 @@ func WithQueueNum(num int) Option {
 }
 
 // WithRunFunc setup the run func of queue
-func WithRunFunc(fn func(queue.QueuedMessage) error) Option {
+func WithRunFunc(fn func(queue.QueuedMessage, <-chan struct{}) error) Option {
 	return func(w *Worker) {
 		w.runFunc = fn
 	}
@@ -83,7 +89,8 @@ func WithRunFunc(fn func(queue.QueuedMessage) error) Option {
 func NewWorker(opts ...Option) *Worker {
 	w := &Worker{
 		queueNotification: make(chan queue.QueuedMessage, runtime.NumCPU()<<1),
-		runFunc: func(msg queue.QueuedMessage) error {
+		stop:              make(chan struct{}),
+		runFunc: func(queue.QueuedMessage, <-chan struct{}) error {
 			return nil
 		},
 	}

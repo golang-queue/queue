@@ -30,11 +30,13 @@ type Worker struct {
 	q           *nsq.Consumer
 	p           *nsq.Producer
 	startOnce   sync.Once
+	stopOnce    sync.Once
+	stop        chan struct{}
 	maxInFlight int
 	addr        string
 	topic       string
 	channel     string
-	runFunc     func(queue.QueuedMessage) error
+	runFunc     func(queue.QueuedMessage, <-chan struct{}) error
 }
 
 // WithAddr setup the addr of NSQ
@@ -59,7 +61,7 @@ func WithChannel(channel string) Option {
 }
 
 // WithRunFunc setup the run func of queue
-func WithRunFunc(fn func(queue.QueuedMessage) error) Option {
+func WithRunFunc(fn func(queue.QueuedMessage, <-chan struct{}) error) Option {
 	return func(w *Worker) {
 		w.runFunc = fn
 	}
@@ -80,7 +82,8 @@ func NewWorker(opts ...Option) *Worker {
 		topic:       "gorush",
 		channel:     "ch",
 		maxInFlight: runtime.NumCPU(),
-		runFunc: func(queue.QueuedMessage) error {
+		stop:        make(chan struct{}),
+		runFunc: func(queue.QueuedMessage, <-chan struct{}) error {
 			return nil
 		},
 	}
@@ -125,7 +128,7 @@ func (s *Worker) AfterRun() error {
 }
 
 // Run start the worker
-func (s *Worker) Run(quit chan struct{}) error {
+func (s *Worker) Run() error {
 	wg := &sync.WaitGroup{}
 	s.q.AddHandler(nsq.HandlerFunc(func(msg *nsq.Message) error {
 		wg.Add(1)
@@ -141,11 +144,11 @@ func (s *Worker) Run(quit chan struct{}) error {
 		}
 
 		// run custom process function
-		return s.runFunc(job)
+		return s.runFunc(job, s.stop)
 	}))
 
 	// wait close signal
-	<-quit
+	<-s.stop
 
 	// wait job completed
 	wg.Wait()
@@ -155,8 +158,11 @@ func (s *Worker) Run(quit chan struct{}) error {
 
 // Shutdown worker
 func (s *Worker) Shutdown() error {
-	s.q.Stop()
-	s.p.Stop()
+	s.stopOnce.Do(func() {
+		s.q.Stop()
+		s.p.Stop()
+		close(s.stop)
+	})
 	return nil
 }
 
