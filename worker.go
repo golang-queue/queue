@@ -10,7 +10,7 @@ type Worker interface {
 	// BeforeRun is called before starting the worker
 	BeforeRun() error
 	// Run is called to start the worker
-	Run(chan struct{}) error
+	Run() error
 	// BeforeRun is called after starting the worker
 	AfterRun() error
 	// Shutdown is called if stop all worker
@@ -37,7 +37,7 @@ type emptyWorker struct{}
 
 func (w *emptyWorker) BeforeRun() error              { return nil }
 func (w *emptyWorker) AfterRun() error               { return nil }
-func (w *emptyWorker) Run(chan struct{}) error       { return nil }
+func (w *emptyWorker) Run() error                    { return nil }
 func (w *emptyWorker) Shutdown() error               { return nil }
 func (w *emptyWorker) Queue(job QueuedMessage) error { return nil }
 func (w *emptyWorker) Capacity() int                 { return 0 }
@@ -49,7 +49,7 @@ type queueWorker struct {
 
 func (w *queueWorker) BeforeRun() error { return nil }
 func (w *queueWorker) AfterRun() error  { return nil }
-func (w *queueWorker) Run(chan struct{}) error {
+func (w *queueWorker) Run() error {
 	for msg := range w.messages {
 		if string(msg.Bytes()) == "panic" {
 			panic("show panic")

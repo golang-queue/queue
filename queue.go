@@ -126,7 +126,7 @@ func (q *Queue) work() {
 			}
 		}()
 		q.logger.Infof("start the worker num: %d", num)
-		if err := q.worker.Run(q.quit); err != nil {
+		if err := q.worker.Run(); err != nil {
 			q.logger.Error(err)
 		}
 		q.logger.Infof("stop the worker num: %d", num)

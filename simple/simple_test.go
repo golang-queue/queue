@@ -48,7 +48,7 @@ func TestCustomFuncAndWait(t *testing.T) {
 		msg: "foo",
 	}
 	w := NewWorker(
-		WithRunFunc(func(msg queue.QueuedMessage) error {
+		WithRunFunc(func(msg queue.QueuedMessage, s <-chan struct{}) error {
 			time.Sleep(500 * time.Millisecond)
 			return nil
 		}),
