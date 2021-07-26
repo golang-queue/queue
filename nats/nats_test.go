@@ -79,7 +79,7 @@ func TestNATSCustomFuncAndWait(t *testing.T) {
 	assert.NoError(t, q.Queue(m))
 	assert.NoError(t, q.Queue(m))
 	assert.NoError(t, q.Queue(m))
-	time.Sleep(700 * time.Millisecond)
+	time.Sleep(600 * time.Millisecond)
 	q.Shutdown()
 	q.Wait()
 	// you will see the execute time > 1000ms

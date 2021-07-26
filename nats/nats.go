@@ -103,7 +103,7 @@ func (s *Worker) AfterRun() error {
 func (s *Worker) Run() error {
 	wg := &sync.WaitGroup{}
 
-	s.client.QueueSubscribe(s.subj, s.queue, func(m *nats.Msg) {
+	_, err := s.client.QueueSubscribe(s.subj, s.queue, func(m *nats.Msg) {
 		wg.Add(1)
 		defer wg.Done()
 		job := &Job{
@@ -111,8 +111,11 @@ func (s *Worker) Run() error {
 		}
 
 		// run custom process function
-		s.runFunc(job, s.stop)
+		_ = s.runFunc(job, s.stop)
 	})
+	if err != nil {
+		return err
+	}
 
 	// wait close signal
 	<-s.stop
@@ -127,6 +130,7 @@ func (s *Worker) Run() error {
 func (s *Worker) Shutdown() error {
 	s.stopOnce.Do(func() {
 		close(s.stop)
+		s.client.Close()
 	})
 	return nil
 }
