@@ -113,7 +113,9 @@ The third step to create a queue and initialize multiple workers, receive all jo
 		time.Sleep(50 * time.Millisecond)
 	}
 
+	// shutdown the service and notify all the worker
 	q.Shutdown()
+	// wait all jobs are complete.
 	q.Wait()
 ```
 
@@ -187,7 +189,9 @@ func main() {
 		time.Sleep(50 * time.Millisecond)
 	}
 
+	// shutdown the service and notify all the worker
 	q.Shutdown()
+	// wait all jobs are complete.
 	q.Wait()
 }
 ```

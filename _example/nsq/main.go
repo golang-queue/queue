@@ -73,6 +73,8 @@ func main() {
 		time.Sleep(50 * time.Millisecond)
 	}
 
+	// shutdown the service and notify all the worker
 	q.Shutdown()
+	// wait all jobs are complete.
 	q.Wait()
 }
