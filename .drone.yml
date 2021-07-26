@@ -32,6 +32,9 @@ services:
   commands:
   - /nsqd
 
+- name: nats
+  image: nats
+
 volumes:
 - name: gopath
   temp: {}
