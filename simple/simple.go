@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/appleboy/queue"
 )
@@ -41,6 +42,7 @@ func (s *Worker) handle(m interface{}) error {
 	done := make(chan error, 1)
 	panicChan := make(chan interface{}, 1)
 	job, _ := m.(queue.Job)
+	startTime := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), job.Timeout)
 	defer cancel()
 
@@ -61,16 +63,22 @@ func (s *Worker) handle(m interface{}) error {
 	case p := <-panicChan:
 		panic(p)
 	case <-ctx.Done(): // timeout reached
-		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			s.logger.Infof("job timeout: %s", job.Timeout.String())
-		}
-		// wait job
-		return <-done
+		return ctx.Err()
 	case <-s.stop: // shutdown service
+		// cancel job
 		cancel()
+
+		leftTime := job.Timeout - time.Since(startTime)
 		// wait job
-		return <-done
-	case err := <-done: // job finish and continue to worker
+		select {
+		case <-time.After(leftTime):
+			return context.DeadlineExceeded
+		case err := <-done: // job finish
+			return err
+		case p := <-panicChan:
+			panic(p)
+		}
+	case err := <-done: // job finish
 		return err
 	}
 }
