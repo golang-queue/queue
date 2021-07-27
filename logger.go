@@ -16,7 +16,8 @@ type Logger interface {
 	Fatal(args ...interface{})
 }
 
-func newLogger() Logger {
+// NewLogger for simple logger.
+func NewLogger() Logger {
 	return defaultLogger{
 		infoLogger:  log.New(os.Stderr, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile),
 		errorLogger: log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
@@ -53,3 +54,18 @@ func (l defaultLogger) Error(args ...interface{}) {
 func (l defaultLogger) Fatal(args ...interface{}) {
 	l.fatalLogger.Println(fmt.Sprint(args...))
 }
+
+// NewEmptyLogger for simple logger.
+func NewEmptyLogger() Logger {
+	return emptyLogger{}
+}
+
+// EmptyLogger no meesgae logger
+type emptyLogger struct{}
+
+func (l emptyLogger) Infof(format string, args ...interface{})  {}
+func (l emptyLogger) Errorf(format string, args ...interface{}) {}
+func (l emptyLogger) Fatalf(format string, args ...interface{}) {}
+func (l emptyLogger) Info(args ...interface{})                  {}
+func (l emptyLogger) Error(args ...interface{})                 {}
+func (l emptyLogger) Fatal(args ...interface{})                 {}

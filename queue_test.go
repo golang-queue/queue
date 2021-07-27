@@ -88,8 +88,8 @@ func TestWorkerStatus(t *testing.T) {
 
 	assert.NoError(t, q.Queue(m))
 	assert.NoError(t, q.Queue(m))
-	assert.NoError(t, q.Queue(m))
-	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.QueueWithTimeout(10*time.Millisecond, m))
+	assert.NoError(t, q.QueueWithTimeout(10*time.Millisecond, m))
 	assert.Equal(t, 100, q.Capacity())
 	assert.Equal(t, 4, q.Usage())
 	q.Start()
