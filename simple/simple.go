@@ -80,8 +80,8 @@ func (s *Worker) Run() error {
 // Shutdown worker
 func (s *Worker) Shutdown() error {
 	s.stopOnce.Do(func() {
-		close(s.taskQueue)
 		close(s.stop)
+		close(s.taskQueue)
 	})
 	return nil
 }
