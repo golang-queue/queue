@@ -68,17 +68,17 @@ func (s *Worker) handle(m interface{}) error {
 		// cancel job
 		cancel()
 
-		leftTime := job.Timeout - time.Now().Sub(startTime)
+		leftTime := job.Timeout - time.Since(startTime)
 		// wait job
 		select {
 		case <-time.After(leftTime):
 			return context.DeadlineExceeded
-		case err := <-done: // job finish and continue to worker
+		case err := <-done: // job finish
 			return err
 		case p := <-panicChan:
 			panic(p)
 		}
-	case err := <-done: // job finish and continue to worker
+	case err := <-done: // job finish
 		return err
 	}
 }
