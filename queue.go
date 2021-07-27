@@ -138,6 +138,12 @@ func (q *Queue) QueueWithTimeout(timeout time.Duration, job QueuedMessage) error
 }
 
 func (q *Queue) work() {
+	select {
+	case <-q.quit:
+		return
+	default:
+	}
+
 	num := atomic.AddInt32(&q.runningWorkers, 1)
 	if err := q.worker.BeforeRun(); err != nil {
 		q.logger.Fatal(err)

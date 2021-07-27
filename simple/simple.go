@@ -36,6 +36,45 @@ func (s *Worker) AfterRun() error {
 	return nil
 }
 
+func (s *Worker) handle(m interface{}) error {
+	// create channel with buffer size 1 to avoid goroutine leak
+	done := make(chan error, 1)
+	panicChan := make(chan interface{}, 1)
+	job, _ := m.(queue.Job)
+	ctx, cancel := context.WithTimeout(context.Background(), job.Timeout)
+	defer cancel()
+
+	// run the job
+	go func() {
+		// handle panic issue
+		defer func() {
+			if p := recover(); p != nil {
+				panicChan <- p
+			}
+		}()
+
+		// run custom process function
+		done <- s.runFunc(ctx, job)
+	}()
+
+	select {
+	case p := <-panicChan:
+		panic(p)
+	case <-ctx.Done(): // timeout reached
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			s.logger.Infof("job timeout: %s", job.Timeout.String())
+		}
+		// wait job
+		return <-done
+	case <-s.stop: // shutdown service
+		cancel()
+		// wait job
+		return <-done
+	case err := <-done: // job finish and continue to worker
+		return err
+	}
+}
+
 // Run start the worker
 func (s *Worker) Run() error {
 	// check queue status
@@ -46,42 +85,9 @@ func (s *Worker) Run() error {
 	}
 
 	for task := range s.taskQueue {
-		done := make(chan struct{})
-		// create channel with buffer size 1 to avoid goroutine leak
-		panicChan := make(chan interface{}, 1)
-		v, _ := task.(queue.Job)
-		ctx, cancel := context.WithTimeout(context.Background(), v.Timeout)
-		defer cancel()
-
-		// run the job
-		go func() {
-			// handle panic issue
-			defer func() {
-				if p := recover(); p != nil {
-					panicChan <- p
-				}
-			}()
-			// run custom process function
-			_ = s.runFunc(ctx, task)
-			close(done)
-		}()
-
-		select {
-		case p := <-panicChan:
-			panic(p)
-		case <-ctx.Done(): // timeout reached
-			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				s.logger.Infof("job timeout: %s", v.Timeout.String())
-			}
-			// wait job
-			<-done
-		case <-s.stop: // shutdown service
-			cancel()
-			// wait job
-			<-done
-		case <-done: // job finish and continue to work
+		if err := s.handle(task); err != nil {
+			s.logger.Error(err.Error())
 		}
-
 	}
 	return nil
 }
