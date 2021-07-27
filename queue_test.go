@@ -133,6 +133,7 @@ func TestCapacityReached(t *testing.T) {
 	q, err := NewQueue(
 		WithWorker(w),
 		WithWorkerCount(5),
+		WithLogger(NewEmptyLogger()),
 	)
 	assert.NoError(t, err)
 	assert.NotNil(t, q)
