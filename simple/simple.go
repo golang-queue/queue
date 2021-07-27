@@ -1,6 +1,7 @@
 package simple
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -18,10 +19,11 @@ var errMaxCapacity = errors.New("max capacity reached")
 
 // Worker for simple queue using channel
 type Worker struct {
-	queueNotification chan queue.QueuedMessage
-	runFunc           func(queue.QueuedMessage, <-chan struct{}) error
-	stop              chan struct{}
-	stopOnce          sync.Once
+	taskQueue chan queue.QueuedMessage
+	runFunc   func(context.Context, queue.QueuedMessage) error
+	stop      chan struct{}
+	logger    queue.Logger
+	stopOnce  sync.Once
 }
 
 // BeforeRun run script before start worker
@@ -36,9 +38,41 @@ func (s *Worker) AfterRun() error {
 
 // Run start the worker
 func (s *Worker) Run() error {
-	for notification := range s.queueNotification {
-		// run custom process function
-		_ = s.runFunc(notification, s.stop)
+	// check queue status
+	select {
+	case <-s.stop:
+		return queue.ErrQueueShutdown
+	default:
+	}
+
+	for task := range s.taskQueue {
+		done := make(chan struct{})
+		v, _ := task.(queue.Job)
+		ctx, cancel := context.WithTimeout(context.Background(), v.Timeout)
+		// vet doesn't complain if I do this
+		_ = cancel
+
+		// run the job
+		go func() {
+			// run custom process function
+			_ = s.runFunc(ctx, task)
+			close(done)
+		}()
+
+		select {
+		case <-ctx.Done(): // timeout reached
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				s.logger.Infof("job timeout: %s", v.Timeout.String())
+			}
+			// wait job
+			<-done
+		case <-s.stop: // shutdown service
+			cancel()
+			// wait job
+			<-done
+		case <-done: // job finish and continue to work
+		}
+
 	}
 	return nil
 }
@@ -46,7 +80,7 @@ func (s *Worker) Run() error {
 // Shutdown worker
 func (s *Worker) Shutdown() error {
 	s.stopOnce.Do(func() {
-		close(s.queueNotification)
+		close(s.taskQueue)
 		close(s.stop)
 	})
 	return nil
@@ -54,18 +88,20 @@ func (s *Worker) Shutdown() error {
 
 // Capacity for channel
 func (s *Worker) Capacity() int {
-	return cap(s.queueNotification)
+	return cap(s.taskQueue)
 }
 
 // Usage for count of channel usage
 func (s *Worker) Usage() int {
-	return len(s.queueNotification)
+	return len(s.taskQueue)
 }
 
 // Queue send notification to queue
 func (s *Worker) Queue(job queue.QueuedMessage) error {
 	select {
-	case s.queueNotification <- job:
+	case <-s.stop:
+		return queue.ErrQueueShutdown
+	case s.taskQueue <- job:
 		return nil
 	default:
 		return errMaxCapacity
@@ -75,23 +111,31 @@ func (s *Worker) Queue(job queue.QueuedMessage) error {
 // WithQueueNum setup the capcity of queue
 func WithQueueNum(num int) Option {
 	return func(w *Worker) {
-		w.queueNotification = make(chan queue.QueuedMessage, num)
+		w.taskQueue = make(chan queue.QueuedMessage, num)
 	}
 }
 
 // WithRunFunc setup the run func of queue
-func WithRunFunc(fn func(queue.QueuedMessage, <-chan struct{}) error) Option {
+func WithRunFunc(fn func(context.Context, queue.QueuedMessage) error) Option {
 	return func(w *Worker) {
 		w.runFunc = fn
+	}
+}
+
+// WithLogger set custom logger
+func WithLogger(l queue.Logger) Option {
+	return func(w *Worker) {
+		w.logger = l
 	}
 }
 
 // NewWorker for struc
 func NewWorker(opts ...Option) *Worker {
 	w := &Worker{
-		queueNotification: make(chan queue.QueuedMessage, defaultQueueSize),
-		stop:              make(chan struct{}),
-		runFunc: func(queue.QueuedMessage, <-chan struct{}) error {
+		taskQueue: make(chan queue.QueuedMessage, defaultQueueSize),
+		stop:      make(chan struct{}),
+		logger:    queue.NewLogger(),
+		runFunc: func(context.Context, queue.QueuedMessage) error {
 			return nil
 		},
 	}

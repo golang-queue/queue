@@ -5,7 +5,11 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
+	"time"
 )
+
+// ErrQueueShutdown close the queue.
+var ErrQueueShutdown = errors.New("queue has been closed")
 
 type (
 	// A Queue is a message queue.
@@ -17,8 +21,20 @@ type (
 		worker         Worker
 		stopOnce       sync.Once
 		runningWorkers int32
+		timeout        time.Duration
+	}
+
+	// Job with Timeout
+	Job struct {
+		Timeout time.Duration
+		Body    []byte
 	}
 )
+
+// Bytes get string body
+func (j Job) Bytes() []byte {
+	return j.Body
+}
 
 // Option for queue system
 type Option func(*Queue)
@@ -53,7 +69,8 @@ func NewQueue(opts ...Option) (*Queue, error) {
 		workerCount:  runtime.NumCPU(),
 		routineGroup: newRoutineGroup(),
 		quit:         make(chan struct{}),
-		logger:       newLogger(),
+		logger:       NewLogger(),
+		timeout:      24 * 60 * time.Minute,
 	}
 
 	// Loop through each option
@@ -106,7 +123,18 @@ func (q *Queue) Wait() {
 
 // Queue to queue all job
 func (q *Queue) Queue(job QueuedMessage) error {
-	return q.worker.Queue(job)
+	return q.worker.Queue(Job{
+		Timeout: q.timeout,
+		Body:    job.Bytes(),
+	})
+}
+
+// Queue to queue all job
+func (q *Queue) QueueWithTimeout(timeout time.Duration, job QueuedMessage) error {
+	return q.worker.Queue(Job{
+		Timeout: timeout,
+		Body:    job.Bytes(),
+	})
 }
 
 func (q *Queue) work() {
@@ -127,7 +155,7 @@ func (q *Queue) work() {
 		}()
 		q.logger.Infof("start the worker num: %d", num)
 		if err := q.worker.Run(); err != nil {
-			q.logger.Error(err)
+			q.logger.Errorf("runtime error: %s", err.Error())
 		}
 		q.logger.Infof("stop the worker num: %d", num)
 	})
