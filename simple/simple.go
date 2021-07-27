@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/appleboy/queue"
@@ -25,6 +26,7 @@ type Worker struct {
 	stop      chan struct{}
 	logger    queue.Logger
 	stopOnce  sync.Once
+	stopFlag  int32
 }
 
 // BeforeRun run script before start worker
@@ -102,6 +104,10 @@ func (s *Worker) Run() error {
 
 // Shutdown worker
 func (s *Worker) Shutdown() error {
+	if !atomic.CompareAndSwapInt32(&s.stopFlag, 0, 1) {
+		return queue.ErrQueueShutdown
+	}
+
 	s.stopOnce.Do(func() {
 		close(s.stop)
 		close(s.taskQueue)
@@ -121,10 +127,8 @@ func (s *Worker) Usage() int {
 
 // Queue send notification to queue
 func (s *Worker) Queue(job queue.QueuedMessage) error {
-	select {
-	case <-s.stop:
+	if atomic.LoadInt32(&s.stopFlag) == 1 {
 		return queue.ErrQueueShutdown
-	default:
 	}
 
 	select {
