@@ -143,7 +143,7 @@ func TestJobReachTimeout(t *testing.T) {
 	assert.NoError(t, err)
 	q.Start()
 	time.Sleep(50 * time.Millisecond)
-	q.QueueWithTimeout(30*time.Millisecond, m)
+	assert.NoError(t, q.QueueWithTimeout(30*time.Millisecond, m))
 	time.Sleep(50 * time.Millisecond)
 	q.Shutdown()
 	q.Wait()
@@ -179,7 +179,7 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 	assert.NoError(t, err)
 	q.Start()
 	time.Sleep(50 * time.Millisecond)
-	q.QueueWithTimeout(100*time.Millisecond, m)
+	assert.NoError(t, q.QueueWithTimeout(100*time.Millisecond, m))
 	q.Shutdown()
 	q.Wait()
 }
@@ -219,7 +219,7 @@ func TestGoroutineLeak(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 	for i := 0; i < 500; i++ {
 		m.msg = fmt.Sprintf("foobar: %d", i+1)
-		q.Queue(m)
+		assert.NoError(t, q.Queue(m))
 	}
 	time.Sleep(2 * time.Second)
 	q.Shutdown()
