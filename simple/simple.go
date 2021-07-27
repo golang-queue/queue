@@ -47,6 +47,7 @@ func (s *Worker) Run() error {
 
 	for task := range s.taskQueue {
 		done := make(chan struct{})
+		panicChan := make(chan interface{}, 1)
 		v, _ := task.(queue.Job)
 		ctx, cancel := context.WithTimeout(context.Background(), v.Timeout)
 		// vet doesn't complain if I do this
@@ -54,12 +55,20 @@ func (s *Worker) Run() error {
 
 		// run the job
 		go func() {
+			// handle panic issue
+			defer func() {
+				if p := recover(); p != nil {
+					panicChan <- p
+				}
+			}()
 			// run custom process function
 			_ = s.runFunc(ctx, task)
 			close(done)
 		}()
 
 		select {
+		case p := <-panicChan:
+			panic(p)
 		case <-ctx.Done(): // timeout reached
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 				s.logger.Infof("job timeout: %s", v.Timeout.String())

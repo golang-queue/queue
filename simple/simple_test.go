@@ -226,3 +226,25 @@ func TestGoroutineLeak(t *testing.T) {
 	q.Wait()
 	fmt.Println("number of goroutines:", runtime.NumGoroutine())
 }
+
+func TestGoroutinePanic(t *testing.T) {
+	m := mockMessage{
+		msg: "foo",
+	}
+	w := NewWorker(
+		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+			panic("missing something")
+		}),
+	)
+	q, err := queue.NewQueue(
+		queue.WithWorker(w),
+		queue.WithWorkerCount(2),
+	)
+	assert.NoError(t, err)
+	q.Start()
+	time.Sleep(50 * time.Millisecond)
+	assert.NoError(t, q.Queue(m))
+	time.Sleep(50 * time.Millisecond)
+	q.Shutdown()
+	q.Wait()
+}
