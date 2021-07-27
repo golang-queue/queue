@@ -47,11 +47,11 @@ func (s *Worker) Run() error {
 
 	for task := range s.taskQueue {
 		done := make(chan struct{})
+		// create channel with buffer size 1 to avoid goroutine leak
 		panicChan := make(chan interface{}, 1)
 		v, _ := task.(queue.Job)
 		ctx, cancel := context.WithTimeout(context.Background(), v.Timeout)
-		// vet doesn't complain if I do this
-		_ = cancel
+		defer cancel()
 
 		// run the job
 		go func() {
