@@ -22,6 +22,7 @@ type (
 		stopOnce       sync.Once
 		runningWorkers int32
 		timeout        time.Duration
+		stopFlag       int32
 	}
 
 	// Job with Timeout
@@ -103,6 +104,10 @@ func (q *Queue) Start() {
 
 // Shutdown stops all queues.
 func (q *Queue) Shutdown() {
+	if !atomic.CompareAndSwapInt32(&q.stopFlag, 0, 1) {
+		return
+	}
+
 	q.stopOnce.Do(func() {
 		if err := q.worker.Shutdown(); err != nil {
 			q.logger.Error(err)
@@ -138,10 +143,8 @@ func (q *Queue) QueueWithTimeout(timeout time.Duration, job QueuedMessage) error
 }
 
 func (q *Queue) work() {
-	select {
-	case <-q.quit:
+	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return
-	default:
 	}
 
 	num := atomic.AddInt32(&q.runningWorkers, 1)
