@@ -64,10 +64,10 @@ func TestCustomFuncAndWait(t *testing.T) {
 	assert.NoError(t, err)
 	q.Start()
 	time.Sleep(100 * time.Millisecond)
-	assert.NoError(t, w.Queue(m))
-	assert.NoError(t, w.Queue(m))
-	assert.NoError(t, w.Queue(m))
-	assert.NoError(t, w.Queue(m))
+	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.Queue(m))
 	time.Sleep(600 * time.Millisecond)
 	q.Shutdown()
 	q.Wait()
@@ -225,4 +225,26 @@ func TestGoroutineLeak(t *testing.T) {
 	q.Shutdown()
 	q.Wait()
 	fmt.Println("number of goroutines:", runtime.NumGoroutine())
+}
+
+func TestGoroutinePanic(t *testing.T) {
+	m := mockMessage{
+		msg: "foo",
+	}
+	w := NewWorker(
+		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+			panic("missing something")
+		}),
+	)
+	q, err := queue.NewQueue(
+		queue.WithWorker(w),
+		queue.WithWorkerCount(2),
+	)
+	assert.NoError(t, err)
+	q.Start()
+	time.Sleep(50 * time.Millisecond)
+	assert.NoError(t, q.Queue(m))
+	time.Sleep(50 * time.Millisecond)
+	q.Shutdown()
+	q.Wait()
 }
