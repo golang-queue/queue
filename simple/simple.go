@@ -101,6 +101,10 @@ func (s *Worker) Queue(job queue.QueuedMessage) error {
 	select {
 	case <-s.stop:
 		return queue.ErrQueueShutdown
+	default:
+	}
+
+	select {
 	case s.taskQueue <- job:
 		return nil
 	default:
