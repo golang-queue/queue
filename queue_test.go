@@ -168,4 +168,9 @@ func TestCloseQueueAfterShutdown(t *testing.T) {
 	})
 	assert.Error(t, err)
 	assert.Equal(t, ErrQueueShutdown, err)
+	err = q.QueueWithTimeout(10*time.Millisecond, mockMessage{
+		message: "foobar",
+	})
+	assert.Error(t, err)
+	assert.Equal(t, ErrQueueShutdown, err)
 }
