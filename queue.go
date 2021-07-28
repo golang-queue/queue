@@ -128,6 +128,10 @@ func (q *Queue) Wait() {
 
 // Queue to queue all job
 func (q *Queue) Queue(job QueuedMessage) error {
+	if atomic.LoadInt32(&q.stopFlag) == 1 {
+		return ErrQueueShutdown
+	}
+
 	return q.worker.Queue(Job{
 		Timeout: q.timeout,
 		Body:    job.Bytes(),
@@ -136,6 +140,10 @@ func (q *Queue) Queue(job QueuedMessage) error {
 
 // Queue to queue all job
 func (q *Queue) QueueWithTimeout(timeout time.Duration, job QueuedMessage) error {
+	if atomic.LoadInt32(&q.stopFlag) == 1 {
+		return ErrQueueShutdown
+	}
+
 	return q.worker.Queue(Job{
 		Timeout: timeout,
 		Body:    job.Bytes(),

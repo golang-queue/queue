@@ -146,3 +146,26 @@ func TestCapacityReached(t *testing.T) {
 		message: "foobar",
 	}))
 }
+
+func TestCloseQueueAfterShutdown(t *testing.T) {
+	w := &queueWorker{
+		messages: make(chan QueuedMessage, 10),
+	}
+	q, err := NewQueue(
+		WithWorker(w),
+		WithWorkerCount(5),
+		WithLogger(NewEmptyLogger()),
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, q)
+
+	assert.NoError(t, q.Queue(mockMessage{
+		message: "foobar",
+	}))
+	q.Shutdown()
+	err = q.Queue(mockMessage{
+		message: "foobar",
+	})
+	assert.Error(t, err)
+	assert.Equal(t, ErrQueueShutdown, err)
+}
