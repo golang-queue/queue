@@ -96,11 +96,7 @@ func (s *Worker) Run() error {
 
 	for task := range s.taskQueue {
 		var data queue.Job
-		if err := json.Unmarshal(task.Bytes(), &data); err != nil {
-			s.logger.Error(err.Error())
-			continue
-		}
-
+		_ = json.Unmarshal(task.Bytes(), &data)
 		if err := s.handle(data); err != nil {
 			s.logger.Error(err.Error())
 		}

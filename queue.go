@@ -39,10 +39,7 @@ func (j Job) Bytes() []byte {
 }
 
 func (j Job) Encode() []byte {
-	b, err := json.Marshal(j)
-	if err != nil {
-		panic(err)
-	}
+	b, _ := json.Marshal(j)
 	return b
 }
 
