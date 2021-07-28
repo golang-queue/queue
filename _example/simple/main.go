@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -15,7 +16,11 @@ type job struct {
 }
 
 func (j *job) Bytes() []byte {
-	return []byte(j.Message)
+	b, err := json.Marshal(j)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 func main() {
@@ -25,7 +30,7 @@ func main() {
 	// define the worker
 	w := simple.NewWorker(
 		simple.WithQueueNum(taskN),
-		simple.WithRunFunc(func(m queue.QueuedMessage, _ <-chan struct{}) error {
+		simple.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
 			v, ok := m.(*job)
 			if !ok {
 				if err := json.Unmarshal(m.Bytes(), &v); err != nil {

@@ -36,7 +36,11 @@ type job struct {
 }
 
 func (j *job) Bytes() []byte {
-  return []byte(j.Message)
+  b, err := json.Marshal(j)
+  if err != nil {
+    panic(err)
+  }
+  return b
 }
 ```
 
@@ -46,7 +50,7 @@ The second step to create the new worker, use the buffered channel as an example
 // define the worker
 w := simple.NewWorker(
   simple.WithQueueNum(taskN),
-  simple.WithRunFunc(func(m queue.QueuedMessage, stop <-chan struct{}) error {
+  simple.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
     v, ok := m.(*job)
     if !ok {
       if err := json.Unmarshal(m.Bytes(), &v); err != nil {
@@ -70,7 +74,7 @@ w := nsq.NewWorker(
   nsq.WithChannel("foobar"),
   // concurrent job number
   nsq.WithMaxInFlight(10),
-  nsq.WithRunFunc(func(m queue.QueuedMessage, stop <-chan struct{}) error {
+  nsq.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
     v, ok := m.(*job)
     if !ok {
       if err := json.Unmarshal(m.Bytes(), &v); err != nil {
@@ -91,7 +95,7 @@ w := nats.NewWorker(
   nats.WithAddr("127.0.0.1:4222"),
   nats.WithSubj("example"),
   nats.WithQueue("foobar"),
-  nats.WithRunFunc(func(m queue.QueuedMessage, _ <-chan struct{}) error {
+  nats.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
     v, ok := m.(*job)
     if !ok {
       if err := json.Unmarshal(m.Bytes(), &v); err != nil {
