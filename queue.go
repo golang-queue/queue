@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"encoding/json"
 	"errors"
 	"runtime"
 	"sync"
@@ -35,6 +36,14 @@ type (
 // Bytes get string body
 func (j Job) Bytes() []byte {
 	return j.Body
+}
+
+func (j Job) Encode() []byte {
+	b, err := json.Marshal(j)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 // Option for queue system
@@ -126,28 +135,29 @@ func (q *Queue) Wait() {
 	q.routineGroup.Wait()
 }
 
-// Queue to queue all job
-func (q *Queue) Queue(job QueuedMessage) error {
+func (q *Queue) handleQueue(timeout time.Duration, job QueuedMessage) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
 
-	return q.worker.Queue(Job{
-		Timeout: q.timeout,
+	data := Job{
+		Timeout: timeout,
 		Body:    job.Bytes(),
+	}
+
+	return q.worker.Queue(Job{
+		Body: data.Encode(),
 	})
 }
 
 // Queue to queue all job
-func (q *Queue) QueueWithTimeout(timeout time.Duration, job QueuedMessage) error {
-	if atomic.LoadInt32(&q.stopFlag) == 1 {
-		return ErrQueueShutdown
-	}
+func (q *Queue) Queue(job QueuedMessage) error {
+	return q.handleQueue(q.timeout, job)
+}
 
-	return q.worker.Queue(Job{
-		Timeout: timeout,
-		Body:    job.Bytes(),
-	})
+// Queue to queue all job
+func (q *Queue) QueueWithTimeout(timeout time.Duration, job QueuedMessage) error {
+	return q.handleQueue(q.timeout, job)
 }
 
 func (q *Queue) work() {

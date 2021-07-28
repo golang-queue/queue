@@ -2,6 +2,7 @@ package simple
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"sync"
 	"sync/atomic"
@@ -39,11 +40,10 @@ func (s *Worker) AfterRun() error {
 	return nil
 }
 
-func (s *Worker) handle(m interface{}) error {
+func (s *Worker) handle(job queue.Job) error {
 	// create channel with buffer size 1 to avoid goroutine leak
 	done := make(chan error, 1)
 	panicChan := make(chan interface{}, 1)
-	job, _ := m.(queue.Job)
 	startTime := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), job.Timeout)
 	defer cancel()
@@ -95,7 +95,13 @@ func (s *Worker) Run() error {
 	}
 
 	for task := range s.taskQueue {
-		if err := s.handle(task); err != nil {
+		var data queue.Job
+		if err := json.Unmarshal(task.Bytes(), &data); err != nil {
+			s.logger.Error(err.Error())
+			continue
+		}
+
+		if err := s.handle(data); err != nil {
 			s.logger.Error(err.Error())
 		}
 	}
