@@ -12,6 +12,7 @@ import (
 )
 
 type job struct {
+	Name    string
 	Message string
 }
 
@@ -38,7 +39,7 @@ func main() {
 				}
 			}
 
-			rets <- v.Message
+			rets <- "Hi, " + v.Name + ", " + v.Message
 			return nil
 		}),
 	)
@@ -59,6 +60,7 @@ func main() {
 	for i := 0; i < taskN; i++ {
 		go func(i int) {
 			q.Queue(&job{
+				Name:    "foobar",
 				Message: fmt.Sprintf("handle the job: %d", i+1),
 			})
 		}(i)
