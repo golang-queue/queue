@@ -28,8 +28,8 @@ type (
 
 	// Job with Timeout
 	Job struct {
-		Timeout time.Duration
-		Body    []byte
+		Timeout time.Duration `json:"timeout"`
+		Body    []byte        `json:"body"`
 	}
 )
 
@@ -154,7 +154,7 @@ func (q *Queue) Queue(job QueuedMessage) error {
 
 // Queue to queue all job
 func (q *Queue) QueueWithTimeout(timeout time.Duration, job QueuedMessage) error {
-	return q.handleQueue(q.timeout, job)
+	return q.handleQueue(timeout, job)
 }
 
 func (q *Queue) work() {
