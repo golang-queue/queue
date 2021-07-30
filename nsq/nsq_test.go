@@ -99,7 +99,9 @@ func TestEnqueueJobAfterShutdown(t *testing.T) {
 	m := mockMessage{
 		Message: "foo",
 	}
-	w := NewWorker()
+	w := NewWorker(
+		WithAddr(host + ":4150"),
+	)
 	q, err := queue.NewQueue(
 		queue.WithWorker(w),
 		queue.WithWorkerCount(2),
@@ -179,6 +181,7 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 		Message: "test",
 	}
 	w := NewWorker(
+		WithAddr(host+":4150"),
 		WithTopic("cancel"),
 		WithLogger(queue.NewLogger()),
 		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
@@ -216,6 +219,7 @@ func TestGoroutineLeak(t *testing.T) {
 		Message: "foo",
 	}
 	w := NewWorker(
+		WithAddr(host+":4150"),
 		WithTopic("GoroutineLeak"),
 		WithLogger(queue.NewEmptyLogger()),
 		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
@@ -261,6 +265,7 @@ func TestGoroutinePanic(t *testing.T) {
 		Message: "foo",
 	}
 	w := NewWorker(
+		WithAddr(host+":4150"),
 		WithTopic("GoroutinePanic"),
 		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
 			panic("missing something")
