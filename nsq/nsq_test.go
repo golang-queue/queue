@@ -116,7 +116,9 @@ func TestEnqueueJobAfterShutdown(t *testing.T) {
 }
 
 func TestWorkerNumAfterShutdown(t *testing.T) {
-	w := NewWorker()
+	w := NewWorker(
+		WithAddr(host + ":4150"),
+	)
 	q, err := queue.NewQueue(
 		queue.WithWorker(w),
 		queue.WithWorkerCount(2),
