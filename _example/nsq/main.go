@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -33,7 +34,7 @@ func main() {
 		nsq.WithChannel("foobar"),
 		// concurrent job number
 		nsq.WithMaxInFlight(10),
-		nsq.WithRunFunc(func(m queue.QueuedMessage, _ <-chan struct{}) error {
+		nsq.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
 			v, ok := m.(*job)
 			if !ok {
 				if err := json.Unmarshal(m.Bytes(), &v); err != nil {
