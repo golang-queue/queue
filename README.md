@@ -128,6 +128,7 @@ q.Start()
 for i := 0; i < taskN; i++ {
   go func(i int) {
     q.Queue(&job{
+      Name:    "foobar",
       Message: fmt.Sprintf("handle the job: %d", i+1),
     })
   }(i)
@@ -151,6 +152,7 @@ Full example code as below or [try it in playground](https://play.golang.org/p/y
 package main
 
 import (
+  "context"
   "encoding/json"
   "fmt"
   "log"
@@ -161,11 +163,16 @@ import (
 )
 
 type job struct {
+  Name    string
   Message string
 }
 
 func (j *job) Bytes() []byte {
-  return []byte(j.Message)
+  b, err := json.Marshal(j)
+  if err != nil {
+    panic(err)
+  }
+  return b
 }
 
 func main() {
@@ -175,7 +182,7 @@ func main() {
   // define the worker
   w := simple.NewWorker(
     simple.WithQueueNum(taskN),
-    simple.WithRunFunc(func(m queue.QueuedMessage, _ <-chan struct{}) error {
+    simple.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
       v, ok := m.(*job)
       if !ok {
         if err := json.Unmarshal(m.Bytes(), &v); err != nil {
@@ -183,7 +190,7 @@ func main() {
         }
       }
 
-      rets <- v.Message
+      rets <- "Hi, " + v.Name + ", " + v.Message
       return nil
     }),
   )
@@ -204,6 +211,7 @@ func main() {
   for i := 0; i < taskN; i++ {
     go func(i int) {
       q.Queue(&job{
+        Name:    "foobar",
         Message: fmt.Sprintf("handle the job: %d", i+1),
       })
     }(i)
