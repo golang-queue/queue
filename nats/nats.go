@@ -1,7 +1,11 @@
 package nats
 
 import (
+	"context"
+	"encoding/json"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/appleboy/queue"
 
@@ -13,16 +17,6 @@ var _ queue.Worker = (*Worker)(nil)
 // Option for queue system
 type Option func(*Worker)
 
-// Job with NSQ message
-type Job struct {
-	Body []byte
-}
-
-// Bytes get bytes format
-func (j *Job) Bytes() []byte {
-	return j.Body
-}
-
 // Worker for NSQ
 type Worker struct {
 	addr     string
@@ -31,7 +25,9 @@ type Worker struct {
 	client   *nats.Conn
 	stop     chan struct{}
 	stopOnce sync.Once
-	runFunc  func(queue.QueuedMessage, <-chan struct{}) error
+	runFunc  func(context.Context, queue.QueuedMessage) error
+	logger   queue.Logger
+	stopFlag int32
 }
 
 // WithAddr setup the addr of NATS
@@ -56,9 +52,16 @@ func WithQueue(queue string) Option {
 }
 
 // WithRunFunc setup the run func of queue
-func WithRunFunc(fn func(queue.QueuedMessage, <-chan struct{}) error) Option {
+func WithRunFunc(fn func(context.Context, queue.QueuedMessage) error) Option {
 	return func(w *Worker) {
 		w.runFunc = fn
+	}
+}
+
+// WithLogger set custom logger
+func WithLogger(l queue.Logger) Option {
+	return func(w *Worker) {
+		w.logger = l
 	}
 }
 
@@ -70,7 +73,7 @@ func NewWorker(opts ...Option) *Worker {
 		subj:  "foobar",
 		queue: "foobar",
 		stop:  make(chan struct{}),
-		runFunc: func(queue.QueuedMessage, <-chan struct{}) error {
+		runFunc: func(context.Context, queue.QueuedMessage) error {
 			return nil
 		},
 	}
@@ -99,26 +102,81 @@ func (s *Worker) AfterRun() error {
 	return nil
 }
 
+func (s *Worker) handle(job queue.Job) error {
+	// create channel with buffer size 1 to avoid goroutine leak
+	done := make(chan error, 1)
+	panicChan := make(chan interface{}, 1)
+	startTime := time.Now()
+	ctx, cancel := context.WithTimeout(context.Background(), job.Timeout)
+	defer cancel()
+
+	// run the job
+	go func() {
+		// handle panic issue
+		defer func() {
+			if p := recover(); p != nil {
+				panicChan <- p
+			}
+		}()
+
+		// run custom process function
+		done <- s.runFunc(ctx, job)
+	}()
+
+	select {
+	case p := <-panicChan:
+		panic(p)
+	case <-ctx.Done(): // timeout reached
+		return ctx.Err()
+	case <-s.stop: // shutdown service
+		// cancel job
+		cancel()
+
+		leftTime := job.Timeout - time.Since(startTime)
+		// wait job
+		select {
+		case <-time.After(leftTime):
+			return context.DeadlineExceeded
+		case err := <-done: // job finish
+			return err
+		case p := <-panicChan:
+			panic(p)
+		}
+	case err := <-done: // job finish
+		return err
+	}
+}
+
 // Run start the worker
 func (s *Worker) Run() error {
 	wg := &sync.WaitGroup{}
-
+	panicChan := make(chan interface{}, 1)
 	_, err := s.client.QueueSubscribe(s.subj, s.queue, func(m *nats.Msg) {
 		wg.Add(1)
-		defer wg.Done()
-		job := &Job{
-			Body: m.Data,
-		}
+		defer func() {
+			wg.Done()
+			if p := recover(); p != nil {
+				panicChan <- p
+			}
+		}()
 
-		// run custom process function
-		_ = s.runFunc(job, s.stop)
+		var data queue.Job
+		_ = json.Unmarshal(m.Data, &data)
+
+		if err := s.handle(data); err != nil {
+			s.logger.Error(err)
+		}
 	})
 	if err != nil {
 		return err
 	}
 
 	// wait close signal
-	<-s.stop
+	select {
+	case <-s.stop:
+	case err := <-panicChan:
+		s.logger.Error(err)
+	}
 
 	// wait job completed
 	wg.Wait()
@@ -128,9 +186,13 @@ func (s *Worker) Run() error {
 
 // Shutdown worker
 func (s *Worker) Shutdown() error {
+	if !atomic.CompareAndSwapInt32(&s.stopFlag, 0, 1) {
+		return queue.ErrQueueShutdown
+	}
+
 	s.stopOnce.Do(func() {
-		close(s.stop)
 		s.client.Close()
+		close(s.stop)
 	})
 	return nil
 }
@@ -147,6 +209,10 @@ func (s *Worker) Usage() int {
 
 // Queue send notification to queue
 func (s *Worker) Queue(job queue.QueuedMessage) error {
+	if atomic.LoadInt32(&s.stopFlag) == 1 {
+		return queue.ErrQueueShutdown
+	}
+
 	err := s.client.Publish(s.subj, job.Bytes())
 	if err != nil {
 		return err
