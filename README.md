@@ -146,7 +146,7 @@ q.Shutdown()
 q.Wait()
 ```
 
-Full example code as below or [try it in playground](https://play.golang.org/p/PCPPnltpU9K).
+Full example code as below or [try it in playground](https://play.golang.org/p/77PtkZRaPE-).
 
 ```go
 package main
