@@ -295,6 +295,7 @@ func TestHandleTimeout(t *testing.T) {
 		Body:    []byte("foo"),
 	}
 	w := NewWorker(
+		WithAddr(host+":4222"),
 		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return nil
@@ -335,6 +336,7 @@ func TestJobComplete(t *testing.T) {
 		Body:    []byte("foo"),
 	}
 	w := NewWorker(
+		WithAddr(host+":4222"),
 		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
 			return errors.New("job completed")
 		}),
