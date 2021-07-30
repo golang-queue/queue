@@ -61,7 +61,8 @@ func TestNSQShutdown(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	q.Shutdown()
 	// check shutdown once
-	q.Shutdown()
+	assert.Error(t, w.Shutdown())
+	assert.Equal(t, queue.ErrQueueShutdown, w.Shutdown())
 	q.Wait()
 }
 
