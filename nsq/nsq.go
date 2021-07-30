@@ -1,8 +1,11 @@
 package nsq
 
 import (
+	"context"
+	"encoding/json"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/appleboy/queue"
@@ -15,16 +18,6 @@ var _ queue.Worker = (*Worker)(nil)
 // Option for queue system
 type Option func(*Worker)
 
-// Job with NSQ message
-type Job struct {
-	Body []byte
-}
-
-// Bytes get bytes format
-func (j *Job) Bytes() []byte {
-	return j.Body
-}
-
 // Worker for NSQ
 type Worker struct {
 	q           *nsq.Consumer
@@ -36,7 +29,10 @@ type Worker struct {
 	addr        string
 	topic       string
 	channel     string
-	runFunc     func(queue.QueuedMessage, <-chan struct{}) error
+	runFunc     func(context.Context, queue.QueuedMessage) error
+	logger      queue.Logger
+	stopFlag    int32
+	startFlag   int32
 }
 
 // WithAddr setup the addr of NSQ
@@ -61,7 +57,7 @@ func WithChannel(channel string) Option {
 }
 
 // WithRunFunc setup the run func of queue
-func WithRunFunc(fn func(queue.QueuedMessage, <-chan struct{}) error) Option {
+func WithRunFunc(fn func(context.Context, queue.QueuedMessage) error) Option {
 	return func(w *Worker) {
 		w.runFunc = fn
 	}
@@ -74,6 +70,13 @@ func WithMaxInFlight(num int) Option {
 	}
 }
 
+// WithLogger set custom logger
+func WithLogger(l queue.Logger) Option {
+	return func(w *Worker) {
+		w.logger = l
+	}
+}
+
 // NewWorker for struc
 func NewWorker(opts ...Option) *Worker {
 	var err error
@@ -83,7 +86,8 @@ func NewWorker(opts ...Option) *Worker {
 		channel:     "ch",
 		maxInFlight: runtime.NumCPU(),
 		stop:        make(chan struct{}),
-		runFunc: func(queue.QueuedMessage, <-chan struct{}) error {
+		logger:      queue.NewLogger(),
+		runFunc: func(context.Context, queue.QueuedMessage) error {
 			return nil
 		},
 	}
@@ -122,33 +126,87 @@ func (s *Worker) AfterRun() error {
 		if err != nil {
 			panic("Could not connect nsq server: " + err.Error())
 		}
+
+		atomic.CompareAndSwapInt32(&s.startFlag, 0, 1)
 	})
 
 	return nil
 }
 
+func (s *Worker) handle(job queue.Job) error {
+	// create channel with buffer size 1 to avoid goroutine leak
+	done := make(chan error, 1)
+	panicChan := make(chan interface{}, 1)
+	startTime := time.Now()
+	ctx, cancel := context.WithTimeout(context.Background(), job.Timeout)
+	defer cancel()
+
+	// run the job
+	go func() {
+		// handle panic issue
+		defer func() {
+			if p := recover(); p != nil {
+				panicChan <- p
+			}
+		}()
+
+		// run custom process function
+		done <- s.runFunc(ctx, job)
+	}()
+
+	select {
+	case p := <-panicChan:
+		panic(p)
+	case <-ctx.Done(): // timeout reached
+		return ctx.Err()
+	case <-s.stop: // shutdown service
+		// cancel job
+		cancel()
+
+		leftTime := job.Timeout - time.Since(startTime)
+		// wait job
+		select {
+		case <-time.After(leftTime):
+			return context.DeadlineExceeded
+		case err := <-done: // job finish
+			return err
+		case p := <-panicChan:
+			panic(p)
+		}
+	case err := <-done: // job finish
+		return err
+	}
+}
+
 // Run start the worker
 func (s *Worker) Run() error {
 	wg := &sync.WaitGroup{}
+	panicChan := make(chan interface{}, 1)
 	s.q.AddHandler(nsq.HandlerFunc(func(msg *nsq.Message) error {
 		wg.Add(1)
-		defer wg.Done()
+		defer func() {
+			wg.Done()
+			if p := recover(); p != nil {
+				panicChan <- p
+			}
+		}()
 		if len(msg.Body) == 0 {
 			// Returning nil will automatically send a FIN command to NSQ to mark the message as processed.
 			// In this case, a message with an empty body is simply ignored/discarded.
 			return nil
 		}
 
-		job := &Job{
-			Body: msg.Body,
-		}
-
-		// run custom process function
-		return s.runFunc(job, s.stop)
+		var data queue.Job
+		_ = json.Unmarshal(msg.Body, &data)
+		return s.handle(data)
 	}))
 
 	// wait close signal
-	<-s.stop
+	select {
+	case <-s.stop:
+	case err := <-panicChan:
+		s.logger.Error(err)
+	}
 
 	// wait job completed
 	wg.Wait()
@@ -158,9 +216,16 @@ func (s *Worker) Run() error {
 
 // Shutdown worker
 func (s *Worker) Shutdown() error {
+	if !atomic.CompareAndSwapInt32(&s.stopFlag, 0, 1) {
+		return queue.ErrQueueShutdown
+	}
+
 	s.stopOnce.Do(func() {
-		s.q.Stop()
-		s.p.Stop()
+		if atomic.LoadInt32(&s.startFlag) == 1 {
+			s.q.Stop()
+			s.p.Stop()
+		}
+
 		close(s.stop)
 	})
 	return nil
@@ -178,6 +243,10 @@ func (s *Worker) Usage() int {
 
 // Queue send notification to queue
 func (s *Worker) Queue(job queue.QueuedMessage) error {
+	if atomic.LoadInt32(&s.stopFlag) == 1 {
+		return queue.ErrQueueShutdown
+	}
+
 	err := s.p.Publish(s.topic, job.Bytes())
 	if err != nil {
 		return err
