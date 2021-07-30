@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -31,7 +32,7 @@ func main() {
 		nats.WithAddr("127.0.0.1:4222"),
 		nats.WithSubj("example"),
 		nats.WithQueue("foobar"),
-		nats.WithRunFunc(func(m queue.QueuedMessage, _ <-chan struct{}) error {
+		nats.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
 			v, ok := m.(*job)
 			if !ok {
 				if err := json.Unmarshal(m.Bytes(), &v); err != nil {
