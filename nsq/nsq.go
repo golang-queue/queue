@@ -127,9 +127,7 @@ func (s *Worker) AfterRun() error {
 			panic("Could not connect nsq server: " + err.Error())
 		}
 
-		if !atomic.CompareAndSwapInt32(&s.startFlag, 0, 1) {
-			return
-		}
+		atomic.CompareAndSwapInt32(&s.startFlag, 0, 1)
 	})
 
 	return nil
