@@ -1,5 +1,5 @@
-github.com/appleboy/queue v0.0.4 h1:WuRPuiYs4aj7cZfPbzgJBxvDyrJkOy0evNpkNvLS+JM=
-github.com/appleboy/queue v0.0.4/go.mod h1:cEQW2y7dduAUqUGnGJEK9oM5bZLlc0+3HI9bTUL0+Ek=
+github.com/appleboy/queue v0.0.5 h1:4wrS83ktdxg3U0YGx1EC9mU8vXD4BCAswAliqCEaxHw=
+github.com/appleboy/queue v0.0.5/go.mod h1:cEQW2y7dduAUqUGnGJEK9oM5bZLlc0+3HI9bTUL0+Ek=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/golang/protobuf v1.4.0-rc.1/go.mod h1:ceaxUfeHdC40wWswd/P6IGgMaK3YpKi5j83Wpe3EHw8=
