@@ -167,9 +167,13 @@ func (q *Queue) handleQueueTask(timeout time.Duration, task TaskFunc) error {
 		return ErrQueueShutdown
 	}
 
-	return q.worker.Queue(Job{
-		Task:    task,
+	data := Job{
 		Timeout: timeout,
+	}
+
+	return q.worker.Queue(Job{
+		Task: task,
+		Body: data.Encode(),
 	})
 }
 
