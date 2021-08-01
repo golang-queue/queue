@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"errors"
 	"time"
 )
@@ -30,7 +31,7 @@ type QueuedMessage interface {
 
 var (
 	_ Worker = (*emptyWorker)(nil)
-	_ Worker = (*queueWorker)(nil)
+	_ Worker = (*messageWorker)(nil)
 )
 
 type emptyWorker struct{}
@@ -43,13 +44,13 @@ func (w *emptyWorker) Queue(job QueuedMessage) error { return nil }
 func (w *emptyWorker) Capacity() int                 { return 0 }
 func (w *emptyWorker) Usage() int                    { return 0 }
 
-type queueWorker struct {
+type messageWorker struct {
 	messages chan QueuedMessage
 }
 
-func (w *queueWorker) BeforeRun() error { return nil }
-func (w *queueWorker) AfterRun() error  { return nil }
-func (w *queueWorker) Run() error {
+func (w *messageWorker) BeforeRun() error { return nil }
+func (w *messageWorker) AfterRun() error  { return nil }
+func (w *messageWorker) Run() error {
 	for msg := range w.messages {
 		if string(msg.Bytes()) == "panic" {
 			panic("show panic")
@@ -59,12 +60,12 @@ func (w *queueWorker) Run() error {
 	return nil
 }
 
-func (w *queueWorker) Shutdown() error {
+func (w *messageWorker) Shutdown() error {
 	close(w.messages)
 	return nil
 }
 
-func (w *queueWorker) Queue(job QueuedMessage) error {
+func (w *messageWorker) Queue(job QueuedMessage) error {
 	select {
 	case w.messages <- job:
 		return nil
@@ -72,5 +73,38 @@ func (w *queueWorker) Queue(job QueuedMessage) error {
 		return errors.New("max capacity reached")
 	}
 }
-func (w *queueWorker) Capacity() int { return cap(w.messages) }
-func (w *queueWorker) Usage() int    { return len(w.messages) }
+func (w *messageWorker) Capacity() int { return cap(w.messages) }
+func (w *messageWorker) Usage() int    { return len(w.messages) }
+
+type taskWorker struct {
+	messages chan QueuedMessage
+}
+
+func (w *taskWorker) BeforeRun() error { return nil }
+func (w *taskWorker) AfterRun() error  { return nil }
+func (w *taskWorker) Run() error {
+	for msg := range w.messages {
+		if v, ok := msg.(Job); ok {
+			if v.Task != nil {
+				v.Task(context.Background())
+			}
+		}
+	}
+	return nil
+}
+
+func (w *taskWorker) Shutdown() error {
+	close(w.messages)
+	return nil
+}
+
+func (w *taskWorker) Queue(job QueuedMessage) error {
+	select {
+	case w.messages <- job:
+		return nil
+	default:
+		return errors.New("max capacity reached")
+	}
+}
+func (w *taskWorker) Capacity() int { return cap(w.messages) }
+func (w *taskWorker) Usage() int    { return len(w.messages) }

@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"runtime"
@@ -11,6 +12,9 @@ import (
 
 // ErrQueueShutdown close the queue.
 var ErrQueueShutdown = errors.New("queue has been closed")
+
+// TaskFunc is the task function
+type TaskFunc func(context.Context) error
 
 type (
 	// A Queue is a message queue.
@@ -28,6 +32,7 @@ type (
 
 	// Job with Timeout
 	Job struct {
+		Task    TaskFunc      `json:"-"`
 		Timeout time.Duration `json:"timeout"`
 		Body    []byte        `json:"body"`
 	}
@@ -155,6 +160,27 @@ func (q *Queue) Queue(job QueuedMessage) error {
 // Queue to queue all job
 func (q *Queue) QueueWithTimeout(timeout time.Duration, job QueuedMessage) error {
 	return q.handleQueue(timeout, job)
+}
+
+func (q *Queue) handleQueueTask(timeout time.Duration, task TaskFunc) error {
+	if atomic.LoadInt32(&q.stopFlag) == 1 {
+		return ErrQueueShutdown
+	}
+
+	return q.worker.Queue(Job{
+		Task:    task,
+		Timeout: timeout,
+	})
+}
+
+// QueueTask to queue job task
+func (q *Queue) QueueTask(task TaskFunc) error {
+	return q.handleQueueTask(q.timeout, task)
+}
+
+// QueueTaskWithTimeout to queue job task with timeout
+func (q *Queue) QueueTaskWithTimeout(timeout time.Duration, task TaskFunc) error {
+	return q.handleQueueTask(timeout, task)
 }
 
 func (q *Queue) work() {
