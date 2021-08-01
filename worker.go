@@ -86,7 +86,7 @@ func (w *taskWorker) Run() error {
 	for msg := range w.messages {
 		if v, ok := msg.(Job); ok {
 			if v.Task != nil {
-				v.Task(context.Background())
+				_ = v.Task(context.Background())
 			}
 		}
 	}
