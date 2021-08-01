@@ -327,3 +327,43 @@ func TestJobComplete(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("job completed"), err)
 }
+
+func TestTaskJobComplete(t *testing.T) {
+	job := queue.Job{
+		Timeout: 100 * time.Millisecond,
+		Task: func(ctx context.Context) error {
+			return errors.New("job completed")
+		},
+	}
+	w := NewWorker()
+
+	err := w.handle(job)
+	assert.Error(t, err)
+	assert.Equal(t, errors.New("job completed"), err)
+
+	job = queue.Job{
+		Timeout: 250 * time.Millisecond,
+		Task: func(ctx context.Context) error {
+			return nil
+		},
+	}
+
+	w = NewWorker()
+	done := make(chan error)
+	go func() {
+		done <- w.handle(job)
+	}()
+	assert.NoError(t, w.Shutdown())
+	err = <-done
+	assert.NoError(t, err)
+
+	// job timeout
+	job = queue.Job{
+		Timeout: 50 * time.Millisecond,
+		Task: func(ctx context.Context) error {
+			time.Sleep(60 * time.Millisecond)
+			return nil
+		},
+	}
+	assert.Equal(t, context.DeadlineExceeded, w.handle(job))
+}

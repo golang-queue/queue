@@ -58,7 +58,11 @@ func (s *Worker) handle(job queue.Job) error {
 		}()
 
 		// run custom process function
-		done <- s.runFunc(ctx, job)
+		if job.Task != nil {
+			done <- job.Task(ctx)
+		} else {
+			done <- s.runFunc(ctx, job)
+		}
 	}()
 
 	select {
@@ -97,6 +101,11 @@ func (s *Worker) Run() error {
 	for task := range s.taskQueue {
 		var data queue.Job
 		_ = json.Unmarshal(task.Bytes(), &data)
+		if v, ok := task.(queue.Job); ok {
+			if v.Task != nil {
+				data.Task = v.Task
+			}
+		}
 		if err := s.handle(data); err != nil {
 			s.logger.Error(err.Error())
 		}
