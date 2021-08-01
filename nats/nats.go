@@ -69,7 +69,7 @@ func WithLogger(l queue.Logger) Option {
 func NewWorker(opts ...Option) *Worker {
 	var err error
 	w := &Worker{
-		addr:  "nats://127.0.0.1:4222",
+		addr:  "127.0.0.1:4222",
 		subj:  "foobar",
 		queue: "foobar",
 		stop:  make(chan struct{}),
