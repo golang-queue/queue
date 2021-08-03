@@ -7,8 +7,15 @@ platform:
   arch: amd64
 
 steps:
+- name: lint
+  image: golangci/golangci-lint:v1.41.1
+  commands:
+  - golangci-lint run -v
+  volumes:
+  - name: gopath
+    path: /go
+
 - name: test
-  pull: always
   image: golang:1.16
   commands:
   - go test -v -covermode=atomic -coverprofile=coverage.out ./...
@@ -17,7 +24,6 @@ steps:
     path: /go
 
 - name: codecov
-  pull: always
   image: robertstettner/drone-codecov
   settings:
     token:
