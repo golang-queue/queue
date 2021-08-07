@@ -44,7 +44,7 @@ func (j *job) Bytes() []byte {
 }
 ```
 
-The second step to create the new worker, use the buffered channel as an example, you can use the `stop` channel to terminate the job immediately after shutdown the queue service if need.
+The second step to create the new worker, use the buffered channel as an example.
 
 ```go
 // define the worker
