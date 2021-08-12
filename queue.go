@@ -119,6 +119,7 @@ func (q *Queue) Shutdown() {
 		return
 	}
 
+	q.logger.Infof("shutdown all woker numbers: %d", q.runningWorkers)
 	q.stopOnce.Do(func() {
 		if err := q.worker.Shutdown(); err != nil {
 			q.logger.Error(err)
