@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/appleboy/queue"
-	"github.com/appleboy/queue/nats"
+	"github.com/golang-queue/queue"
+	"github.com/golang-queue/queue/nats"
 )
 
 type job struct {

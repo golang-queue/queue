@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/appleboy/queue"
-	"github.com/appleboy/queue/simple"
+	"github.com/golang-queue/queue"
+	"github.com/golang-queue/queue/simple"
 )
 
 func main() {

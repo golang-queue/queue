@@ -2,4 +2,4 @@ module example
 
 go 1.16
 
-require github.com/appleboy/queue v0.0.5
+require github.com/golang-queue/queue v0.0.6
