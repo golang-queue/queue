@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-// ErrQueueShutdown close the queue.
-var ErrQueueShutdown = errors.New("queue has been closed")
+// ErrQueueShutdown the queue is released and closed.
+var ErrQueueShutdown = errors.New("queue has been closed and released")
 
 // TaskFunc is the task function
 type TaskFunc func(context.Context) error
