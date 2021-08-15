@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/appleboy/queue"
+	"github.com/golang-queue/queue"
 
 	"github.com/nats-io/nats.go"
 )

@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/appleboy/queue"
+	"github.com/golang-queue/queue"
 
 	"github.com/nsqio/go-nsq"
 )

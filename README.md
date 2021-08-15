@@ -1,8 +1,8 @@
 # Queue
 
-[![Run Tests](https://github.com/appleboy/queue/actions/workflows/go.yml/badge.svg?branch=master)](https://github.com/appleboy/queue/actions/workflows/go.yml)
-[![codecov](https://codecov.io/gh/appleboy/queue/branch/master/graph/badge.svg?token=V8A1WA0P5E)](https://codecov.io/gh/appleboy/queue)
-[![Build Status](https://cloud.drone.io/api/badges/appleboy/queue/status.svg)](https://cloud.drone.io/appleboy/queue)
+[![Run Tests](https://github.com/golang-queue/queue/actions/workflows/go.yml/badge.svg?branch=master)](https://github.com/golang-queue/queue/actions/workflows/go.yml)
+[![codecov](https://codecov.io/gh/golang-queue/queue/branch/master/graph/badge.svg?token=V8A1WA0P5E)](https://codecov.io/gh/golang-queue/queue)
+[![Build Status](https://cloud.drone.io/api/badges/golang-queue/queue/status.svg)](https://cloud.drone.io/golang-queue/queue)
 
 Queue is a Golang library for spawning and managing a Goroutine pool, Alloowing you to create multiple worker according to limit CPU number of machine.
 
@@ -17,13 +17,13 @@ Queue is a Golang library for spawning and managing a Goroutine pool, Alloowing 
 Install the stable version:
 
 ```sh
-go get github.com/appleboy/queue
+go get github.com/golang-queue/queue
 ```
 
 Install the latest verison:
 
 ```sh
-go get github.com/appleboy/queue@master
+go get github.com/golang-queue/queue@master
 ```
 
 ## Usage
@@ -158,8 +158,8 @@ import (
   "log"
   "time"
 
-  "github.com/appleboy/queue"
-  "github.com/appleboy/queue/simple"
+  "github.com/golang-queue/queue"
+  "github.com/golang-queue/queue/simple"
 )
 
 type job struct {

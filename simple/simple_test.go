@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/appleboy/queue"
+	"github.com/golang-queue/queue"
 
 	"github.com/stretchr/testify/assert"
 )
