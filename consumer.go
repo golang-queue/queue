@@ -1,4 +1,4 @@
-package simple
+package queue
 
 import (
 	"context"
@@ -7,40 +7,38 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/golang-queue/queue"
 )
 
 const defaultQueueSize = 4096
 
-var _ queue.Worker = (*Worker)(nil)
+var _ Worker = (*Consumer)(nil)
 
-// Option for queue system
-type Option func(*Worker)
+// ConsumerOption for queue system
+type ConsumerOption func(*Consumer)
 
 var errMaxCapacity = errors.New("max capacity reached")
 
 // Worker for simple queue using channel
-type Worker struct {
-	taskQueue chan queue.QueuedMessage
-	runFunc   func(context.Context, queue.QueuedMessage) error
+type Consumer struct {
+	taskQueue chan QueuedMessage
+	runFunc   func(context.Context, QueuedMessage) error
 	stop      chan struct{}
-	logger    queue.Logger
+	logger    Logger
 	stopOnce  sync.Once
 	stopFlag  int32
 }
 
 // BeforeRun run script before start worker
-func (s *Worker) BeforeRun() error {
+func (s *Consumer) BeforeRun() error {
 	return nil
 }
 
 // AfterRun run script after start worker
-func (s *Worker) AfterRun() error {
+func (s *Consumer) AfterRun() error {
 	return nil
 }
 
-func (s *Worker) handle(job queue.Job) error {
+func (s *Consumer) handle(job Job) error {
 	// create channel with buffer size 1 to avoid goroutine leak
 	done := make(chan error, 1)
 	panicChan := make(chan interface{}, 1)
@@ -90,18 +88,18 @@ func (s *Worker) handle(job queue.Job) error {
 }
 
 // Run start the worker
-func (s *Worker) Run() error {
+func (s *Consumer) Run() error {
 	// check queue status
 	select {
 	case <-s.stop:
-		return queue.ErrQueueShutdown
+		return ErrQueueShutdown
 	default:
 	}
 
 	for task := range s.taskQueue {
-		var data queue.Job
+		var data Job
 		_ = json.Unmarshal(task.Bytes(), &data)
-		if v, ok := task.(queue.Job); ok {
+		if v, ok := task.(Job); ok {
 			if v.Task != nil {
 				data.Task = v.Task
 			}
@@ -114,9 +112,9 @@ func (s *Worker) Run() error {
 }
 
 // Shutdown worker
-func (s *Worker) Shutdown() error {
+func (s *Consumer) Shutdown() error {
 	if !atomic.CompareAndSwapInt32(&s.stopFlag, 0, 1) {
-		return queue.ErrQueueShutdown
+		return ErrQueueShutdown
 	}
 
 	s.stopOnce.Do(func() {
@@ -127,19 +125,19 @@ func (s *Worker) Shutdown() error {
 }
 
 // Capacity for channel
-func (s *Worker) Capacity() int {
+func (s *Consumer) Capacity() int {
 	return cap(s.taskQueue)
 }
 
 // Usage for count of channel usage
-func (s *Worker) Usage() int {
+func (s *Consumer) Usage() int {
 	return len(s.taskQueue)
 }
 
 // Queue send notification to queue
-func (s *Worker) Queue(job queue.QueuedMessage) error {
+func (s *Consumer) Queue(job QueuedMessage) error {
 	if atomic.LoadInt32(&s.stopFlag) == 1 {
-		return queue.ErrQueueShutdown
+		return ErrQueueShutdown
 	}
 
 	select {
@@ -151,33 +149,33 @@ func (s *Worker) Queue(job queue.QueuedMessage) error {
 }
 
 // WithQueueNum setup the capcity of queue
-func WithQueueNum(num int) Option {
-	return func(w *Worker) {
-		w.taskQueue = make(chan queue.QueuedMessage, num)
+func WithConsumerQueueNum(num int) ConsumerOption {
+	return func(w *Consumer) {
+		w.taskQueue = make(chan QueuedMessage, num)
 	}
 }
 
 // WithRunFunc setup the run func of queue
-func WithRunFunc(fn func(context.Context, queue.QueuedMessage) error) Option {
-	return func(w *Worker) {
+func WithConsumerRunFunc(fn func(context.Context, QueuedMessage) error) ConsumerOption {
+	return func(w *Consumer) {
 		w.runFunc = fn
 	}
 }
 
-// WithLogger set custom logger
-func WithLogger(l queue.Logger) Option {
-	return func(w *Worker) {
+// WithConsumerLogger set custom logger
+func WithConsumerLogger(l Logger) ConsumerOption {
+	return func(w *Consumer) {
 		w.logger = l
 	}
 }
 
-// NewWorker for struc
-func NewWorker(opts ...Option) *Worker {
-	w := &Worker{
-		taskQueue: make(chan queue.QueuedMessage, defaultQueueSize),
+// NewConsumer for struc
+func NewConsumer(opts ...ConsumerOption) *Consumer {
+	w := &Consumer{
+		taskQueue: make(chan QueuedMessage, defaultQueueSize),
 		stop:      make(chan struct{}),
-		logger:    queue.NewLogger(),
-		runFunc: func(context.Context, queue.QueuedMessage) error {
+		logger:    NewLogger(),
+		runFunc: func(context.Context, QueuedMessage) error {
 			return nil
 		},
 	}

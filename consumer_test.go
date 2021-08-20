@@ -1,4 +1,4 @@
-package simple
+package queue
 
 import (
 	"context"
@@ -9,21 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-queue/queue"
-
 	"github.com/stretchr/testify/assert"
 )
 
-type mockMessage struct {
-	msg string
-}
-
-func (m mockMessage) Bytes() []byte {
-	return []byte(m.msg)
-}
-
 func TestQueueUsage(t *testing.T) {
-	w := NewWorker()
+	w := NewConsumer()
 	assert.Equal(t, defaultQueueSize, w.Capacity())
 	assert.Equal(t, 0, w.Usage())
 
@@ -32,7 +22,7 @@ func TestQueueUsage(t *testing.T) {
 }
 
 func TestMaxCapacity(t *testing.T) {
-	w := NewWorker(WithQueueNum(2))
+	w := NewConsumer(WithConsumerQueueNum(2))
 	assert.Equal(t, 2, w.Capacity())
 	assert.Equal(t, 0, w.Usage())
 
@@ -49,17 +39,17 @@ func TestMaxCapacity(t *testing.T) {
 
 func TestCustomFuncAndWait(t *testing.T) {
 	m := mockMessage{
-		msg: "foo",
+		message: "foo",
 	}
-	w := NewWorker(
-		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+	w := NewConsumer(
+		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
 			time.Sleep(500 * time.Millisecond)
 			return nil
 		}),
 	)
-	q, err := queue.NewQueue(
-		queue.WithWorker(w),
-		queue.WithWorkerCount(2),
+	q, err := NewQueue(
+		WithWorker(w),
+		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
 	q.Start()
@@ -76,12 +66,12 @@ func TestCustomFuncAndWait(t *testing.T) {
 
 func TestEnqueueJobAfterShutdown(t *testing.T) {
 	m := mockMessage{
-		msg: "foo",
+		message: "foo",
 	}
-	w := NewWorker()
-	q, err := queue.NewQueue(
-		queue.WithWorker(w),
-		queue.WithWorkerCount(2),
+	w := NewConsumer()
+	q, err := NewQueue(
+		WithWorker(w),
+		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
 	q.Start()
@@ -90,15 +80,15 @@ func TestEnqueueJobAfterShutdown(t *testing.T) {
 	// can't queue task after shutdown
 	err = q.Queue(m)
 	assert.Error(t, err)
-	assert.Equal(t, queue.ErrQueueShutdown, err)
+	assert.Equal(t, ErrQueueShutdown, err)
 	q.Wait()
 }
 
-func TestWorkerNumAfterShutdown(t *testing.T) {
-	w := NewWorker()
-	q, err := queue.NewQueue(
-		queue.WithWorker(w),
-		queue.WithWorkerCount(2),
+func TestConsumerNumAfterShutdown(t *testing.T) {
+	w := NewConsumer()
+	q, err := NewQueue(
+		WithWorker(w),
+		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
 	q.Start()
@@ -116,10 +106,10 @@ func TestWorkerNumAfterShutdown(t *testing.T) {
 
 func TestJobReachTimeout(t *testing.T) {
 	m := mockMessage{
-		msg: "foo",
+		message: "foo",
 	}
-	w := NewWorker(
-		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+	w := NewConsumer(
+		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
 			for {
 				select {
 				case <-ctx.Done():
@@ -136,9 +126,9 @@ func TestJobReachTimeout(t *testing.T) {
 			}
 		}),
 	)
-	q, err := queue.NewQueue(
-		queue.WithWorker(w),
-		queue.WithWorkerCount(2),
+	q, err := NewQueue(
+		WithWorker(w),
+		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
 	q.Start()
@@ -151,11 +141,11 @@ func TestJobReachTimeout(t *testing.T) {
 
 func TestCancelJobAfterShutdown(t *testing.T) {
 	m := mockMessage{
-		msg: "foo",
+		message: "foo",
 	}
-	w := NewWorker(
-		WithLogger(queue.NewEmptyLogger()),
-		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+	w := NewConsumer(
+		WithConsumerLogger(NewEmptyLogger()),
+		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
 			for {
 				select {
 				case <-ctx.Done():
@@ -172,9 +162,9 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 			}
 		}),
 	)
-	q, err := queue.NewQueue(
-		queue.WithWorker(w),
-		queue.WithWorkerCount(2),
+	q, err := NewQueue(
+		WithWorker(w),
+		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
 	q.Start()
@@ -186,11 +176,11 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 
 func TestGoroutineLeak(t *testing.T) {
 	m := mockMessage{
-		msg: "foo",
+		message: "foo",
 	}
-	w := NewWorker(
-		WithLogger(queue.NewEmptyLogger()),
-		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+	w := NewConsumer(
+		WithConsumerLogger(NewEmptyLogger()),
+		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
 			for {
 				select {
 				case <-ctx.Done():
@@ -209,16 +199,16 @@ func TestGoroutineLeak(t *testing.T) {
 			}
 		}),
 	)
-	q, err := queue.NewQueue(
-		queue.WithLogger(queue.NewEmptyLogger()),
-		queue.WithWorker(w),
-		queue.WithWorkerCount(10),
+	q, err := NewQueue(
+		WithLogger(NewEmptyLogger()),
+		WithWorker(w),
+		WithWorkerCount(10),
 	)
 	assert.NoError(t, err)
 	q.Start()
 	time.Sleep(50 * time.Millisecond)
 	for i := 0; i < 500; i++ {
-		m.msg = fmt.Sprintf("foobar: %d", i+1)
+		m.message = fmt.Sprintf("foobar: %d", i+1)
 		assert.NoError(t, q.Queue(m))
 	}
 	time.Sleep(2 * time.Second)
@@ -229,16 +219,16 @@ func TestGoroutineLeak(t *testing.T) {
 
 func TestGoroutinePanic(t *testing.T) {
 	m := mockMessage{
-		msg: "foo",
+		message: "foo",
 	}
-	w := NewWorker(
-		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+	w := NewConsumer(
+		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
 			panic("missing something")
 		}),
 	)
-	q, err := queue.NewQueue(
-		queue.WithWorker(w),
-		queue.WithWorkerCount(2),
+	q, err := NewQueue(
+		WithWorker(w),
+		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
 	q.Start()
@@ -250,12 +240,12 @@ func TestGoroutinePanic(t *testing.T) {
 }
 
 func TestHandleTimeout(t *testing.T) {
-	job := queue.Job{
+	job := Job{
 		Timeout: 100 * time.Millisecond,
 		Body:    []byte("foo"),
 	}
-	w := NewWorker(
-		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+	w := NewConsumer(
+		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return nil
 		}),
@@ -265,13 +255,13 @@ func TestHandleTimeout(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, context.DeadlineExceeded, err)
 
-	job = queue.Job{
+	job = Job{
 		Timeout: 150 * time.Millisecond,
 		Body:    []byte("foo"),
 	}
 
-	w = NewWorker(
-		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+	w = NewConsumer(
+		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return nil
 		}),
@@ -290,12 +280,12 @@ func TestHandleTimeout(t *testing.T) {
 }
 
 func TestJobComplete(t *testing.T) {
-	job := queue.Job{
+	job := Job{
 		Timeout: 100 * time.Millisecond,
 		Body:    []byte("foo"),
 	}
-	w := NewWorker(
-		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+	w := NewConsumer(
+		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
 			return errors.New("job completed")
 		}),
 	)
@@ -304,13 +294,13 @@ func TestJobComplete(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("job completed"), err)
 
-	job = queue.Job{
+	job = Job{
 		Timeout: 250 * time.Millisecond,
 		Body:    []byte("foo"),
 	}
 
-	w = NewWorker(
-		WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+	w = NewConsumer(
+		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return errors.New("job completed")
 		}),
@@ -329,26 +319,26 @@ func TestJobComplete(t *testing.T) {
 }
 
 func TestTaskJobComplete(t *testing.T) {
-	job := queue.Job{
+	job := Job{
 		Timeout: 100 * time.Millisecond,
 		Task: func(ctx context.Context) error {
 			return errors.New("job completed")
 		},
 	}
-	w := NewWorker()
+	w := NewConsumer()
 
 	err := w.handle(job)
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("job completed"), err)
 
-	job = queue.Job{
+	job = Job{
 		Timeout: 250 * time.Millisecond,
 		Task: func(ctx context.Context) error {
 			return nil
 		},
 	}
 
-	w = NewWorker()
+	w = NewConsumer()
 	done := make(chan error)
 	go func() {
 		done <- w.handle(job)
@@ -358,7 +348,7 @@ func TestTaskJobComplete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// job timeout
-	job = queue.Job{
+	job = Job{
 		Timeout: 50 * time.Millisecond,
 		Task: func(ctx context.Context) error {
 			time.Sleep(60 * time.Millisecond)
