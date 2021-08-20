@@ -2,21 +2,45 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/golang-queue/queue"
-	"github.com/golang-queue/queue/simple"
 )
+
+type job struct {
+	Name    string
+	Message string
+}
+
+func (j *job) Bytes() []byte {
+	b, err := json.Marshal(j)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
 
 func main() {
 	taskN := 100
 	rets := make(chan string, taskN)
 
 	// define the worker
-	w := simple.NewWorker(
-		simple.WithQueueNum(taskN),
+	w := queue.NewConsumer(
+		queue.WithQueueSize(taskN),
+		queue.WithFn(func(ctx context.Context, m queue.QueuedMessage) error {
+			v, ok := m.(*job)
+			if !ok {
+				if err := json.Unmarshal(m.Bytes(), &v); err != nil {
+					return err
+				}
+			}
+
+			rets <- "Hi, " + v.Name + ", " + v.Message
+			return nil
+		}),
 	)
 
 	// define the queue
@@ -34,9 +58,9 @@ func main() {
 	// assign tasks in queue
 	for i := 0; i < taskN; i++ {
 		go func(i int) {
-			q.QueueTask(func(ctx context.Context) error {
-				rets <- fmt.Sprintf("Hi appleboy, handle the job: %02d", +i)
-				return nil
+			q.Queue(&job{
+				Name:    "foobar",
+				Message: fmt.Sprintf("handle the job: %d", i+1),
 			})
 		}(i)
 	}
