@@ -22,7 +22,7 @@ func TestQueueUsage(t *testing.T) {
 }
 
 func TestMaxCapacity(t *testing.T) {
-	w := NewConsumer(WithConsumerQueueNum(2))
+	w := NewConsumer(WithQueueSize(2))
 	assert.Equal(t, 2, w.Capacity())
 	assert.Equal(t, 0, w.Usage())
 
@@ -42,7 +42,7 @@ func TestCustomFuncAndWait(t *testing.T) {
 		message: "foo",
 	}
 	w := NewConsumer(
-		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m QueuedMessage) error {
 			time.Sleep(500 * time.Millisecond)
 			return nil
 		}),
@@ -109,7 +109,7 @@ func TestJobReachTimeout(t *testing.T) {
 		message: "foo",
 	}
 	w := NewConsumer(
-		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m QueuedMessage) error {
 			for {
 				select {
 				case <-ctx.Done():
@@ -144,8 +144,8 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 		message: "foo",
 	}
 	w := NewConsumer(
-		WithConsumerLogger(NewEmptyLogger()),
-		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
+		WithLogger(NewEmptyLogger()),
+		WithFn(func(ctx context.Context, m QueuedMessage) error {
 			for {
 				select {
 				case <-ctx.Done():
@@ -179,8 +179,8 @@ func TestGoroutineLeak(t *testing.T) {
 		message: "foo",
 	}
 	w := NewConsumer(
-		WithConsumerLogger(NewEmptyLogger()),
-		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
+		WithLogger(NewEmptyLogger()),
+		WithFn(func(ctx context.Context, m QueuedMessage) error {
 			for {
 				select {
 				case <-ctx.Done():
@@ -222,7 +222,7 @@ func TestGoroutinePanic(t *testing.T) {
 		message: "foo",
 	}
 	w := NewConsumer(
-		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m QueuedMessage) error {
 			panic("missing something")
 		}),
 	)
@@ -245,7 +245,7 @@ func TestHandleTimeout(t *testing.T) {
 		Body:    []byte("foo"),
 	}
 	w := NewConsumer(
-		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m QueuedMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return nil
 		}),
@@ -261,7 +261,7 @@ func TestHandleTimeout(t *testing.T) {
 	}
 
 	w = NewConsumer(
-		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m QueuedMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return nil
 		}),
@@ -285,7 +285,7 @@ func TestJobComplete(t *testing.T) {
 		Body:    []byte("foo"),
 	}
 	w := NewConsumer(
-		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m QueuedMessage) error {
 			return errors.New("job completed")
 		}),
 	)
@@ -300,7 +300,7 @@ func TestJobComplete(t *testing.T) {
 	}
 
 	w = NewConsumer(
-		WithConsumerRunFunc(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m QueuedMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return errors.New("job completed")
 		}),

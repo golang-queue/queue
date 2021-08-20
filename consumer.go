@@ -9,12 +9,7 @@ import (
 	"time"
 )
 
-const defaultQueueSize = 4096
-
 var _ Worker = (*Consumer)(nil)
-
-// ConsumerOption for queue system
-type ConsumerOption func(*Consumer)
 
 var errMaxCapacity = errors.New("max capacity reached")
 
@@ -148,42 +143,14 @@ func (s *Consumer) Queue(job QueuedMessage) error {
 	}
 }
 
-// WithQueueNum setup the capcity of queue
-func WithConsumerQueueNum(num int) ConsumerOption {
-	return func(w *Consumer) {
-		w.taskQueue = make(chan QueuedMessage, num)
-	}
-}
-
-// WithRunFunc setup the run func of queue
-func WithConsumerRunFunc(fn func(context.Context, QueuedMessage) error) ConsumerOption {
-	return func(w *Consumer) {
-		w.runFunc = fn
-	}
-}
-
-// WithConsumerLogger set custom logger
-func WithConsumerLogger(l Logger) ConsumerOption {
-	return func(w *Consumer) {
-		w.logger = l
-	}
-}
-
 // NewConsumer for struc
-func NewConsumer(opts ...ConsumerOption) *Consumer {
+func NewConsumer(opts ...Option) *Consumer {
+	o := NewOptions(opts...)
 	w := &Consumer{
-		taskQueue: make(chan QueuedMessage, defaultQueueSize),
+		taskQueue: make(chan QueuedMessage, o.queueSize),
 		stop:      make(chan struct{}),
-		logger:    NewLogger(),
-		runFunc: func(context.Context, QueuedMessage) error {
-			return nil
-		},
-	}
-
-	// Loop through each option
-	for _, opt := range opts {
-		// Call the option giving the instantiated
-		opt(w)
+		logger:    o.logger,
+		runFunc:   o.fn,
 	}
 
 	return w
