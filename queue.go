@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -48,47 +47,19 @@ func (j Job) Encode() []byte {
 	return b
 }
 
-// Option for queue system
-type Option func(*Queue)
-
 // ErrMissingWorker missing define worker
 var ErrMissingWorker = errors.New("missing worker module")
 
-// WithWorkerCount set worker count
-func WithWorkerCount(num int) Option {
-	return func(q *Queue) {
-		q.workerCount = num
-	}
-}
-
-// WithLogger set custom logger
-func WithLogger(l Logger) Option {
-	return func(q *Queue) {
-		q.logger = l
-	}
-}
-
-// WithWorker set custom worker
-func WithWorker(w Worker) Option {
-	return func(q *Queue) {
-		q.worker = w
-	}
-}
-
 // NewQueue returns a Queue.
 func NewQueue(opts ...Option) (*Queue, error) {
+	o := NewOptions(opts...)
 	q := &Queue{
-		workerCount:  runtime.NumCPU(),
+		workerCount:  o.workerCount,
 		routineGroup: newRoutineGroup(),
 		quit:         make(chan struct{}),
-		logger:       NewLogger(),
-		timeout:      24 * 60 * time.Minute,
-	}
-
-	// Loop through each option
-	for _, opt := range opts {
-		// Call the option giving the instantiated
-		opt(q)
+		logger:       o.logger,
+		timeout:      o.timeout,
+		worker:       o.worker,
 	}
 
 	if q.worker == nil {
