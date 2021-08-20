@@ -33,10 +33,12 @@ func main() {
 	// assign tasks in queue
 	for i := 0; i < taskN; i++ {
 		go func(i int) {
-			q.QueueTask(func(ctx context.Context) error {
+			if err := q.QueueTask(func(ctx context.Context) error {
 				rets <- fmt.Sprintf("Hi appleboy, handle the job: %02d", +i)
 				return nil
-			})
+			}); err != nil {
+				panic(err)
+			}
 		}(i)
 	}
 
