@@ -100,6 +100,12 @@ func (q *Queue) Shutdown() {
 }
 
 // Workers returns the numbers of workers has been created.
+func (q *Queue) Release() {
+	q.Shutdown()
+	q.Wait()
+}
+
+// Workers returns the numbers of workers has been created.
 func (q *Queue) Workers() int {
 	return int(atomic.LoadInt32(&q.runningWorkers))
 }
