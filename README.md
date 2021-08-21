@@ -27,125 +27,55 @@ go get github.com/golang-queue/queue@master
 
 ## Usage
 
-The first step to create a new job as `QueueMessage` interface:
+### Basic usage of Pool (use Task function)
+
+By calling `QueueTask()` method, it schedules the task executed by worker (goroutines) in the Pool.
 
 ```go
-type job struct {
-  Message string
-}
+package main
 
-func (j *job) Bytes() []byte {
-  b, err := json.Marshal(j)
-  if err != nil {
-    panic(err)
+import (
+  "context"
+  "fmt"
+  "time"
+
+  "github.com/golang-queue/queue"
+)
+
+func main() {
+  taskN := 100
+  rets := make(chan string, taskN)
+
+  // initial queue pool
+  q := queue.NewPool(5)
+  // shutdown the service and notify all the worker
+  // wait all jobs are complete.
+  defer q.Release()
+
+  // assign tasks in queue
+  for i := 0; i < taskN; i++ {
+    go func(i int) {
+      if err := q.QueueTask(func(ctx context.Context) error {
+        rets <- fmt.Sprintf("Hi Gopher, handle the job: %02d", +i)
+        return nil
+      }); err != nil {
+        panic(err)
+      }
+    }(i)
   }
-  return b
+
+  // wait until all tasks done
+  for i := 0; i < taskN; i++ {
+    fmt.Println("message:", <-rets)
+    time.Sleep(20 * time.Millisecond)
+  }
 }
 ```
 
-The second step to create the new worker, use the buffered channel as an example.
+### Basic usage of Pool (use message queue)
 
-```go
-// define the worker
-w := simple.NewWorker(
-  simple.WithQueueNum(taskN),
-  simple.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
-    v, ok := m.(*job)
-    if !ok {
-      if err := json.Unmarshal(m.Bytes(), &v); err != nil {
-        return err
-      }
-    }
-
-    rets <- v.Message
-    return nil
-  }),
-)
-```
-
-or use the [NSQ](https://nsq.io/) as backend, see the worker example:
-
-```go
-// define the worker
-w := nsq.NewWorker(
-  nsq.WithAddr("127.0.0.1:4150"),
-  nsq.WithTopic("example"),
-  nsq.WithChannel("foobar"),
-  // concurrent job number
-  nsq.WithMaxInFlight(10),
-  nsq.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
-    v, ok := m.(*job)
-    if !ok {
-      if err := json.Unmarshal(m.Bytes(), &v); err != nil {
-        return err
-      }
-    }
-
-    rets <- v.Message
-    return nil
-  }),
-)
-```
-
-or use the [NATS](https://nats.io/) as backend, see the worker example:
-
-```go
-w := nats.NewWorker(
-  nats.WithAddr("127.0.0.1:4222"),
-  nats.WithSubj("example"),
-  nats.WithQueue("foobar"),
-  nats.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
-    v, ok := m.(*job)
-    if !ok {
-      if err := json.Unmarshal(m.Bytes(), &v); err != nil {
-        return err
-      }
-    }
-
-    rets <- v.Message
-    return nil
-  }),
-)
-```
-
-The third step to create a queue and initialize multiple workers, receive all job messages:
-
-```go
-// define the queue
-q, err := queue.NewQueue(
-  queue.WithWorkerCount(5),
-  queue.WithWorker(w),
-)
-if err != nil {
-  log.Fatal(err)
-}
-
-// start the five worker
-q.Start()
-
-// assign tasks in queue
-for i := 0; i < taskN; i++ {
-  go func(i int) {
-    q.Queue(&job{
-      Name:    "foobar",
-      Message: fmt.Sprintf("handle the job: %d", i+1),
-    })
-  }(i)
-}
-
-// wait until all tasks done
-for i := 0; i < taskN; i++ {
-  fmt.Println("message:", <-rets)
-  time.Sleep(50 * time.Millisecond)
-}
-
-// shutdown the service and notify all the worker
-q.Shutdown()
-// wait all jobs are complete.
-q.Wait()
-```
-
-Full example code as below or [try it in playground](https://play.golang.org/p/77PtkZRaPE-).
+Define the new message struct and implement the `Bytes()` func to encode message. Give the `WithFn` func
+to handle the message from Queue.
 
 ```go
 package main
@@ -158,7 +88,6 @@ import (
   "time"
 
   "github.com/golang-queue/queue"
-  "github.com/golang-queue/queue/simple"
 )
 
 type job struct {
@@ -178,41 +107,31 @@ func main() {
   taskN := 100
   rets := make(chan string, taskN)
 
-  // define the worker
-  w := simple.NewWorker(
-    simple.WithQueueNum(taskN),
-    simple.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
-      v, ok := m.(*job)
-      if !ok {
-        if err := json.Unmarshal(m.Bytes(), &v); err != nil {
-          return err
-        }
+  // initial queue pool
+  q := queue.NewPool(5, queue.WithFn(func(ctx context.Context, m queue.QueuedMessage) error {
+    v, ok := m.(*job)
+    if !ok {
+      if err := json.Unmarshal(m.Bytes(), &v); err != nil {
+        return err
       }
+    }
 
-      rets <- "Hi, " + v.Name + ", " + v.Message
-      return nil
-    }),
-  )
-
-  // define the queue
-  q, err := queue.NewQueue(
-    queue.WithWorkerCount(5),
-    queue.WithWorker(w),
-  )
-  if err != nil {
-    log.Fatal(err)
-  }
-
-  // start the five worker
-  q.Start()
+    rets <- "Hi, " + v.Name + ", " + v.Message
+    return nil
+  }))
+  // shutdown the service and notify all the worker
+  // wait all jobs are complete.
+  defer q.Release()
 
   // assign tasks in queue
   for i := 0; i < taskN; i++ {
     go func(i int) {
-      q.Queue(&job{
-        Name:    "foobar",
+      if err := q.Queue(&job{
+        Name:    "Gopher",
         Message: fmt.Sprintf("handle the job: %d", i+1),
-      })
+      }); err != nil {
+        log.Println(err)
+      }
     }(i)
   }
 
@@ -221,10 +140,5 @@ func main() {
     fmt.Println("message:", <-rets)
     time.Sleep(50 * time.Millisecond)
   }
-
-  // shutdown the service and notify all the worker
-  q.Shutdown()
-  // wait all jobs are complete.
-  q.Wait()
 }
 ```
