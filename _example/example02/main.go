@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -9,35 +10,47 @@ import (
 	"github.com/golang-queue/queue"
 )
 
+type job struct {
+	Name    string
+	Message string
+}
+
+func (j *job) Bytes() []byte {
+	b, err := json.Marshal(j)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
 func main() {
 	taskN := 100
 	rets := make(chan string, taskN)
 
-	// define the worker
-	w := queue.NewConsumer(
-		queue.WithQueueSize(taskN),
-	)
+	// initial queue pool
+	q := queue.NewPool(5, queue.WithFn(func(ctx context.Context, m queue.QueuedMessage) error {
+		v, ok := m.(*job)
+		if !ok {
+			if err := json.Unmarshal(m.Bytes(), &v); err != nil {
+				return err
+			}
+		}
 
-	// define the queue
-	q, err := queue.NewQueue(
-		queue.WithWorkerCount(5),
-		queue.WithWorker(w),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// start the five worker
-	q.Start()
+		rets <- "Hi, " + v.Name + ", " + v.Message
+		return nil
+	}))
+	// shutdown the service and notify all the worker
+	// wait all jobs are complete.
+	defer q.Release()
 
 	// assign tasks in queue
 	for i := 0; i < taskN; i++ {
 		go func(i int) {
-			if err := q.QueueTask(func(ctx context.Context) error {
-				rets <- fmt.Sprintf("Hi appleboy, handle the job: %02d", +i)
-				return nil
+			if err := q.Queue(&job{
+				Name:    "Gopher",
+				Message: fmt.Sprintf("handle the job: %d", i+1),
 			}); err != nil {
-				panic(err)
+				log.Println(err)
 			}
 		}(i)
 	}
@@ -47,9 +60,4 @@ func main() {
 		fmt.Println("message:", <-rets)
 		time.Sleep(50 * time.Millisecond)
 	}
-
-	// shutdown the service and notify all the worker
-	q.Shutdown()
-	// wait all jobs are complete.
-	q.Wait()
 }
