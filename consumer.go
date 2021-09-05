@@ -15,12 +15,25 @@ var errMaxCapacity = errors.New("max capacity reached")
 
 // Worker for simple queue using channel
 type Consumer struct {
-	taskQueue chan QueuedMessage
-	runFunc   func(context.Context, QueuedMessage) error
-	stop      chan struct{}
-	logger    Logger
-	stopOnce  sync.Once
-	stopFlag  int32
+	taskQueue   chan QueuedMessage
+	runFunc     func(context.Context, QueuedMessage) error
+	stop        chan struct{}
+	logger      Logger
+	stopOnce    sync.Once
+	stopFlag    int32
+	busyWorkers uint64
+}
+
+func (s *Consumer) incBusyWorker() {
+	atomic.AddUint64(&s.busyWorkers, 1)
+}
+
+func (s *Consumer) decBusyWorker() {
+	atomic.AddUint64(&s.busyWorkers, ^uint64(0))
+}
+
+func (s *Consumer) BusyWorkers() uint64 {
+	return atomic.LoadUint64(&s.busyWorkers)
 }
 
 // BeforeRun run script before start worker
@@ -39,7 +52,11 @@ func (s *Consumer) handle(job Job) error {
 	panicChan := make(chan interface{}, 1)
 	startTime := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), job.Timeout)
-	defer cancel()
+	s.incBusyWorker()
+	defer func() {
+		cancel()
+		s.decBusyWorker()
+	}()
 
 	// run the job
 	go func() {
