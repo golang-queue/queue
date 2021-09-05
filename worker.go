@@ -16,6 +16,8 @@ type Worker interface {
 	Capacity() int
 	// Usage is how many message in queue
 	Usage() int
+	// BusyWorkers return count of busy worker currently
+	BusyWorkers() uint64
 }
 
 // QueuedMessage ...

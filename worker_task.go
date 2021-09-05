@@ -38,5 +38,6 @@ func (w *taskWorker) Queue(job QueuedMessage) error {
 		return errors.New("max capacity reached")
 	}
 }
-func (w *taskWorker) Capacity() int { return cap(w.messages) }
-func (w *taskWorker) Usage() int    { return len(w.messages) }
+func (w *taskWorker) Capacity() int       { return cap(w.messages) }
+func (w *taskWorker) Usage() int          { return len(w.messages) }
+func (w *taskWorker) BusyWorkers() uint64 { return uint64(0) }
