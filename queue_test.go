@@ -29,6 +29,7 @@ func TestNewQueue(t *testing.T) {
 	assert.NotNil(t, q)
 
 	q.Start()
+	assert.Equal(t, uint64(0), w.BusyWorkers())
 	q.Shutdown()
 	q.Wait()
 }
@@ -48,6 +49,7 @@ func TestWorkerNum(t *testing.T) {
 	q.Start()
 	time.Sleep(20 * time.Millisecond)
 	assert.Equal(t, 4, q.Workers())
+	assert.Equal(t, uint64(0), w.BusyWorkers())
 	q.Shutdown()
 	q.Wait()
 }
@@ -203,6 +205,7 @@ func TestQueueTaskJob(t *testing.T) {
 		return nil
 	}))
 	time.Sleep(50 * time.Millisecond)
+	assert.Equal(t, uint64(0), w.BusyWorkers())
 	q.Shutdown()
 	assert.Equal(t, ErrQueueShutdown, q.QueueTask(func(ctx context.Context) error {
 		return nil
