@@ -209,16 +209,10 @@ func main() {
   )
 
   // define the queue
-  q, err := queue.NewQueue(
-    queue.WithWorkerCount(10),
+  q := queue.NewPool(
+    5,
     queue.WithWorker(w),
   )
-  if err != nil {
-    log.Fatal(err)
-  }
-
-  // start the five worker
-  q.Start()
 
   // assign tasks in queue
   for i := 0; i < taskN; i++ {
