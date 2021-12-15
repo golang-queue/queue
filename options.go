@@ -52,6 +52,13 @@ func WithFn(fn func(context.Context, QueuedMessage) error) Option {
 	}
 }
 
+// WithTimeOut set custom timeout
+func WithTimeOut(t time.Duration) Option {
+	return func(q *Options) {
+		q.timeout = t
+	}
+}
+
 type Options struct {
 	workerCount int
 	timeout     time.Duration
