@@ -15,25 +15,25 @@ var errMaxCapacity = errors.New("max capacity reached")
 
 // Worker for simple queue using channel
 type Consumer struct {
-	taskQueue   chan QueuedMessage
-	runFunc     func(context.Context, QueuedMessage) error
-	stop        chan struct{}
-	logger      Logger
-	stopOnce    sync.Once
-	stopFlag    int32
-	busyWorkers uint64
+	taskQueue chan QueuedMessage
+	runFunc   func(context.Context, QueuedMessage) error
+	stop      chan struct{}
+	logger    Logger
+	stopOnce  sync.Once
+	stopFlag  int32
+	metric    Metric
 }
 
 func (s *Consumer) incBusyWorker() {
-	atomic.AddUint64(&s.busyWorkers, 1)
+	s.metric.IncBusyWorker()
 }
 
 func (s *Consumer) decBusyWorker() {
-	atomic.AddUint64(&s.busyWorkers, ^uint64(0))
+	s.metric.DecBusyWorker()
 }
 
 func (s *Consumer) BusyWorkers() uint64 {
-	return atomic.LoadUint64(&s.busyWorkers)
+	return s.metric.BusyWorkers()
 }
 
 // BeforeRun run script before start worker
@@ -168,6 +168,7 @@ func NewConsumer(opts ...Option) *Consumer {
 		stop:      make(chan struct{}),
 		logger:    o.logger,
 		runFunc:   o.fn,
+		metric:    o.metric,
 	}
 
 	return w
