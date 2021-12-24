@@ -12,6 +12,7 @@ var (
 	defaultTimeout     = 60 * time.Minute
 	defaultNewLogger   = NewLogger()
 	defaultFn          = func(context.Context, QueuedMessage) error { return nil }
+	defaultMetric      = newMetric()
 )
 
 // Option for queue system
@@ -35,6 +36,13 @@ func WithQueueSize(num int) Option {
 func WithLogger(l Logger) Option {
 	return func(q *Options) {
 		q.logger = l
+	}
+}
+
+// WithMetric set custom Metric
+func WithMetric(m Metric) Option {
+	return func(q *Options) {
+		q.metric = m
 	}
 }
 
@@ -66,6 +74,7 @@ type Options struct {
 	queueSize   int
 	worker      Worker
 	fn          func(context.Context, QueuedMessage) error
+	metric      Metric
 }
 
 func NewOptions(opts ...Option) *Options {
@@ -76,6 +85,7 @@ func NewOptions(opts ...Option) *Options {
 		logger:      defaultNewLogger,
 		worker:      nil,
 		fn:          defaultFn,
+		metric:      defaultMetric,
 	}
 
 	// Loop through each option
