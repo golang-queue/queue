@@ -13,7 +13,8 @@ type metric struct {
 	busyWorkers uint64
 }
 
-func newMetric() Metric {
+// NewMetric for default metric structure
+func NewMetric() Metric {
 	return &metric{}
 }
 

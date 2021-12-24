@@ -12,7 +12,7 @@ var (
 	defaultTimeout     = 60 * time.Minute
 	defaultNewLogger   = NewLogger()
 	defaultFn          = func(context.Context, QueuedMessage) error { return nil }
-	defaultMetric      = newMetric()
+	defaultMetric      = NewMetric()
 )
 
 // Option for queue system
