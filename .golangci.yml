@@ -1,5 +1,7 @@
 linters:
+  enable-all: false
   disable-all: true
+  fast: false
   enable:
     - bodyclose
     - deadcode
@@ -36,3 +38,6 @@ linters:
     - varcheck
     - whitespace
     - gofumpt
+
+run:
+  timeout: 3m
