@@ -54,9 +54,9 @@ var ErrMissingWorker = errors.New("missing worker module")
 func NewQueue(opts ...Option) (*Queue, error) {
 	o := NewOptions(opts...)
 	q := &Queue{
-		workerCount:  o.workerCount,
 		routineGroup: newRoutineGroup(),
 		quit:         make(chan struct{}),
+		workerCount:  o.workerCount,
 		logger:       o.logger,
 		timeout:      o.timeout,
 		worker:       o.worker,
