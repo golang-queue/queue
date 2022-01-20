@@ -29,17 +29,20 @@ type (
 		stopFlag       int32
 	}
 
-	// Job with Timeout
+	// Job describes a task and its metadata.
 	Job struct {
-		Task    TaskFunc      `json:"-"`
+		Task TaskFunc `json:"-"`
+		// Timeout is the duration the task can be processed by Handler.
+		// zero if not specified
 		Timeout time.Duration `json:"timeout"`
-		Body    []byte        `json:"body"`
+		// Payload is the payload data of the task.
+		Payload []byte `json:"body"`
 	}
 )
 
 // Bytes get string body
 func (j Job) Bytes() []byte {
-	return j.Body
+	return j.Payload
 }
 
 func (j Job) Encode() []byte {
@@ -125,11 +128,11 @@ func (q *Queue) handleQueue(timeout time.Duration, job QueuedMessage) error {
 
 	data := Job{
 		Timeout: timeout,
-		Body:    job.Bytes(),
+		Payload: job.Bytes(),
 	}
 
 	return q.worker.Queue(Job{
-		Body: data.Encode(),
+		Payload: data.Encode(),
 	})
 }
 
@@ -153,8 +156,8 @@ func (q *Queue) handleQueueTask(timeout time.Duration, task TaskFunc) error {
 	}
 
 	return q.worker.Queue(Job{
-		Task: task,
-		Body: data.Encode(),
+		Task:    task,
+		Payload: data.Encode(),
 	})
 }
 

@@ -242,7 +242,7 @@ func TestGoroutinePanic(t *testing.T) {
 func TestHandleTimeout(t *testing.T) {
 	job := Job{
 		Timeout: 100 * time.Millisecond,
-		Body:    []byte("foo"),
+		Payload: []byte("foo"),
 	}
 	w := NewConsumer(
 		WithFn(func(ctx context.Context, m QueuedMessage) error {
@@ -257,7 +257,7 @@ func TestHandleTimeout(t *testing.T) {
 
 	job = Job{
 		Timeout: 150 * time.Millisecond,
-		Body:    []byte("foo"),
+		Payload: []byte("foo"),
 	}
 
 	w = NewConsumer(
@@ -282,7 +282,7 @@ func TestHandleTimeout(t *testing.T) {
 func TestJobComplete(t *testing.T) {
 	job := Job{
 		Timeout: 100 * time.Millisecond,
-		Body:    []byte("foo"),
+		Payload: []byte("foo"),
 	}
 	w := NewConsumer(
 		WithFn(func(ctx context.Context, m QueuedMessage) error {
@@ -296,7 +296,7 @@ func TestJobComplete(t *testing.T) {
 
 	job = Job{
 		Timeout: 250 * time.Millisecond,
-		Body:    []byte("foo"),
+		Payload: []byte("foo"),
 	}
 
 	w = NewConsumer(
