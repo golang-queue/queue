@@ -32,9 +32,11 @@ type (
 	// Job describes a task and its metadata.
 	Job struct {
 		Task TaskFunc `json:"-"`
+
 		// Timeout is the duration the task can be processed by Handler.
 		// zero if not specified
 		Timeout time.Duration `json:"timeout"`
+
 		// Payload is the payload data of the task.
 		Payload []byte `json:"body"`
 	}
