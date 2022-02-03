@@ -67,6 +67,7 @@ func WithTimeOut(t time.Duration) Option {
 	}
 }
 
+// Options for custom args in Queue
 type Options struct {
 	workerCount int
 	timeout     time.Duration
@@ -77,6 +78,7 @@ type Options struct {
 	metric      Metric
 }
 
+// NewOptions initialize the default value for the options
 func NewOptions(opts ...Option) *Options {
 	o := &Options{
 		workerCount: defaultWorkerCount,

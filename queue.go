@@ -47,6 +47,7 @@ func (j Job) Bytes() []byte {
 	return j.Payload
 }
 
+// Encode for encoding the structure
 func (j Job) Encode() []byte {
 	b, _ := json.Marshal(j)
 	return b
@@ -107,7 +108,7 @@ func (q *Queue) Shutdown() {
 	})
 }
 
-// Workers returns the numbers of workers has been created.
+// Release for graceful shutdown.
 func (q *Queue) Release() {
 	q.Shutdown()
 	q.Wait()
@@ -143,7 +144,7 @@ func (q *Queue) Queue(job QueuedMessage) error {
 	return q.handleQueue(q.timeout, job)
 }
 
-// Queue to queue all job
+// QueueWithTimeout to queue all job with specified timeout.
 func (q *Queue) QueueWithTimeout(timeout time.Duration, job QueuedMessage) error {
 	return q.handleQueue(timeout, job)
 }

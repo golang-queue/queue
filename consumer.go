@@ -13,7 +13,7 @@ var _ Worker = (*Consumer)(nil)
 
 var errMaxCapacity = errors.New("max capacity reached")
 
-// Worker for simple queue using channel
+// Consumer for simple queue using channel
 type Consumer struct {
 	taskQueue chan QueuedMessage
 	runFunc   func(context.Context, QueuedMessage) error
@@ -32,6 +32,7 @@ func (s *Consumer) decBusyWorker() {
 	s.metric.DecBusyWorker()
 }
 
+// BusyWorkers returns the numbers of workers has been busy.
 func (s *Consumer) BusyWorkers() uint64 {
 	return s.metric.BusyWorkers()
 }
