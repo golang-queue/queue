@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/golang-queue/contrib/zerolog"
 	"github.com/golang-queue/queue"
 )
 
@@ -13,7 +14,7 @@ func main() {
 	rets := make(chan string, taskN)
 
 	// initial queue pool
-	q := queue.NewPool(5)
+	q := queue.NewPool(5, queue.WithLogger(zerolog.New()))
 	// shutdown the service and notify all the worker
 	// wait all jobs are complete.
 	defer q.Release()
