@@ -41,6 +41,9 @@ changelog:
     - title: 'Bug fixes'
       regexp: "^.*fix[(\\w)]*:+.*$"
       order: 1
+    - title: 'Enhancements'
+      regexp: "^.*chore[(\\w)]*:+.*$"
+      order: 2
     - title: Others
       order: 999
 
@@ -50,4 +53,5 @@ changelog:
     # Default is empty
     exclude:
       - '^docs'
+      - 'CICD'
       - typo
