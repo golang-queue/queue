@@ -80,7 +80,7 @@ func TestWorkerStatus(t *testing.T) {
 	assert.Equal(t, 100, q.Capacity())
 	assert.Equal(t, 4, q.Usage())
 	q.Start()
-	time.Sleep(20 * time.Millisecond)
+	time.Sleep(40 * time.Millisecond)
 	q.Release()
 }
 
