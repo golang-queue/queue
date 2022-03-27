@@ -101,7 +101,7 @@ func (s *Consumer) handle(job Job) error {
 }
 
 // Run start the worker
-func (s *Consumer) Run() error {
+func (s *Consumer) Run(task QueuedMessage) error {
 	// check queue status
 	select {
 	case <-s.stop:
@@ -109,18 +109,17 @@ func (s *Consumer) Run() error {
 	default:
 	}
 
-	for task := range s.taskQueue {
-		var data Job
-		_ = json.Unmarshal(task.Bytes(), &data)
-		if v, ok := task.(Job); ok {
-			if v.Task != nil {
-				data.Task = v.Task
-			}
-		}
-		if err := s.handle(data); err != nil {
-			s.logger.Error(err.Error())
+	var data Job
+	_ = json.Unmarshal(task.Bytes(), &data)
+	if v, ok := task.(Job); ok {
+		if v.Task != nil {
+			data.Task = v.Task
 		}
 	}
+	if err := s.handle(data); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -148,16 +147,25 @@ func (s *Consumer) Usage() int {
 }
 
 // Queue send notification to queue
-func (s *Consumer) Queue(job QueuedMessage) error {
+func (s *Consumer) Queue(task QueuedMessage) error {
 	if atomic.LoadInt32(&s.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
 
 	select {
-	case s.taskQueue <- job:
+	case s.taskQueue <- task:
 		return nil
 	default:
 		return errMaxCapacity
+	}
+}
+
+func (s *Consumer) Request() (QueuedMessage, error) {
+	select {
+	case task := <-s.taskQueue:
+		return task, nil
+	default:
+		return nil, errors.New("no message in queue")
 	}
 }
 

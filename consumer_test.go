@@ -50,14 +50,16 @@ func TestCustomFuncAndWait(t *testing.T) {
 	q, err := NewQueue(
 		WithWorker(w),
 		WithWorkerCount(2),
+		WithLogger(NewLogger()),
 	)
 	assert.NoError(t, err)
+	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.Queue(m))
+	assert.NoError(t, q.Queue(m))
 	q.Start()
 	time.Sleep(100 * time.Millisecond)
-	assert.NoError(t, q.Queue(m))
-	assert.NoError(t, q.Queue(m))
-	assert.NoError(t, q.Queue(m))
-	assert.NoError(t, q.Queue(m))
+	assert.Equal(t, 2, int(q.metric.BusyWorkers()))
 	time.Sleep(600 * time.Millisecond)
 	q.Shutdown()
 	q.Wait()
@@ -82,26 +84,6 @@ func TestEnqueueJobAfterShutdown(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, ErrQueueShutdown, err)
 	q.Wait()
-}
-
-func TestConsumerNumAfterShutdown(t *testing.T) {
-	w := NewConsumer()
-	q, err := NewQueue(
-		WithWorker(w),
-		WithWorkerCount(2),
-	)
-	assert.NoError(t, err)
-	q.Start()
-	q.Start()
-	time.Sleep(50 * time.Millisecond)
-	assert.Equal(t, 4, q.Workers())
-	q.Shutdown()
-	q.Wait()
-	assert.Equal(t, 0, q.Workers())
-	// show queue has been shutdown meesgae
-	q.Start()
-	q.Start()
-	assert.Equal(t, 0, q.Workers())
 }
 
 func TestJobReachTimeout(t *testing.T) {
@@ -131,12 +113,10 @@ func TestJobReachTimeout(t *testing.T) {
 		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
+	assert.NoError(t, q.QueueWithTimeout(30*time.Millisecond, m))
 	q.Start()
 	time.Sleep(50 * time.Millisecond)
-	assert.NoError(t, q.QueueWithTimeout(30*time.Millisecond, m))
-	time.Sleep(50 * time.Millisecond)
-	q.Shutdown()
-	q.Wait()
+	q.Release()
 }
 
 func TestCancelJobAfterShutdown(t *testing.T) {
@@ -167,17 +147,15 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
-	q.Start()
-	time.Sleep(50 * time.Millisecond)
 	assert.NoError(t, q.QueueWithTimeout(100*time.Millisecond, m))
-	q.Shutdown()
-	q.Wait()
+	assert.NoError(t, q.QueueWithTimeout(100*time.Millisecond, m))
+	q.Start()
+	time.Sleep(10 * time.Millisecond)
+	assert.Equal(t, 2, int(q.metric.busyWorkers))
+	q.Release()
 }
 
 func TestGoroutineLeak(t *testing.T) {
-	m := mockMessage{
-		message: "foo",
-	}
 	w := NewConsumer(
 		WithLogger(NewEmptyLogger()),
 		WithFn(func(ctx context.Context, m QueuedMessage) error {
@@ -200,20 +178,22 @@ func TestGoroutineLeak(t *testing.T) {
 		}),
 	)
 	q, err := NewQueue(
-		WithLogger(NewEmptyLogger()),
+		WithLogger(NewLogger()),
 		WithWorker(w),
 		WithWorkerCount(10),
 	)
 	assert.NoError(t, err)
-	q.Start()
-	time.Sleep(50 * time.Millisecond)
-	for i := 0; i < 500; i++ {
-		m.message = fmt.Sprintf("foobar: %d", i+1)
+	for i := 0; i < 400; i++ {
+		m := mockMessage{
+			message: fmt.Sprintf("new message: %d", i+1),
+		}
+
 		assert.NoError(t, q.Queue(m))
 	}
+
+	q.Start()
 	time.Sleep(2 * time.Second)
-	q.Shutdown()
-	q.Wait()
+	q.Release()
 	fmt.Println("number of goroutines:", runtime.NumGoroutine())
 }
 
@@ -231,12 +211,10 @@ func TestGoroutinePanic(t *testing.T) {
 		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
-	q.Start()
-	time.Sleep(50 * time.Millisecond)
 	assert.NoError(t, q.Queue(m))
-	time.Sleep(50 * time.Millisecond)
-	q.Shutdown()
-	q.Wait()
+	q.Start()
+	time.Sleep(10 * time.Millisecond)
+	q.Release()
 }
 
 func TestHandleTimeout(t *testing.T) {
