@@ -147,13 +147,13 @@ func (s *Consumer) Usage() int {
 }
 
 // Queue send notification to queue
-func (s *Consumer) Queue(job QueuedMessage) error {
+func (s *Consumer) Queue(task QueuedMessage) error {
 	if atomic.LoadInt32(&s.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
 
 	select {
-	case s.taskQueue <- job:
+	case s.taskQueue <- task:
 		return nil
 	default:
 		return errMaxCapacity

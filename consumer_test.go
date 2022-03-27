@@ -156,9 +156,6 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 }
 
 func TestGoroutineLeak(t *testing.T) {
-	m := mockMessage{
-		message: "foo",
-	}
 	w := NewConsumer(
 		WithLogger(NewEmptyLogger()),
 		WithFn(func(ctx context.Context, m QueuedMessage) error {
@@ -181,13 +178,16 @@ func TestGoroutineLeak(t *testing.T) {
 		}),
 	)
 	q, err := NewQueue(
-		WithLogger(NewEmptyLogger()),
+		WithLogger(NewLogger()),
 		WithWorker(w),
 		WithWorkerCount(10),
 	)
 	assert.NoError(t, err)
-	for i := 0; i < 500; i++ {
-		m.message = fmt.Sprintf("foobar: %d", i+1)
+	for i := 0; i < 400; i++ {
+		m := mockMessage{
+			message: fmt.Sprintf("new message: %d", i+1),
+		}
+
 		assert.NoError(t, q.Queue(m))
 	}
 

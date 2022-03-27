@@ -211,10 +211,10 @@ func (q *Queue) schedule() {
 
 // start handle job
 func (q *Queue) start() {
-	var task QueuedMessage
 	tasks := make(chan QueuedMessage, 1)
 
 	for {
+		var task QueuedMessage
 		if atomic.LoadInt32(&q.stopFlag) == 1 {
 			return
 		}
@@ -227,8 +227,8 @@ func (q *Queue) start() {
 				case <-q.quit:
 					return
 				default:
-					task, err := q.worker.Request()
-					if task == nil || err != nil {
+					t, err := q.worker.Request()
+					if t == nil || err != nil {
 						if err != nil {
 							select {
 							case <-q.quit:
@@ -238,8 +238,8 @@ func (q *Queue) start() {
 							}
 						}
 					}
-					if task != nil {
-						tasks <- task
+					if t != nil {
+						tasks <- t
 						break loop
 					}
 				}

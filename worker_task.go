@@ -15,13 +15,11 @@ type taskWorker struct {
 func (w *taskWorker) BeforeRun() error { return nil }
 func (w *taskWorker) AfterRun() error  { return nil }
 func (w *taskWorker) Run(task QueuedMessage) error {
-	// for msg := range w.messages {
 	if v, ok := task.(Job); ok {
 		if v.Task != nil {
 			_ = v.Task(context.Background())
 		}
 	}
-	// }
 	return nil
 }
 
