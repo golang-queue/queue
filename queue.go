@@ -101,7 +101,7 @@ func (q *Queue) Shutdown() {
 	}
 
 	if q.metric.BusyWorkers() > 0 {
-		q.logger.Infof("shutdown all woker numbers: %d", q.metric.BusyWorkers())
+		q.logger.Infof("shutdown all tasks: %d workers", q.metric.BusyWorkers())
 	}
 
 	q.stopOnce.Do(func() {
