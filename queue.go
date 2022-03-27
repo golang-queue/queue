@@ -18,15 +18,17 @@ type TaskFunc func(context.Context) error
 type (
 	// A Queue is a message queue.
 	Queue struct {
-		logger         Logger
-		workerCount    int
-		routineGroup   *routineGroup
-		quit           chan struct{}
-		worker         Worker
-		stopOnce       sync.Once
-		runningWorkers int32
-		timeout        time.Duration
-		stopFlag       int32
+		sync.Mutex
+		metric       *metric
+		logger       Logger
+		workerCount  int
+		routineGroup *routineGroup
+		quit         chan struct{}
+		ready        chan struct{}
+		worker       Worker
+		stopOnce     sync.Once
+		timeout      time.Duration
+		stopFlag     int32
 	}
 
 	// Job describes a task and its metadata.
@@ -62,10 +64,12 @@ func NewQueue(opts ...Option) (*Queue, error) {
 	q := &Queue{
 		routineGroup: newRoutineGroup(),
 		quit:         make(chan struct{}),
+		ready:        make(chan struct{}, 1),
 		workerCount:  o.workerCount,
 		logger:       o.logger,
 		timeout:      o.timeout,
 		worker:       o.worker,
+		metric:       &metric{},
 	}
 
 	if q.worker == nil {
@@ -87,7 +91,7 @@ func (q *Queue) Usage() int {
 
 // Start to enable all worker
 func (q *Queue) Start() {
-	q.startWorker()
+	go q.start()
 }
 
 // Shutdown stops all queues.
@@ -96,8 +100,8 @@ func (q *Queue) Shutdown() {
 		return
 	}
 
-	if q.runningWorkers > 0 {
-		q.logger.Infof("shutdown all woker numbers: %d", q.runningWorkers)
+	if q.metric.BusyWorkers() > 0 {
+		q.logger.Infof("shutdown all woker numbers: %d", q.metric.BusyWorkers())
 	}
 
 	q.stopOnce.Do(func() {
@@ -114,9 +118,9 @@ func (q *Queue) Release() {
 	q.Wait()
 }
 
-// Workers returns the numbers of workers has been created.
-func (q *Queue) Workers() int {
-	return int(atomic.LoadInt32(&q.runningWorkers))
+// BusyWorkers returns the numbers of workers in the running process.
+func (q *Queue) BusyWorkers() int {
+	return int(q.metric.BusyWorkers())
 }
 
 // Wait all process
@@ -174,39 +178,110 @@ func (q *Queue) QueueTaskWithTimeout(timeout time.Duration, task TaskFunc) error
 	return q.handleQueueTask(timeout, task)
 }
 
-func (q *Queue) work() {
-	if atomic.LoadInt32(&q.stopFlag) == 1 {
-		return
+func (q *Queue) work(task QueuedMessage) {
+	if err := q.worker.BeforeRun(); err != nil {
+		q.logger.Error(err)
 	}
 
-	num := atomic.AddInt32(&q.runningWorkers, 1)
-	if err := q.worker.BeforeRun(); err != nil {
-		q.logger.Fatal(err)
-	}
-	q.routineGroup.Run(func() {
-		// to handle panic cases from inside the worker
-		// in such case, we start a new goroutine
-		defer func() {
-			atomic.AddInt32(&q.runningWorkers, -1)
-			if err := recover(); err != nil {
-				q.logger.Error(err)
-				q.logger.Infof("restart the new worker: %d", num)
-				go q.work()
-			}
-		}()
-		q.logger.Infof("start the worker num: %d", num)
-		if err := q.worker.Run(); err != nil {
-			q.logger.Errorf("runtime error: %s", err.Error())
+	// to handle panic cases from inside the worker
+	// in such case, we start a new goroutine
+	defer func() {
+		q.metric.DecBusyWorker()
+		if err := recover(); err != nil {
+			q.logger.Errorf("panic error: %v", err)
 		}
-		q.logger.Infof("stop the worker num: %d", num)
-	})
+		q.schedule()
+	}()
+
+	if err := q.worker.Run(task); err != nil {
+		q.logger.Errorf("runtime error: %s", err.Error())
+	}
+
 	if err := q.worker.AfterRun(); err != nil {
-		q.logger.Fatal(err)
+		q.logger.Error(err)
 	}
 }
 
-func (q *Queue) startWorker() {
-	for i := 0; i < q.workerCount; i++ {
-		go q.work()
+func (q *Queue) schedule() {
+	select {
+	case q.ready <- struct{}{}:
+	default:
+	}
+}
+
+// start handle job
+func (q *Queue) start() {
+	var task QueuedMessage
+	tasks := make(chan QueuedMessage, 1)
+
+	for {
+		if atomic.LoadInt32(&q.stopFlag) == 1 {
+			return
+		}
+
+		// request task from queue in background
+		q.routineGroup.Run(func() {
+		loop:
+			for {
+				select {
+				case <-q.quit:
+					return
+				default:
+					task, err := q.worker.Request()
+					if task == nil || err != nil {
+						if err != nil {
+							select {
+							case <-q.quit:
+								break loop
+							case <-time.After(time.Second):
+								// sleep 1 second to fetch new task
+							}
+						}
+					}
+					if task != nil {
+						tasks <- task
+						break loop
+					}
+				}
+			}
+		})
+
+		// read task
+		select {
+		case task = <-tasks:
+		case <-q.quit:
+			select {
+			case task = <-tasks:
+				// queue task before shutdown the service
+				q.worker.Queue(task)
+			default:
+			}
+			return
+		}
+
+		// check worker number
+		if q.BusyWorkers() < q.workerCount {
+			q.schedule()
+		}
+
+		// get worker to execute new task
+		select {
+		case <-q.quit:
+			q.worker.Queue(task)
+			return
+		case <-q.ready:
+			select {
+			case <-q.quit:
+				q.worker.Queue(task)
+				return
+			default:
+			}
+		}
+
+		// start new task
+		q.metric.IncBusyWorker()
+		q.routineGroup.Run(func() {
+			q.work(task)
+		})
 	}
 }
