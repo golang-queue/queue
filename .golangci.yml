@@ -8,6 +8,7 @@ linters:
     - depguard
     - dogsled
     - dupl
+    - errcheck
     - exportloopref
     - exhaustive
     - gochecknoinits
