@@ -12,26 +12,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestQueueUsage(t *testing.T) {
-	w := NewConsumer()
-	assert.Equal(t, defaultQueueSize, w.Capacity())
-	assert.Equal(t, 0, w.Usage())
-
-	assert.NoError(t, w.Queue(&mockMessage{}))
-	assert.Equal(t, 1, w.Usage())
-}
-
 func TestMaxCapacity(t *testing.T) {
 	w := NewConsumer(WithQueueSize(2))
-	assert.Equal(t, 2, w.Capacity())
-	assert.Equal(t, 0, w.Usage())
 
 	assert.NoError(t, w.Queue(&mockMessage{}))
-	assert.Equal(t, 1, w.Usage())
 	assert.NoError(t, w.Queue(&mockMessage{}))
-	assert.Equal(t, 2, w.Usage())
 	assert.Error(t, w.Queue(&mockMessage{}))
-	assert.Equal(t, 2, w.Usage())
 
 	err := w.Queue(&mockMessage{})
 	assert.Equal(t, errMaxCapacity, err)

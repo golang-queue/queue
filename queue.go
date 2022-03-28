@@ -272,7 +272,7 @@ func (q *Queue) start() {
 			case task = <-tasks:
 				// queue task before shutdown the service
 				if err := q.worker.Queue(task); err != nil {
-					q.logger.Errorf("can't re-queue message: %v", err)
+					q.logger.Errorf("can't re-queue task: %v", err)
 				}
 			default:
 			}
@@ -280,22 +280,24 @@ func (q *Queue) start() {
 		}
 
 		// check worker number
+		q.Lock()
 		if q.BusyWorkers() < q.workerCount {
 			q.schedule()
 		}
+		q.Unlock()
 
 		// get worker to execute new task
 		select {
 		case <-q.quit:
 			if err := q.worker.Queue(task); err != nil {
-				q.logger.Errorf("can't re-queue message: %v", err)
+				q.logger.Errorf("can't re-queue task: %v", err)
 			}
 			return
 		case <-q.ready:
 			select {
 			case <-q.quit:
 				if err := q.worker.Queue(task); err != nil {
-					q.logger.Errorf("can't re-queue message: %v", err)
+					q.logger.Errorf("can't re-queue task: %v", err)
 				}
 				return
 			default:

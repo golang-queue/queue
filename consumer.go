@@ -126,16 +126,6 @@ func (s *Consumer) Shutdown() error {
 	return nil
 }
 
-// Capacity for channel
-func (s *Consumer) Capacity() int {
-	return cap(s.taskQueue)
-}
-
-// Usage for count of channel usage
-func (s *Consumer) Usage() int {
-	return len(s.taskQueue)
-}
-
 // Queue send notification to queue
 func (s *Consumer) Queue(task QueuedMessage) error {
 	if atomic.LoadInt32(&s.stopFlag) == 1 {
@@ -155,7 +145,7 @@ func (s *Consumer) Request() (QueuedMessage, error) {
 	case task := <-s.taskQueue:
 		return task, nil
 	default:
-		return nil, errors.New("no message in queue")
+		return nil, errors.New("no task in queue")
 	}
 }
 
