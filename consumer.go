@@ -76,13 +76,6 @@ func (s *Consumer) handle(job Job) error {
 
 // Run start the worker
 func (s *Consumer) Run(task QueuedMessage) error {
-	// check queue status
-	select {
-	case <-s.stop:
-		return ErrQueueShutdown
-	default:
-	}
-
 	var data Job
 	_ = json.Unmarshal(task.Bytes(), &data)
 	if v, ok := task.(Job); ok {

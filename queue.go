@@ -81,7 +81,9 @@ func NewQueue(opts ...Option) (*Queue, error) {
 
 // Start to enable all worker
 func (q *Queue) Start() {
-	go q.start()
+	q.routineGroup.Run(func() {
+		q.start()
+	})
 }
 
 // Shutdown stops all queues.
@@ -220,6 +222,7 @@ func (q *Queue) work(task QueuedMessage) {
 	}
 }
 
+// UpdateWorkerCount to update worker number dynamically.
 func (q *Queue) UpdateWorkerCount(num int) {
 	q.workerCount = num
 	q.schedule()
@@ -244,13 +247,9 @@ func (q *Queue) start() {
 
 	for {
 		var task QueuedMessage
-		if atomic.LoadInt32(&q.stopFlag) == 1 {
-			return
-		}
 
 		// request task from queue in background
 		q.routineGroup.Run(func() {
-		loop:
 			for {
 				select {
 				case <-q.quit:
@@ -261,7 +260,7 @@ func (q *Queue) start() {
 						if err != nil {
 							select {
 							case <-q.quit:
-								break loop
+								return
 							case <-time.After(time.Second):
 								// sleep 1 second to fetch new task
 							}
@@ -269,7 +268,7 @@ func (q *Queue) start() {
 					}
 					if t != nil {
 						tasks <- t
-						break loop
+						return
 					}
 				}
 			}
@@ -292,24 +291,8 @@ func (q *Queue) start() {
 
 		// check worker number
 		q.schedule()
-
-		// get worker to execute new task
-		select {
-		case <-q.quit:
-			if err := q.worker.Queue(task); err != nil {
-				q.logger.Errorf("can't re-queue task: %v", err)
-			}
-			return
-		case <-q.ready:
-			select {
-			case <-q.quit:
-				if err := q.worker.Queue(task); err != nil {
-					q.logger.Errorf("can't re-queue task: %v", err)
-				}
-				return
-			default:
-			}
-		}
+		// wait worker ready
+		<-q.ready
 
 		// start new task
 		q.metric.IncBusyWorker()
