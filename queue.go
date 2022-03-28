@@ -220,7 +220,18 @@ func (q *Queue) work(task QueuedMessage) {
 	}
 }
 
+func (q *Queue) UpdateWorkerCount(num int) {
+	q.workerCount = num
+	q.schedule()
+}
+
 func (q *Queue) schedule() {
+	q.Lock()
+	defer q.Unlock()
+	if q.BusyWorkers() >= q.workerCount {
+		return
+	}
+
 	select {
 	case q.ready <- struct{}{}:
 	default:
@@ -280,11 +291,7 @@ func (q *Queue) start() {
 		}
 
 		// check worker number
-		q.Lock()
-		if q.BusyWorkers() < q.workerCount {
-			q.schedule()
-		}
-		q.Unlock()
+		q.schedule()
 
 		// get worker to execute new task
 		select {
