@@ -321,3 +321,66 @@ func TestTaskJobComplete(t *testing.T) {
 	}
 	assert.Equal(t, context.DeadlineExceeded, w.handle(job))
 }
+
+func TestIncreaseWorkerCount(t *testing.T) {
+	w := NewConsumer(
+		WithLogger(NewEmptyLogger()),
+		WithFn(func(ctx context.Context, m QueuedMessage) error {
+			time.Sleep(500 * time.Millisecond)
+			return nil
+		}),
+	)
+	q, err := NewQueue(
+		WithLogger(NewLogger()),
+		WithWorker(w),
+		WithWorkerCount(5),
+	)
+	assert.NoError(t, err)
+
+	for i := 1; i <= 10; i++ {
+		m := mockMessage{
+			message: fmt.Sprintf("new message: %d", i),
+		}
+		assert.NoError(t, q.Queue(m))
+	}
+
+	q.Start()
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, 5, q.BusyWorkers())
+	q.UpdateWorkerCount(10)
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, 10, q.BusyWorkers())
+	q.Release()
+}
+
+func TestDecreaseWorkerCount(t *testing.T) {
+	w := NewConsumer(
+		WithFn(func(ctx context.Context, m QueuedMessage) error {
+			time.Sleep(100 * time.Millisecond)
+			return nil
+		}),
+	)
+	q, err := NewQueue(
+		WithLogger(NewLogger()),
+		WithWorker(w),
+		WithWorkerCount(5),
+	)
+	assert.NoError(t, err)
+
+	for i := 1; i <= 10; i++ {
+		m := mockMessage{
+			message: fmt.Sprintf("test message: %d", i),
+		}
+		assert.NoError(t, q.Queue(m))
+	}
+
+	q.Start()
+	time.Sleep(20 * time.Millisecond)
+	assert.Equal(t, 5, q.BusyWorkers())
+	q.UpdateWorkerCount(3)
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, 3, q.BusyWorkers())
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, 2, q.BusyWorkers())
+	q.Release()
+}
