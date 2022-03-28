@@ -10,12 +10,6 @@ type Worker interface {
 	Queue(task QueuedMessage) error
 	// Request to get message from Queue
 	Request() (QueuedMessage, error)
-	// Capacity queue capacity = cap(channel name)
-	Capacity() int
-	// Usage is how many message in queue
-	Usage() int
-	// BusyWorkers return count of busy worker currently
-	BusyWorkers() uint64
 }
 
 // QueuedMessage ...

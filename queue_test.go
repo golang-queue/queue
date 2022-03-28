@@ -34,7 +34,7 @@ func TestNewQueue(t *testing.T) {
 	assert.NotNil(t, q)
 
 	q.Start()
-	assert.Equal(t, uint64(0), w.BusyWorkers())
+	assert.Equal(t, 0, q.BusyWorkers())
 	q.Shutdown()
 	q.Wait()
 }
@@ -57,31 +57,6 @@ func TestShtdonwOnce(t *testing.T) {
 	q.Shutdown()
 	q.Wait()
 	assert.Equal(t, 0, q.BusyWorkers())
-}
-
-func TestWorkerStatus(t *testing.T) {
-	m := mockMessage{
-		message: "foobar",
-	}
-	w := &messageWorker{
-		messages: make(chan QueuedMessage, 100),
-	}
-	q, err := NewQueue(
-		WithWorker(w),
-		WithWorkerCount(2),
-	)
-	assert.NoError(t, err)
-	assert.NotNil(t, q)
-
-	assert.NoError(t, q.Queue(m))
-	assert.NoError(t, q.Queue(m))
-	assert.NoError(t, q.QueueWithTimeout(10*time.Millisecond, m))
-	assert.NoError(t, q.QueueWithTimeout(10*time.Millisecond, m))
-	assert.Equal(t, 100, q.Capacity())
-	assert.Equal(t, 4, q.Usage())
-	q.Start()
-	time.Sleep(40 * time.Millisecond)
-	q.Release()
 }
 
 func TestCapacityReached(t *testing.T) {
@@ -160,7 +135,6 @@ func TestQueueTaskJob(t *testing.T) {
 		return nil
 	}))
 	time.Sleep(50 * time.Millisecond)
-	assert.Equal(t, uint64(0), w.BusyWorkers())
 	q.Shutdown()
 	assert.Equal(t, ErrQueueShutdown, q.QueueTask(func(ctx context.Context) error {
 		return nil
