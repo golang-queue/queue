@@ -179,10 +179,6 @@ func (q *Queue) QueueTaskWithTimeout(timeout time.Duration, task TaskFunc) error
 }
 
 func (q *Queue) work(task QueuedMessage) {
-	if err := q.worker.BeforeRun(); err != nil {
-		q.logger.Error(err)
-	}
-
 	// to handle panic cases from inside the worker
 	// in such case, we start a new goroutine
 	defer func() {
@@ -195,10 +191,6 @@ func (q *Queue) work(task QueuedMessage) {
 
 	if err := q.worker.Run(task); err != nil {
 		q.logger.Errorf("runtime error: %s", err.Error())
-	}
-
-	if err := q.worker.AfterRun(); err != nil {
-		q.logger.Error(err)
 	}
 }
 

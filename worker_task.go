@@ -12,8 +12,6 @@ type taskWorker struct {
 	messages chan QueuedMessage
 }
 
-func (w *taskWorker) BeforeRun() error { return nil }
-func (w *taskWorker) AfterRun() error  { return nil }
 func (w *taskWorker) Run(task QueuedMessage) error {
 	if v, ok := task.(Job); ok {
 		if v.Task != nil {
