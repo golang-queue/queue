@@ -42,7 +42,3 @@ func (w *messageWorker) Request() (QueuedMessage, error) {
 		return nil, errors.New("no message in queue")
 	}
 }
-
-func (w *messageWorker) Capacity() int       { return cap(w.messages) }
-func (w *messageWorker) Usage() int          { return len(w.messages) }
-func (w *messageWorker) BusyWorkers() uint64 { return uint64(0) }

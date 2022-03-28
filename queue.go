@@ -79,16 +79,6 @@ func NewQueue(opts ...Option) (*Queue, error) {
 	return q, nil
 }
 
-// Capacity for queue max size
-func (q *Queue) Capacity() int {
-	return q.worker.Capacity()
-}
-
-// Usage for count of queue usage
-func (q *Queue) Usage() int {
-	return q.worker.Usage()
-}
-
 // Start to enable all worker
 func (q *Queue) Start() {
 	go q.start()
@@ -123,24 +113,24 @@ func (q *Queue) BusyWorkers() int {
 	return int(q.metric.BusyWorkers())
 }
 
+// BusyWorkers returns the numbers of success tasks.
+func (q *Queue) SuccessTasks() int {
+	return int(q.metric.SuccessTasks())
+}
+
+// BusyWorkers returns the numbers of failure tasks.
+func (q *Queue) FailureTasks() int {
+	return int(q.metric.FailureTasks())
+}
+
+// BusyWorkers returns the numbers of submitted tasks.
+func (q *Queue) SubmittedTasks() int {
+	return int(q.metric.SubmittedTasks())
+}
+
 // Wait all process
 func (q *Queue) Wait() {
 	q.routineGroup.Wait()
-}
-
-func (q *Queue) handleQueue(timeout time.Duration, job QueuedMessage) error {
-	if atomic.LoadInt32(&q.stopFlag) == 1 {
-		return ErrQueueShutdown
-	}
-
-	data := Job{
-		Timeout: timeout,
-		Payload: job.Bytes(),
-	}
-
-	return q.worker.Queue(Job{
-		Payload: data.Encode(),
-	})
 }
 
 // Queue to queue all job
@@ -153,19 +143,25 @@ func (q *Queue) QueueWithTimeout(timeout time.Duration, job QueuedMessage) error
 	return q.handleQueue(timeout, job)
 }
 
-func (q *Queue) handleQueueTask(timeout time.Duration, task TaskFunc) error {
+func (q *Queue) handleQueue(timeout time.Duration, job QueuedMessage) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
 
 	data := Job{
 		Timeout: timeout,
+		Payload: job.Bytes(),
 	}
 
-	return q.worker.Queue(Job{
-		Task:    task,
+	if err := q.worker.Queue(Job{
 		Payload: data.Encode(),
-	})
+	}); err != nil {
+		return err
+	}
+
+	q.metric.IncSubmittedTask()
+
+	return nil
 }
 
 // QueueTask to queue job task
@@ -178,18 +174,48 @@ func (q *Queue) QueueTaskWithTimeout(timeout time.Duration, task TaskFunc) error
 	return q.handleQueueTask(timeout, task)
 }
 
+func (q *Queue) handleQueueTask(timeout time.Duration, task TaskFunc) error {
+	if atomic.LoadInt32(&q.stopFlag) == 1 {
+		return ErrQueueShutdown
+	}
+
+	data := Job{
+		Timeout: timeout,
+	}
+
+	if err := q.worker.Queue(Job{
+		Task:    task,
+		Payload: data.Encode(),
+	}); err != nil {
+		return err
+	}
+
+	q.metric.IncSubmittedTask()
+
+	return nil
+}
+
 func (q *Queue) work(task QueuedMessage) {
+	var err error
 	// to handle panic cases from inside the worker
 	// in such case, we start a new goroutine
 	defer func() {
 		q.metric.DecBusyWorker()
-		if err := recover(); err != nil {
+		e := recover()
+		if e != nil {
 			q.logger.Errorf("panic error: %v", err)
 		}
 		q.schedule()
+
+		// increase success or failure number
+		if err == nil && e == nil {
+			q.metric.IncSuccessTask()
+		} else {
+			q.metric.IncFailureTask()
+		}
 	}()
 
-	if err := q.worker.Run(task); err != nil {
+	if err = q.worker.Run(task); err != nil {
 		q.logger.Errorf("runtime error: %s", err.Error())
 	}
 }
