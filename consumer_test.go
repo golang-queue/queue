@@ -321,30 +321,3 @@ func TestTaskJobComplete(t *testing.T) {
 	}
 	assert.Equal(t, context.DeadlineExceeded, w.handle(job))
 }
-
-func TestBusyWorkerCount(t *testing.T) {
-	job := Job{
-		Timeout: 200 * time.Millisecond,
-		Task: func(ctx context.Context) error {
-			time.Sleep(100 * time.Millisecond)
-			return nil
-		},
-	}
-
-	w := NewConsumer()
-
-	assert.Equal(t, uint64(0), w.BusyWorkers())
-	go func() {
-		assert.NoError(t, w.handle(job))
-	}()
-	go func() {
-		assert.NoError(t, w.handle(job))
-	}()
-
-	time.Sleep(50 * time.Millisecond)
-	assert.Equal(t, uint64(2), w.BusyWorkers())
-	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, uint64(0), w.BusyWorkers())
-
-	assert.NoError(t, w.Shutdown())
-}
