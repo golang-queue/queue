@@ -143,7 +143,7 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 
 func TestGoroutineLeak(t *testing.T) {
 	w := NewConsumer(
-		WithLogger(NewEmptyLogger()),
+		WithLogger(NewLogger()),
 		WithFn(func(ctx context.Context, m QueuedMessage) error {
 			for {
 				select {
@@ -178,7 +178,7 @@ func TestGoroutineLeak(t *testing.T) {
 	}
 
 	q.Start()
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 	q.Release()
 	fmt.Println("number of goroutines:", runtime.NumGoroutine())
 }
