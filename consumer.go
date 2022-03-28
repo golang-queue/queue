@@ -37,16 +37,6 @@ func (s *Consumer) BusyWorkers() uint64 {
 	return s.metric.BusyWorkers()
 }
 
-// BeforeRun run script before start worker
-func (s *Consumer) BeforeRun() error {
-	return nil
-}
-
-// AfterRun run script after start worker
-func (s *Consumer) AfterRun() error {
-	return nil
-}
-
 func (s *Consumer) handle(job Job) error {
 	// create channel with buffer size 1 to avoid goroutine leak
 	done := make(chan error, 1)

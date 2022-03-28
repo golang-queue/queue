@@ -12,8 +12,6 @@ type messageWorker struct {
 	messages chan QueuedMessage
 }
 
-func (w *messageWorker) BeforeRun() error { return nil }
-func (w *messageWorker) AfterRun() error  { return nil }
 func (w *messageWorker) Run(task QueuedMessage) error {
 	if string(task.Bytes()) == "panic" {
 		panic("show panic")
