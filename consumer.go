@@ -21,20 +21,6 @@ type Consumer struct {
 	logger    Logger
 	stopOnce  sync.Once
 	stopFlag  int32
-	metric    Metric
-}
-
-func (s *Consumer) incBusyWorker() {
-	s.metric.IncBusyWorker()
-}
-
-func (s *Consumer) decBusyWorker() {
-	s.metric.DecBusyWorker()
-}
-
-// BusyWorkers returns the numbers of workers has been busy.
-func (s *Consumer) BusyWorkers() uint64 {
-	return s.metric.BusyWorkers()
 }
 
 func (s *Consumer) handle(job Job) error {
@@ -43,10 +29,8 @@ func (s *Consumer) handle(job Job) error {
 	panicChan := make(chan interface{}, 1)
 	startTime := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), job.Timeout)
-	s.incBusyWorker()
 	defer func() {
 		cancel()
-		s.decBusyWorker()
 	}()
 
 	// run the job
@@ -157,7 +141,6 @@ func NewConsumer(opts ...Option) *Consumer {
 		stop:      make(chan struct{}),
 		logger:    o.logger,
 		runFunc:   o.fn,
-		metric:    o.metric,
 	}
 
 	return w
