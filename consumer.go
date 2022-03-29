@@ -13,7 +13,7 @@ var _ Worker = (*Consumer)(nil)
 
 var errMaxCapacity = errors.New("max capacity reached")
 
-// Consumer for simple queue using channel
+// Consumer for simple queue using buffer channel
 type Consumer struct {
 	taskQueue chan QueuedMessage
 	runFunc   func(context.Context, QueuedMessage) error
@@ -74,7 +74,7 @@ func (s *Consumer) handle(job Job) error {
 	}
 }
 
-// Run start the worker
+// Run to execute new task
 func (s *Consumer) Run(task QueuedMessage) error {
 	var data Job
 	_ = json.Unmarshal(task.Bytes(), &data)
@@ -90,7 +90,7 @@ func (s *Consumer) Run(task QueuedMessage) error {
 	return nil
 }
 
-// Shutdown worker
+// Shutdown the worker
 func (s *Consumer) Shutdown() error {
 	if !atomic.CompareAndSwapInt32(&s.stopFlag, 0, 1) {
 		return ErrQueueShutdown
@@ -103,7 +103,7 @@ func (s *Consumer) Shutdown() error {
 	return nil
 }
 
-// Queue send notification to queue
+// Queue send task to the buffer channel
 func (s *Consumer) Queue(task QueuedMessage) error {
 	if atomic.LoadInt32(&s.stopFlag) == 1 {
 		return ErrQueueShutdown
@@ -117,6 +117,7 @@ func (s *Consumer) Queue(task QueuedMessage) error {
 	}
 }
 
+// Request a new task from channel
 func (s *Consumer) Request() (QueuedMessage, error) {
 	select {
 	case task, ok := <-s.taskQueue:
@@ -129,7 +130,7 @@ func (s *Consumer) Request() (QueuedMessage, error) {
 	}
 }
 
-// NewConsumer for struc
+// NewConsumer for create new consumer instance
 func NewConsumer(opts ...Option) *Consumer {
 	o := NewOptions(opts...)
 	w := &Consumer{
