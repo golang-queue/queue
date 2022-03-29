@@ -148,11 +148,10 @@ func TestGoroutineLeak(t *testing.T) {
 			for {
 				select {
 				case <-ctx.Done():
-					log.Println("get data:", string(m.Bytes()))
 					if errors.Is(ctx.Err(), context.Canceled) {
-						log.Println("queue has been shutdown and cancel the job")
+						log.Println("queue has been shutdown and cancel the job: " + string(m.Bytes()))
 					} else if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-						log.Println("job deadline exceeded")
+						log.Println("job deadline exceeded: " + string(m.Bytes()))
 					}
 					return nil
 				default:

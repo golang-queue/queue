@@ -119,10 +119,13 @@ func (s *Consumer) Queue(task QueuedMessage) error {
 
 func (s *Consumer) Request() (QueuedMessage, error) {
 	select {
-	case task := <-s.taskQueue:
+	case task, ok := <-s.taskQueue:
+		if !ok {
+			return nil, ErrQueueHasBeenClosed
+		}
 		return task, nil
 	default:
-		return nil, errors.New("no task in queue")
+		return nil, ErrNoTaskInQueue
 	}
 }
 
