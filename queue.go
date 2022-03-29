@@ -246,46 +246,41 @@ func (q *Queue) start() {
 	tasks := make(chan QueuedMessage, 1)
 
 	for {
-		var task QueuedMessage
-
 		// request task from queue in background
 		q.routineGroup.Run(func() {
 			for {
-				select {
-				case <-q.quit:
-					return
-				default:
-					t, err := q.worker.Request()
-					if t == nil || err != nil {
-						if err != nil {
-							select {
-							case <-q.quit:
+				t, err := q.worker.Request()
+				if t == nil || err != nil {
+					if err != nil {
+						select {
+						case <-q.quit:
+							if !errors.Is(err, ErrNoTaskInQueue) {
+								close(tasks)
 								return
-							case <-time.After(time.Second):
-								// sleep 1 second to fetch new task
 							}
+						case <-time.After(time.Second):
+							// sleep 1 second to fetch new task
 						}
 					}
-					if t != nil {
-						tasks <- t
+				}
+				if t != nil {
+					tasks <- t
+					return
+				}
+
+				select {
+				case <-q.quit:
+					if !errors.Is(err, ErrNoTaskInQueue) {
+						close(tasks)
 						return
 					}
+				default:
 				}
 			}
 		})
 
-		// read task
-		select {
-		case task = <-tasks:
-		case <-q.quit:
-			select {
-			case task = <-tasks:
-				// queue task before shutdown the service
-				if err := q.worker.Queue(task); err != nil {
-					q.logger.Errorf("can't re-queue task: %v", err)
-				}
-			default:
-			}
+		task, ok := <-tasks
+		if !ok {
 			return
 		}
 
