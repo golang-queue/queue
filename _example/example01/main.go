@@ -16,7 +16,7 @@ func main() {
 	// initial queue pool
 	q := queue.NewPool(5, queue.WithLogger(zerolog.New()))
 	// shutdown the service and notify all the worker
-	// wait all jobs are complete.
+	// wait all jobs done.
 	defer q.Release()
 
 	// assign tasks in queue

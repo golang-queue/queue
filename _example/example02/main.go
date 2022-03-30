@@ -40,7 +40,7 @@ func main() {
 		return nil
 	}))
 	// shutdown the service and notify all the worker
-	// wait all jobs are complete.
+	// wait all jobs done.
 	defer q.Release()
 
 	// assign tasks in queue
@@ -58,6 +58,6 @@ func main() {
 	// wait until all tasks done
 	for i := 0; i < taskN; i++ {
 		fmt.Println("message:", <-rets)
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
 	}
 }
