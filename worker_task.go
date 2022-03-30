@@ -40,6 +40,6 @@ func (w *taskWorker) Request() (QueuedMessage, error) {
 	case task := <-w.messages:
 		return task, nil
 	default:
-		return nil, errors.New("no message in queue")
+		return nil, ErrNoTaskInQueue
 	}
 }
