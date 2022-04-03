@@ -28,3 +28,11 @@ func TestNewPoolWithQueueTask(t *testing.T) {
 	p.Release()
 	assert.Equal(t, 0, p.BusyWorkers())
 }
+
+func TestPoolNumber(t *testing.T) {
+	p := NewPool(0)
+	p.Start()
+	// shutdown all, and now running worker is 0
+	p.Release()
+	assert.Equal(t, 0, p.BusyWorkers())
+}
