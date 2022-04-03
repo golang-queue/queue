@@ -81,6 +81,9 @@ func NewQueue(opts ...Option) (*Queue, error) {
 
 // Start to enable all worker
 func (q *Queue) Start() {
+	if q.workerCount == 0 {
+		return
+	}
 	q.routineGroup.Run(func() {
 		q.start()
 	})
