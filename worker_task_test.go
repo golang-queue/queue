@@ -5,12 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-queue/queue/core"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestQueueTaskJob(t *testing.T) {
 	w := &taskWorker{
-		messages: make(chan QueuedMessage, 10),
+		messages: make(chan core.QueuedMessage, 10),
 	}
 	q, err := NewQueue(
 		WithWorker(w),

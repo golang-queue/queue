@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-queue/queue/core"
+
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/goleak"
 )
@@ -40,7 +42,7 @@ func TestNewQueue(t *testing.T) {
 
 func TestShtdonwOnce(t *testing.T) {
 	w := &messageWorker{
-		messages: make(chan QueuedMessage, 100),
+		messages: make(chan core.QueuedMessage, 100),
 	}
 	q, err := NewQueue(
 		WithWorker(w),
@@ -60,7 +62,7 @@ func TestShtdonwOnce(t *testing.T) {
 
 func TestCapacityReached(t *testing.T) {
 	w := &messageWorker{
-		messages: make(chan QueuedMessage, 1),
+		messages: make(chan core.QueuedMessage, 1),
 	}
 	q, err := NewQueue(
 		WithWorker(w),
@@ -81,7 +83,7 @@ func TestCapacityReached(t *testing.T) {
 
 func TestCloseQueueAfterShutdown(t *testing.T) {
 	w := &messageWorker{
-		messages: make(chan QueuedMessage, 10),
+		messages: make(chan core.QueuedMessage, 10),
 	}
 	q, err := NewQueue(
 		WithWorker(w),

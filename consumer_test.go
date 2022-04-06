@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-queue/queue/core"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,7 +30,7 @@ func TestCustomFuncAndWait(t *testing.T) {
 		message: "foo",
 	}
 	w := NewConsumer(
-		WithFn(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(500 * time.Millisecond)
 			return nil
 		}),
@@ -77,7 +79,7 @@ func TestJobReachTimeout(t *testing.T) {
 		message: "foo",
 	}
 	w := NewConsumer(
-		WithFn(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			for {
 				select {
 				case <-ctx.Done():
@@ -111,7 +113,7 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 	}
 	w := NewConsumer(
 		WithLogger(NewEmptyLogger()),
-		WithFn(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			for {
 				select {
 				case <-ctx.Done():
@@ -144,7 +146,7 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 func TestGoroutineLeak(t *testing.T) {
 	w := NewConsumer(
 		WithLogger(NewLogger()),
-		WithFn(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			for {
 				select {
 				case <-ctx.Done():
@@ -187,7 +189,7 @@ func TestGoroutinePanic(t *testing.T) {
 		message: "foo",
 	}
 	w := NewConsumer(
-		WithFn(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			panic("missing something")
 		}),
 	)
@@ -208,7 +210,7 @@ func TestHandleTimeout(t *testing.T) {
 		Payload: []byte("foo"),
 	}
 	w := NewConsumer(
-		WithFn(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return nil
 		}),
@@ -224,7 +226,7 @@ func TestHandleTimeout(t *testing.T) {
 	}
 
 	w = NewConsumer(
-		WithFn(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return nil
 		}),
@@ -248,7 +250,7 @@ func TestJobComplete(t *testing.T) {
 		Payload: []byte("foo"),
 	}
 	w := NewConsumer(
-		WithFn(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			return errors.New("job completed")
 		}),
 	)
@@ -263,7 +265,7 @@ func TestJobComplete(t *testing.T) {
 	}
 
 	w = NewConsumer(
-		WithFn(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return errors.New("job completed")
 		}),
@@ -324,7 +326,7 @@ func TestTaskJobComplete(t *testing.T) {
 func TestIncreaseWorkerCount(t *testing.T) {
 	w := NewConsumer(
 		WithLogger(NewEmptyLogger()),
-		WithFn(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(500 * time.Millisecond)
 			return nil
 		}),
@@ -354,7 +356,7 @@ func TestIncreaseWorkerCount(t *testing.T) {
 
 func TestDecreaseWorkerCount(t *testing.T) {
 	w := NewConsumer(
-		WithFn(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(100 * time.Millisecond)
 			return nil
 		}),

@@ -7,16 +7,18 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/golang-queue/queue/core"
 )
 
-var _ Worker = (*Consumer)(nil)
+var _ core.Worker = (*Consumer)(nil)
 
 var errMaxCapacity = errors.New("max capacity reached")
 
 // Consumer for simple queue using buffer channel
 type Consumer struct {
-	taskQueue chan QueuedMessage
-	runFunc   func(context.Context, QueuedMessage) error
+	taskQueue chan core.QueuedMessage
+	runFunc   func(context.Context, core.QueuedMessage) error
 	stop      chan struct{}
 	logger    Logger
 	stopOnce  sync.Once
@@ -75,7 +77,7 @@ func (s *Consumer) handle(job Job) error {
 }
 
 // Run to execute new task
-func (s *Consumer) Run(task QueuedMessage) error {
+func (s *Consumer) Run(task core.QueuedMessage) error {
 	var data Job
 	_ = json.Unmarshal(task.Bytes(), &data)
 	if v, ok := task.(Job); ok {
@@ -104,7 +106,7 @@ func (s *Consumer) Shutdown() error {
 }
 
 // Queue send task to the buffer channel
-func (s *Consumer) Queue(task QueuedMessage) error {
+func (s *Consumer) Queue(task core.QueuedMessage) error {
 	if atomic.LoadInt32(&s.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
@@ -118,7 +120,7 @@ func (s *Consumer) Queue(task QueuedMessage) error {
 }
 
 // Request a new task from channel
-func (s *Consumer) Request() (QueuedMessage, error) {
+func (s *Consumer) Request() (core.QueuedMessage, error) {
 	clock := 0
 loop:
 	for {
@@ -143,7 +145,7 @@ loop:
 func NewConsumer(opts ...Option) *Consumer {
 	o := NewOptions(opts...)
 	w := &Consumer{
-		taskQueue: make(chan QueuedMessage, o.queueSize),
+		taskQueue: make(chan core.QueuedMessage, o.queueSize),
 		stop:      make(chan struct{}),
 		logger:    o.logger,
 		runFunc:   o.fn,

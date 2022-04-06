@@ -6,12 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-queue/queue/core"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMetricData(t *testing.T) {
 	w := NewConsumer(
-		WithFn(func(ctx context.Context, m QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			switch string(m.Bytes()) {
 			case "foo1":
 				panic("missing something")
