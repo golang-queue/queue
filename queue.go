@@ -7,6 +7,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/golang-queue/queue/core"
 )
 
 // ErrQueueShutdown the queue is released and closed.
@@ -25,7 +27,7 @@ type (
 		routineGroup *routineGroup
 		quit         chan struct{}
 		ready        chan struct{}
-		worker       Worker
+		worker       core.Worker
 		stopOnce     sync.Once
 		timeout      time.Duration
 		stopFlag     int32
@@ -139,16 +141,16 @@ func (q *Queue) Wait() {
 }
 
 // Queue to queue all job
-func (q *Queue) Queue(job QueuedMessage) error {
+func (q *Queue) Queue(job core.QueuedMessage) error {
 	return q.handleQueue(q.timeout, job)
 }
 
 // QueueWithTimeout to queue all job with specified timeout.
-func (q *Queue) QueueWithTimeout(timeout time.Duration, job QueuedMessage) error {
+func (q *Queue) QueueWithTimeout(timeout time.Duration, job core.QueuedMessage) error {
 	return q.handleQueue(timeout, job)
 }
 
-func (q *Queue) handleQueue(timeout time.Duration, job QueuedMessage) error {
+func (q *Queue) handleQueue(timeout time.Duration, job core.QueuedMessage) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
@@ -200,7 +202,7 @@ func (q *Queue) handleQueueTask(timeout time.Duration, task TaskFunc) error {
 	return nil
 }
 
-func (q *Queue) work(task QueuedMessage) {
+func (q *Queue) work(task core.QueuedMessage) {
 	var err error
 	// to handle panic cases from inside the worker
 	// in such case, we start a new goroutine
@@ -246,7 +248,7 @@ func (q *Queue) schedule() {
 
 // start handle job
 func (q *Queue) start() {
-	tasks := make(chan QueuedMessage, 1)
+	tasks := make(chan core.QueuedMessage, 1)
 
 	for {
 		// request task from queue in background

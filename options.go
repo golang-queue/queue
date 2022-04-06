@@ -4,6 +4,8 @@ import (
 	"context"
 	"runtime"
 	"time"
+
+	"github.com/golang-queue/queue/core"
 )
 
 var (
@@ -11,7 +13,7 @@ var (
 	defaultWorkerCount = runtime.NumCPU()
 	defaultTimeout     = 60 * time.Minute
 	defaultNewLogger   = NewLogger()
-	defaultFn          = func(context.Context, QueuedMessage) error { return nil }
+	defaultFn          = func(context.Context, core.QueuedMessage) error { return nil }
 	defaultMetric      = NewMetric()
 )
 
@@ -47,14 +49,14 @@ func WithMetric(m Metric) Option {
 }
 
 // WithWorker set custom worker
-func WithWorker(w Worker) Option {
+func WithWorker(w core.Worker) Option {
 	return func(q *Options) {
 		q.worker = w
 	}
 }
 
 // WithFn set custom job function
-func WithFn(fn func(context.Context, QueuedMessage) error) Option {
+func WithFn(fn func(context.Context, core.QueuedMessage) error) Option {
 	return func(q *Options) {
 		q.fn = fn
 	}
@@ -73,8 +75,8 @@ type Options struct {
 	timeout     time.Duration
 	logger      Logger
 	queueSize   int
-	worker      Worker
-	fn          func(context.Context, QueuedMessage) error
+	worker      core.Worker
+	fn          func(context.Context, core.QueuedMessage) error
 	metric      Metric
 }
 

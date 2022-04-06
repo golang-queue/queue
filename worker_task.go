@@ -3,16 +3,18 @@ package queue
 import (
 	"context"
 	"errors"
+
+	"github.com/golang-queue/queue/core"
 )
 
-var _ Worker = (*taskWorker)(nil)
+var _ core.Worker = (*taskWorker)(nil)
 
 // just for unit testing, don't use it.
 type taskWorker struct {
-	messages chan QueuedMessage
+	messages chan core.QueuedMessage
 }
 
-func (w *taskWorker) Run(task QueuedMessage) error {
+func (w *taskWorker) Run(task core.QueuedMessage) error {
 	if v, ok := task.(Job); ok {
 		if v.Task != nil {
 			_ = v.Task(context.Background())
@@ -26,7 +28,7 @@ func (w *taskWorker) Shutdown() error {
 	return nil
 }
 
-func (w *taskWorker) Queue(job QueuedMessage) error {
+func (w *taskWorker) Queue(job core.QueuedMessage) error {
 	select {
 	case w.messages <- job:
 		return nil
@@ -35,7 +37,7 @@ func (w *taskWorker) Queue(job QueuedMessage) error {
 	}
 }
 
-func (w *taskWorker) Request() (QueuedMessage, error) {
+func (w *taskWorker) Request() (core.QueuedMessage, error) {
 	select {
 	case task := <-w.messages:
 		return task, nil
