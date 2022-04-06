@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/golang-queue/queue/core"
+	"github.com/golang-queue/queue/mocks"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/goleak"
 )
@@ -23,11 +25,16 @@ func (m mockMessage) Bytes() []byte {
 }
 
 func TestNewQueue(t *testing.T) {
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
 	q, err := NewQueue()
 	assert.Error(t, err)
 	assert.Nil(t, q)
 
-	w := &emptyWorker{}
+	w := mocks.NewMockWorker(controller)
+	w.EXPECT().Shutdown().Return(nil)
+	w.EXPECT().Request().Return(nil, nil)
 	q, err = NewQueue(
 		WithWorker(w),
 	)
@@ -36,8 +43,7 @@ func TestNewQueue(t *testing.T) {
 
 	q.Start()
 	assert.Equal(t, 0, q.BusyWorkers())
-	q.Shutdown()
-	q.Wait()
+	q.Release()
 }
 
 func TestShtdonwOnce(t *testing.T) {
