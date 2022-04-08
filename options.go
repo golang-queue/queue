@@ -17,56 +17,66 @@ var (
 	defaultMetric      = NewMetric()
 )
 
-// Option for queue system
-type Option func(*Options)
+// An Option configures a mutex.
+type Option interface {
+	Apply(*Options)
+}
+
+// OptionFunc is a function that configures a queue.
+type OptionFunc func(*Options)
+
+// Apply calls f(option)
+func (f OptionFunc) Apply(option *Options) {
+	f(option)
+}
 
 // WithWorkerCount set worker count
 func WithWorkerCount(num int) Option {
-	return func(q *Options) {
+	return OptionFunc(func(q *Options) {
 		q.workerCount = num
-	}
+	})
 }
 
 // WithQueueSize set worker count
 func WithQueueSize(num int) Option {
-	return func(q *Options) {
+	return OptionFunc(func(q *Options) {
 		q.queueSize = num
-	}
+	})
 }
 
 // WithLogger set custom logger
 func WithLogger(l Logger) Option {
-	return func(q *Options) {
+	return OptionFunc(func(q *Options) {
 		q.logger = l
-	}
+	})
 }
 
 // WithMetric set custom Metric
 func WithMetric(m Metric) Option {
-	return func(q *Options) {
+	return OptionFunc(func(q *Options) {
 		q.metric = m
-	}
+	})
 }
 
 // WithWorker set custom worker
 func WithWorker(w core.Worker) Option {
-	return func(q *Options) {
+	return OptionFunc(func(q *Options) {
 		q.worker = w
-	}
+	})
 }
 
 // WithFn set custom job function
 func WithFn(fn func(context.Context, core.QueuedMessage) error) Option {
-	return func(q *Options) {
+	return OptionFunc(func(q *Options) {
 		q.fn = fn
-	}
+	})
 }
 
 // WithTimeOut set custom timeout
 func WithTimeOut(t time.Duration) Option {
-	return func(q *Options) {
+	return OptionFunc(func(q *Options) {
 		q.timeout = t
-	}
+	})
 }
 
 // Options for custom args in Queue
@@ -95,7 +105,7 @@ func NewOptions(opts ...Option) *Options {
 	// Loop through each option
 	for _, opt := range opts {
 		// Call the option giving the instantiated
-		opt(o)
+		opt.Apply(o)
 	}
 
 	return o
