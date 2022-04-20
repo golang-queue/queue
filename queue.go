@@ -264,7 +264,6 @@ func (q *Queue) start() {
 		// request task from queue in background
 		q.routineGroup.Run(func() {
 			for {
-				// q.logger.Info("request")
 				t, err := q.worker.Request()
 				if t == nil || err != nil {
 					if err != nil {
@@ -279,7 +278,6 @@ func (q *Queue) start() {
 						}
 					}
 				}
-				// q.logger.Info("aaa", string(t.Bytes()))
 				if t != nil {
 					tasks <- t
 					return
@@ -300,7 +298,6 @@ func (q *Queue) start() {
 		if !ok {
 			return
 		}
-		// q.logger.Info(string(task.Bytes()))
 
 		// start new task
 		q.metric.IncBusyWorker()
