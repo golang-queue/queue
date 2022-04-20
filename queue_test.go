@@ -24,7 +24,7 @@ func (m mockMessage) Bytes() []byte {
 	return []byte(m.message)
 }
 
-func TestNewQueue(t *testing.T) {
+func TestNewQueueWithZeroWorker(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 
@@ -34,7 +34,33 @@ func TestNewQueue(t *testing.T) {
 
 	w := mocks.NewMockWorker(controller)
 	w.EXPECT().Shutdown().Return(nil)
-	w.EXPECT().Request().Return(nil, nil)
+	q, err = NewQueue(
+		WithWorker(w),
+		WithWorkerCount(0),
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, q)
+
+	q.Start()
+	time.Sleep(50 * time.Millisecond)
+	assert.Equal(t, 0, q.BusyWorkers())
+	q.Release()
+}
+
+func TestNewQueueWithDefaultWorker(t *testing.T) {
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	q, err := NewQueue()
+	assert.Error(t, err)
+	assert.Nil(t, q)
+
+	w := mocks.NewMockWorker(controller)
+	m := mocks.NewMockQueuedMessage(controller)
+	m.EXPECT().Bytes().Return([]byte("test")).AnyTimes()
+	w.EXPECT().Shutdown().Return(nil)
+	w.EXPECT().Request().Return(m, nil).AnyTimes()
+	w.EXPECT().Run(m).Return(nil).AnyTimes()
 	q, err = NewQueue(
 		WithWorker(w),
 	)
@@ -42,8 +68,8 @@ func TestNewQueue(t *testing.T) {
 	assert.NotNil(t, q)
 
 	q.Start()
-	assert.Equal(t, 0, q.BusyWorkers())
 	q.Release()
+	assert.Equal(t, 0, q.BusyWorkers())
 }
 
 func TestShtdonwOnce(t *testing.T) {

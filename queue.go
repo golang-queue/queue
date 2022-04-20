@@ -251,9 +251,23 @@ func (q *Queue) start() {
 	tasks := make(chan core.QueuedMessage, 1)
 
 	for {
+	loop:
+		// check worker number
+		q.schedule()
+
+		select {
+		// wait worker ready
+		case <-q.ready:
+		case <-q.quit:
+			return
+		case <-time.After(30 * time.Second):
+			goto loop
+		}
+
 		// request task from queue in background
 		q.routineGroup.Run(func() {
 			for {
+				// q.logger.Info("request")
 				t, err := q.worker.Request()
 				if t == nil || err != nil {
 					if err != nil {
@@ -268,6 +282,7 @@ func (q *Queue) start() {
 						}
 					}
 				}
+				// q.logger.Info("aaa", string(t.Bytes()))
 				if t != nil {
 					tasks <- t
 					return
@@ -288,11 +303,7 @@ func (q *Queue) start() {
 		if !ok {
 			return
 		}
-
-		// check worker number
-		q.schedule()
-		// wait worker ready
-		<-q.ready
+		// q.logger.Info(string(task.Bytes()))
 
 		// start new task
 		q.metric.IncBusyWorker()
