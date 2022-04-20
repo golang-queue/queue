@@ -251,7 +251,6 @@ func (q *Queue) start() {
 	tasks := make(chan core.QueuedMessage, 1)
 
 	for {
-	loop:
 		// check worker number
 		q.schedule()
 
@@ -260,8 +259,6 @@ func (q *Queue) start() {
 		case <-q.ready:
 		case <-q.quit:
 			return
-		case <-time.After(30 * time.Second):
-			goto loop
 		}
 
 		// request task from queue in background
