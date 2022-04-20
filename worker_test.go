@@ -3,6 +3,7 @@ package queue
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/golang-queue/queue/core"
 	"github.com/golang-queue/queue/mocks"
@@ -30,5 +31,6 @@ func TestMockWorkerAndMessage(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, q)
 	q.Start()
+	time.Sleep(50 * time.Millisecond)
 	q.Release()
 }

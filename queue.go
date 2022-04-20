@@ -251,6 +251,16 @@ func (q *Queue) start() {
 	tasks := make(chan core.QueuedMessage, 1)
 
 	for {
+		// check worker number
+		q.schedule()
+
+		select {
+		// wait worker ready
+		case <-q.ready:
+		case <-q.quit:
+			return
+		}
+
 		// request task from queue in background
 		q.routineGroup.Run(func() {
 			for {
@@ -288,11 +298,6 @@ func (q *Queue) start() {
 		if !ok {
 			return
 		}
-
-		// check worker number
-		q.schedule()
-		// wait worker ready
-		<-q.ready
 
 		// start new task
 		q.metric.IncBusyWorker()
