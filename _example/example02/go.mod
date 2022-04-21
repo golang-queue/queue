@@ -1,6 +1,6 @@
 module example
 
-go 1.16
+go 1.18
 
 require github.com/golang-queue/queue v0.0.7
 
