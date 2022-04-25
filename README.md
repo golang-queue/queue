@@ -11,7 +11,8 @@ Queue is a Golang library for spawning and managing a Goroutine pool, Allowing y
 * [x] Support [buffered channel](https://gobyexample.com/channel-buffering) queue.
 * [x] Support [NSQ](https://nsq.io/) (A realtime distributed messaging platform) as backend.
 * [x] Support [NATS](https://nats.io/) (Connective Technology for Adaptive Edge & Distributed Systems) as backend.
-* [x] Support [Redis Pub/Sub](https://pkg.go.dev/github.com/go-redis/redis/v8#PubSub) as backend.
+* [x] Support [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/) as backend.
+* [x] Support [Redis Streams](https://redis.io/docs/manual/data-types/streams/) as backend.
 
 ## Queue Scenario
 
