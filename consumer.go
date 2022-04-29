@@ -20,6 +20,7 @@ type Consumer struct {
 	taskQueue chan core.QueuedMessage
 	runFunc   func(context.Context, core.QueuedMessage) error
 	stop      chan struct{}
+	exit      chan struct{}
 	logger    Logger
 	stopOnce  sync.Once
 	stopFlag  int32
@@ -101,6 +102,9 @@ func (s *Consumer) Shutdown() error {
 	s.stopOnce.Do(func() {
 		close(s.stop)
 		close(s.taskQueue)
+		if len(s.taskQueue) > 0 {
+			<-s.exit
+		}
 	})
 	return nil
 }
@@ -127,6 +131,10 @@ loop:
 		select {
 		case task, ok := <-s.taskQueue:
 			if !ok {
+				select {
+				case s.exit <- struct{}{}:
+				default:
+				}
 				return nil, ErrQueueHasBeenClosed
 			}
 			return task, nil
@@ -147,6 +155,7 @@ func NewConsumer(opts ...Option) *Consumer {
 	w := &Consumer{
 		taskQueue: make(chan core.QueuedMessage, o.queueSize),
 		stop:      make(chan struct{}),
+		exit:      make(chan struct{}),
 		logger:    o.logger,
 		runFunc:   o.fn,
 	}
