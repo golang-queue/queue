@@ -90,6 +90,7 @@ func ExampleNewPool_queueTaskTimeout() {
 
 	fmt.Println("success task count:", q.SuccessTasks())
 	fmt.Println("failure task count:", q.FailureTasks())
+	fmt.Println("submitted task count:", q.SubmittedTasks())
 
 	// Unordered output:
 	// index: 3
@@ -101,4 +102,5 @@ func ExampleNewPool_queueTaskTimeout() {
 	// context deadline exceeded
 	// success task count: 5
 	// failure task count: 2
+	// submitted task count: 7
 }
