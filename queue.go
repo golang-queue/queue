@@ -210,7 +210,7 @@ func (q *Queue) work(task core.QueuedMessage) {
 		q.metric.DecBusyWorker()
 		e := recover()
 		if e != nil {
-			q.logger.Errorf("panic error: %v", err)
+			q.logger.Errorf("panic error: %v", e)
 		}
 		q.schedule()
 
