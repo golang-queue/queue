@@ -144,7 +144,7 @@ func TestCloseQueueAfterShutdown(t *testing.T) {
 
 func BenchmarkQueueTask(b *testing.B) {
 	q := NewPool(5)
-	q.Release()
+	defer q.Release()
 	for n := 0; n < b.N; n++ {
 		_ = q.QueueTask(func(context.Context) error {
 			time.Sleep(10 * time.Millisecond)
@@ -158,7 +158,7 @@ func BenchmarkQueue(b *testing.B) {
 		message: "foo",
 	}
 	q := NewPool(5)
-	q.Release()
+	defer q.Release()
 	for n := 0; n < b.N; n++ {
 		_ = q.Queue(m)
 	}
