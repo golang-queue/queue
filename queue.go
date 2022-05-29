@@ -2,12 +2,12 @@ package queue
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/goccy/go-json"
 	"github.com/golang-queue/queue/core"
 )
 
@@ -47,13 +47,17 @@ type (
 )
 
 // Bytes get string body
-func (j Job) Bytes() []byte {
+func (j *Job) Bytes() []byte {
+	if j.Task != nil {
+		return nil
+	}
 	return j.Payload
 }
 
 // Encode for encoding the structure
-func (j Job) Encode() []byte {
+func (j *Job) Encode() []byte {
 	b, _ := json.Marshal(j)
+
 	return b
 }
 
@@ -97,11 +101,11 @@ func (q *Queue) Shutdown() {
 		return
 	}
 
-	if q.metric.BusyWorkers() > 0 {
-		q.logger.Infof("shutdown all tasks: %d workers", q.metric.BusyWorkers())
-	}
-
 	q.stopOnce.Do(func() {
+		if q.metric.BusyWorkers() > 0 {
+			q.logger.Infof("shutdown all tasks: %d workers", q.metric.BusyWorkers())
+		}
+
 		if err := q.worker.Shutdown(); err != nil {
 			q.logger.Error(err)
 		}
@@ -155,13 +159,11 @@ func (q *Queue) handleQueue(timeout time.Duration, job core.QueuedMessage) error
 		return ErrQueueShutdown
 	}
 
-	data := Job{
-		Timeout: timeout,
-		Payload: job.Bytes(),
-	}
-
-	if err := q.worker.Queue(Job{
-		Payload: data.Encode(),
+	if err := q.worker.Queue(&Job{
+		Payload: (&Job{
+			Timeout: timeout,
+			Payload: job.Bytes(),
+		}).Encode(),
 	}); err != nil {
 		return err
 	}
@@ -186,13 +188,9 @@ func (q *Queue) handleQueueTask(timeout time.Duration, task TaskFunc) error {
 		return ErrQueueShutdown
 	}
 
-	data := Job{
+	if err := q.worker.Queue(&Job{
 		Timeout: timeout,
-	}
-
-	if err := q.worker.Queue(Job{
 		Task:    task,
-		Payload: data.Encode(),
 	}); err != nil {
 		return err
 	}

@@ -207,7 +207,7 @@ func TestGoroutinePanic(t *testing.T) {
 }
 
 func TestHandleTimeout(t *testing.T) {
-	job := Job{
+	job := &Job{
 		Timeout: 100 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
@@ -222,7 +222,7 @@ func TestHandleTimeout(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, context.DeadlineExceeded, err)
 
-	job = Job{
+	job = &Job{
 		Timeout: 150 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
@@ -245,7 +245,7 @@ func TestHandleTimeout(t *testing.T) {
 }
 
 func TestJobComplete(t *testing.T) {
-	job := Job{
+	job := &Job{
 		Timeout: 100 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
@@ -259,7 +259,7 @@ func TestJobComplete(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("job completed"), err)
 
-	job = Job{
+	job = &Job{
 		Timeout: 250 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
@@ -282,7 +282,7 @@ func TestJobComplete(t *testing.T) {
 }
 
 func TestTaskJobComplete(t *testing.T) {
-	job := Job{
+	job := &Job{
 		Timeout: 100 * time.Millisecond,
 		Task: func(ctx context.Context) error {
 			return errors.New("job completed")
@@ -294,7 +294,7 @@ func TestTaskJobComplete(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("job completed"), err)
 
-	job = Job{
+	job = &Job{
 		Timeout: 250 * time.Millisecond,
 		Task: func(ctx context.Context) error {
 			return nil
@@ -311,7 +311,7 @@ func TestTaskJobComplete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// job timeout
-	job = Job{
+	job = &Job{
 		Timeout: 50 * time.Millisecond,
 		Task: func(ctx context.Context) error {
 			time.Sleep(60 * time.Millisecond)
