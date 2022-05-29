@@ -26,7 +26,7 @@ type Consumer struct {
 	stopFlag  int32
 }
 
-func (s *Consumer) handle(job Job) error {
+func (s *Consumer) handle(job *Job) error {
 	// create channel with buffer size 1 to avoid goroutine leak
 	done := make(chan error, 1)
 	panicChan := make(chan interface{}, 1)
@@ -79,13 +79,18 @@ func (s *Consumer) handle(job Job) error {
 
 // Run to execute new task
 func (s *Consumer) Run(task core.QueuedMessage) error {
-	var data Job
-	_ = json.Unmarshal(task.Bytes(), &data)
-	if v, ok := task.(Job); ok {
-		if v.Task != nil {
-			data.Task = v.Task
-		}
+	// var data Job
+	// _ = json.Unmarshal(task.Bytes(), &data)
+	// if v, ok := task.(Job); ok {
+	// 	if v.Task != nil {
+	// 		data.Task = v.Task
+	// 	}
+	// }
+	data := task.(*Job)
+	if data.Task == nil {
+		_ = json.Unmarshal(task.Bytes(), data)
 	}
+
 	if err := s.handle(data); err != nil {
 		return err
 	}

@@ -48,6 +48,9 @@ type (
 
 // Bytes get string body
 func (j Job) Bytes() []byte {
+	if j.Task != nil {
+		return nil
+	}
 	return j.Payload
 }
 
@@ -155,12 +158,12 @@ func (q *Queue) handleQueue(timeout time.Duration, job core.QueuedMessage) error
 		return ErrQueueShutdown
 	}
 
-	data := Job{
+	data := &Job{
 		Timeout: timeout,
 		Payload: job.Bytes(),
 	}
 
-	if err := q.worker.Queue(Job{
+	if err := q.worker.Queue(&Job{
 		Payload: data.Encode(),
 	}); err != nil {
 		return err
@@ -186,14 +189,12 @@ func (q *Queue) handleQueueTask(timeout time.Duration, task TaskFunc) error {
 		return ErrQueueShutdown
 	}
 
-	data := Job{
+	data := &Job{
 		Timeout: timeout,
+		Task:    task,
 	}
 
-	if err := q.worker.Queue(Job{
-		Task:    task,
-		Payload: data.Encode(),
-	}); err != nil {
+	if err := q.worker.Queue(data); err != nil {
 		return err
 	}
 
