@@ -143,17 +143,18 @@ func TestCloseQueueAfterShutdown(t *testing.T) {
 }
 
 func BenchmarkQueueTask(b *testing.B) {
+	b.ReportAllocs()
 	q := NewPool(5)
 	defer q.Release()
 	for n := 0; n < b.N; n++ {
 		_ = q.QueueTask(func(context.Context) error {
-			time.Sleep(10 * time.Millisecond)
 			return nil
 		})
 	}
 }
 
 func BenchmarkQueue(b *testing.B) {
+	b.ReportAllocs()
 	m := &mockMessage{
 		message: "foo",
 	}

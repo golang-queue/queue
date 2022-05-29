@@ -15,7 +15,7 @@ type taskWorker struct {
 }
 
 func (w *taskWorker) Run(task core.QueuedMessage) error {
-	if v, ok := task.(Job); ok {
+	if v, ok := task.(*Job); ok {
 		if v.Task != nil {
 			_ = v.Task(context.Background())
 		}

@@ -2,12 +2,12 @@ package queue
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/goccy/go-json"
 	"github.com/golang-queue/queue/core"
 )
 
@@ -79,13 +79,6 @@ func (s *Consumer) handle(job *Job) error {
 
 // Run to execute new task
 func (s *Consumer) Run(task core.QueuedMessage) error {
-	// var data Job
-	// _ = json.Unmarshal(task.Bytes(), &data)
-	// if v, ok := task.(Job); ok {
-	// 	if v.Task != nil {
-	// 		data.Task = v.Task
-	// 	}
-	// }
 	data := task.(*Job)
 	if data.Task == nil {
 		_ = json.Unmarshal(task.Bytes(), data)
