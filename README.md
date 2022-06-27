@@ -13,6 +13,7 @@ Queue is a Golang library for spawning and managing a Goroutine pool, Allowing y
 * [x] Support [NATS](https://nats.io/) (Connective Technology for Adaptive Edge & Distributed Systems) as backend.
 * [x] Support [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/) as backend.
 * [x] Support [Redis Streams](https://redis.io/docs/manual/data-types/streams/) as backend.
+* [x] Support [RabbitMQ](https://www.rabbitmq.com/) as backend.
 
 ## Queue Scenario
 
