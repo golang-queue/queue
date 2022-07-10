@@ -58,6 +58,9 @@ jobs:
       - name: Run Tests
         run: |
           go test -v -covermode=atomic -coverprofile=coverage.out
+
+      - name: Run Benchmark
+        run: |
           go test -v -run=^$ -benchmem -bench .
 
       - name: Upload coverage to Codecov
