@@ -25,6 +25,10 @@ Multile Container with Queue service like NSQ, NATs or Redis
 
 ![queue02](./images/queue-02.png)
 
+## Requirements
+
+Go version **1.13** above
+
 ## Installation
 
 Install the stable version:
