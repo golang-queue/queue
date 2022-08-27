@@ -3,7 +3,7 @@ module github.com/golang-queue/queue
 go 1.18
 
 require (
-	github.com/goccy/go-json v0.9.10
+	github.com/goccy/go-json v0.9.11
 	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/goleak v1.1.12
