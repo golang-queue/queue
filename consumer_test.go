@@ -11,8 +11,8 @@ import (
 
 	"github.com/golang-queue/queue/core"
 	"github.com/golang-queue/queue/mocks"
-	"github.com/golang/mock/gomock"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
 
