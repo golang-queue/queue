@@ -19,14 +19,14 @@ var (
 
 // An Option configures a mutex.
 type Option interface {
-	Apply(*Options)
+	apply(*Options)
 }
 
 // OptionFunc is a function that configures a queue.
 type OptionFunc func(*Options)
 
 // Apply calls f(option)
-func (f OptionFunc) Apply(option *Options) {
+func (f OptionFunc) apply(option *Options) {
 	f(option)
 }
 
@@ -105,7 +105,7 @@ func NewOptions(opts ...Option) *Options {
 	// Loop through each option
 	for _, opt := range opts {
 		// Call the option giving the instantiated
-		opt.Apply(o)
+		opt.apply(o)
 	}
 
 	return o
