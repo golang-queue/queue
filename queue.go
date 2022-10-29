@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/goccy/go-json"
 	"github.com/golang-queue/queue/core"
 )
 
@@ -32,34 +31,7 @@ type (
 		timeout      time.Duration
 		stopFlag     int32
 	}
-
-	// Job describes a task and its metadata.
-	Job struct {
-		Task TaskFunc `json:"-"`
-
-		// Timeout is the duration the task can be processed by Handler.
-		// zero if not specified
-		Timeout time.Duration `json:"timeout"`
-
-		// Payload is the payload data of the task.
-		Payload []byte `json:"body"`
-	}
 )
-
-// Bytes get string body
-func (j *Job) Bytes() []byte {
-	if j.Task != nil {
-		return nil
-	}
-	return j.Payload
-}
-
-// Encode for encoding the structure
-func (j *Job) Encode() []byte {
-	b, _ := json.Marshal(j)
-
-	return b
-}
 
 // ErrMissingWorker missing define worker
 var ErrMissingWorker = errors.New("missing worker module")
@@ -145,25 +117,30 @@ func (q *Queue) Wait() {
 }
 
 // Queue to queue all job
-func (q *Queue) Queue(job core.QueuedMessage) error {
-	return q.handleQueue(q.timeout, job)
-}
-
-// QueueWithTimeout to queue all job with specified timeout.
-func (q *Queue) QueueWithTimeout(timeout time.Duration, job core.QueuedMessage) error {
-	return q.handleQueue(timeout, job)
-}
-
-func (q *Queue) handleQueue(timeout time.Duration, job core.QueuedMessage) error {
+func (q *Queue) Queue(job core.QueuedMessage, opts ...JobOption) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
 
+	o := &JobConfig{
+		retryCount: 0,
+		retryDelay: 100 * time.Millisecond,
+		timeout:    q.timeout,
+	}
+
+	// Loop through each option
+	for _, opt := range opts {
+		// Call the option giving the instantiated
+		opt.apply(o)
+	}
+
 	if err := q.worker.Queue(&Job{
 		Payload: (&Job{
-			Timeout: timeout,
-			Payload: job.Bytes(),
-		}).Encode(),
+			RetryCount: o.retryCount,
+			RetryDelay: o.retryDelay,
+			Timeout:    o.timeout,
+			Payload:    job.Bytes(),
+		}).encode(),
 	}); err != nil {
 		return err
 	}

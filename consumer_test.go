@@ -103,7 +103,7 @@ func TestJobReachTimeout(t *testing.T) {
 		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
-	assert.NoError(t, q.QueueWithTimeout(30*time.Millisecond, m))
+	assert.NoError(t, q.Queue(m, WithTimeout(30*time.Millisecond)))
 	q.Start()
 	time.Sleep(50 * time.Millisecond)
 	q.Release()
@@ -137,8 +137,8 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
-	assert.NoError(t, q.QueueWithTimeout(100*time.Millisecond, m))
-	assert.NoError(t, q.QueueWithTimeout(100*time.Millisecond, m))
+	assert.NoError(t, q.Queue(m, WithTimeout(100*time.Millisecond)))
+	assert.NoError(t, q.Queue(m, WithTimeout(100*time.Millisecond)))
 	q.Start()
 	time.Sleep(10 * time.Millisecond)
 	assert.Equal(t, 2, int(q.metric.busyWorkers))
