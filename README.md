@@ -106,6 +106,7 @@ import (
   "time"
 
   "github.com/golang-queue/queue"
+  "github.com/golang-queue/queue/core"
 )
 
 type job struct {
@@ -126,7 +127,7 @@ func main() {
   rets := make(chan string, taskN)
 
   // initial queue pool
-  q := queue.NewPool(5, queue.WithFn(func(ctx context.Context, m queue.QueuedMessage) error {
+  q := queue.NewPool(5, queue.WithFn(func(ctx context.Context, m core.QueuedMessage) error {
     v, ok := m.(*job)
     if !ok {
       if err := json.Unmarshal(m.Bytes(), &v); err != nil {
@@ -177,6 +178,7 @@ import (
 
   "github.com/golang-queue/nsq"
   "github.com/golang-queue/queue"
+  "github.com/golang-queue/queue/core"
 )
 
 type job struct {
@@ -202,7 +204,7 @@ func main() {
     nsq.WithChannel("foobar"),
     // concurrent job number
     nsq.WithMaxInFlight(10),
-    nsq.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+    nsq.WithRunFunc(func(ctx context.Context, m core.QueuedMessage) error {
       v, ok := m.(*job)
       if !ok {
         if err := json.Unmarshal(m.Bytes(), &v); err != nil {
@@ -257,6 +259,7 @@ import (
 
   "github.com/golang-queue/nats"
   "github.com/golang-queue/queue"
+  "github.com/golang-queue/queue/core"
 )
 
 type job struct {
@@ -280,7 +283,7 @@ func main() {
     nats.WithAddr("127.0.0.1:4222"),
     nats.WithSubj("example"),
     nats.WithQueue("foobar"),
-    nats.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+    nats.WithRunFunc(func(ctx context.Context, m core.QueuedMessage) error {
       v, ok := m.(*job)
       if !ok {
         if err := json.Unmarshal(m.Bytes(), &v); err != nil {
@@ -340,6 +343,7 @@ import (
   "time"
 
   "github.com/golang-queue/queue"
+  "github.com/golang-queue/queue/core"
   "github.com/golang-queue/redisdb"
 )
 
@@ -363,7 +367,7 @@ func main() {
   w := redisdb.NewWorker(
     redisdb.WithAddr("127.0.0.1:6379"),
     redisdb.WithChannel("foobar"),
-    redisdb.WithRunFunc(func(ctx context.Context, m queue.QueuedMessage) error {
+    redisdb.WithRunFunc(func(ctx context.Context, m core.QueuedMessage) error {
       v, ok := m.(*job)
       if !ok {
         if err := json.Unmarshal(m.Bytes(), &v); err != nil {
