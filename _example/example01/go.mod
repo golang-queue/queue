@@ -7,6 +7,9 @@ require (
 	github.com/golang-queue/queue v0.0.7
 )
 
-require github.com/rs/zerolog v1.26.1 // indirect
+require (
+	github.com/goccy/go-json v0.9.11 // indirect
+	github.com/rs/zerolog v1.26.1 // indirect
+)
 
 replace github.com/golang-queue/queue => ../../

@@ -7,7 +7,9 @@ import (
 	"log"
 	"time"
 
+	"github.com/golang-queue/contrib/zerolog"
 	"github.com/golang-queue/queue"
+	"github.com/golang-queue/queue/core"
 )
 
 type job struct {
@@ -28,7 +30,7 @@ func main() {
 	rets := make(chan string, taskN)
 
 	// initial queue pool
-	q := queue.NewPool(5, queue.WithFn(func(ctx context.Context, m queue.QueuedMessage) error {
+	q := queue.NewPool(5, queue.WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 		v, ok := m.(*job)
 		if !ok {
 			if err := json.Unmarshal(m.Bytes(), &v); err != nil {
@@ -38,7 +40,7 @@ func main() {
 
 		rets <- "Hi, " + v.Name + ", " + v.Message
 		return nil
-	}))
+	}), queue.WithLogger(zerolog.New()))
 	// shutdown the service and notify all the worker
 	// wait all jobs done.
 	defer q.Release()
