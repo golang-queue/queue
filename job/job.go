@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/goccy/go-json"
+	"github.com/golang-queue/queue/core"
 )
 
 // TaskFunc is the task function
@@ -41,4 +42,36 @@ func (m *Message) Encode() []byte {
 	b, _ := json.Marshal(m)
 
 	return b
+}
+
+func NewMessage(m core.QueuedMessage, opts ...Option) *Message {
+	o := NewOptions(opts...)
+	// Loop through each option
+	for _, opt := range opts {
+		// Call the option giving the instantiated
+		opt.Apply(o)
+	}
+
+	return &Message{
+		RetryCount: o.retryCount,
+		RetryDelay: o.retryDelay,
+		Timeout:    o.timeout,
+		Payload:    m.Bytes(),
+	}
+}
+
+func NewTask(task TaskFunc, opts ...Option) *Message {
+	o := NewOptions(opts...)
+	// Loop through each option
+	for _, opt := range opts {
+		// Call the option giving the instantiated
+		opt.Apply(o)
+	}
+
+	return &Message{
+		Timeout:    o.timeout,
+		RetryCount: o.retryCount,
+		RetryDelay: o.retryDelay,
+		Task:       task,
+	}
 }

@@ -2,29 +2,30 @@ package job
 
 import "time"
 
-type Config struct {
-	RetryCount int64
-	RetryDelay time.Duration
-	Timeout    time.Duration
+type Options struct {
+	retryCount int64
+	retryDelay time.Duration
+	timeout    time.Duration
 }
 
 // An Option configures a mutex.
 type Option interface {
-	Apply(*Config)
+	Apply(*Options)
 }
 
 // OptionFunc is a function that configures a job.
-type OptionFunc func(*Config)
+type OptionFunc func(*Options)
 
 // Apply calls f(option)
-func (f OptionFunc) Apply(option *Config) {
+func (f OptionFunc) Apply(option *Options) {
 	f(option)
 }
 
-func DefaultOptions(opts ...Option) *Config {
-	o := &Config{
-		RetryCount: 0,
-		RetryDelay: 100 * time.Millisecond,
+func NewOptions(opts ...Option) *Options {
+	o := &Options{
+		retryCount: 0,
+		retryDelay: 100 * time.Millisecond,
+		timeout:    60 * time.Minute,
 	}
 
 	// Loop through each option
@@ -37,19 +38,19 @@ func DefaultOptions(opts ...Option) *Config {
 }
 
 func WithRetryCount(count int64) Option {
-	return OptionFunc(func(q *Config) {
-		q.RetryCount = count
+	return OptionFunc(func(o *Options) {
+		o.retryCount = count
 	})
 }
 
 func WithRetryDelay(t time.Duration) Option {
-	return OptionFunc(func(q *Config) {
-		q.RetryDelay = t
+	return OptionFunc(func(o *Options) {
+		o.retryDelay = t
 	})
 }
 
 func WithTimeout(t time.Duration) Option {
-	return OptionFunc(func(q *Config) {
-		q.Timeout = t
+	return OptionFunc(func(o *Options) {
+		o.timeout = t
 	})
 }

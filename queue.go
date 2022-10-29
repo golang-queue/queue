@@ -25,7 +25,6 @@ type (
 		ready        chan struct{}
 		worker       core.Worker
 		stopOnce     sync.Once
-		timeout      time.Duration
 		stopFlag     int32
 	}
 )
@@ -42,7 +41,6 @@ func NewQueue(opts ...Option) (*Queue, error) {
 		ready:        make(chan struct{}, 1),
 		workerCount:  o.workerCount,
 		logger:       o.logger,
-		timeout:      o.timeout,
 		worker:       o.worker,
 		metric:       &metric{},
 	}
@@ -119,21 +117,10 @@ func (q *Queue) Queue(m core.QueuedMessage, opts ...job.Option) error {
 		return ErrQueueShutdown
 	}
 
-	o := job.DefaultOptions(job.WithTimeout(q.timeout))
-
-	// Loop through each option
-	for _, opt := range opts {
-		// Call the option giving the instantiated
-		opt.Apply(o)
-	}
+	message := job.NewMessage(m, opts...)
 
 	if err := q.worker.Queue(&job.Message{
-		Payload: (&job.Message{
-			RetryCount: o.RetryCount,
-			RetryDelay: o.RetryDelay,
-			Timeout:    o.Timeout,
-			Payload:    m.Bytes(),
-		}).Encode(),
+		Payload: message.Encode(),
 	}); err != nil {
 		return err
 	}
@@ -149,20 +136,9 @@ func (q *Queue) QueueTask(task job.TaskFunc, opts ...job.Option) error {
 		return ErrQueueShutdown
 	}
 
-	o := job.DefaultOptions(job.WithTimeout(q.timeout))
+	message := job.NewTask(task, opts...)
 
-	// Loop through each option
-	for _, opt := range opts {
-		// Call the option giving the instantiated
-		opt.Apply(o)
-	}
-
-	if err := q.worker.Queue(&job.Message{
-		Timeout:    o.Timeout,
-		RetryCount: o.RetryCount,
-		RetryDelay: o.RetryDelay,
-		Task:       task,
-	}); err != nil {
+	if err := q.worker.Queue(message); err != nil {
 		return err
 	}
 
