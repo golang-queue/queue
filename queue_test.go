@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-queue/queue/core"
+	"github.com/golang-queue/queue/job"
 	"github.com/golang-queue/queue/mocks"
 
 	"github.com/golang/mock/gomock"
@@ -136,7 +137,7 @@ func TestCloseQueueAfterShutdown(t *testing.T) {
 	assert.Equal(t, ErrQueueShutdown, err)
 	err = q.Queue(mockMessage{
 		message: "foobar",
-	}, WithTimeout(10*time.Millisecond))
+	}, job.WithTimeout(10*time.Millisecond))
 	assert.Error(t, err)
 	assert.Equal(t, ErrQueueShutdown, err)
 }

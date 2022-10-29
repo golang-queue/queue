@@ -1,13 +1,17 @@
-package queue
+package job
 
 import (
+	"context"
 	"time"
 
 	"github.com/goccy/go-json"
 )
 
-// Job describes a task and its metadata.
-type Job struct {
+// TaskFunc is the task function
+type TaskFunc func(context.Context) error
+
+// Message describes a task and its metadata.
+type Message struct {
 	Task TaskFunc `json:"-"`
 
 	// Timeout is the duration the task can be processed by Handler.
@@ -25,16 +29,16 @@ type Job struct {
 }
 
 // Bytes get string body
-func (j *Job) Bytes() []byte {
-	if j.Task != nil {
+func (m *Message) Bytes() []byte {
+	if m.Task != nil {
 		return nil
 	}
-	return j.Payload
+	return m.Payload
 }
 
 // Encode for encoding the structure
-func (j *Job) encode() []byte {
-	b, _ := json.Marshal(j)
+func (m *Message) Encode() []byte {
+	b, _ := json.Marshal(m)
 
 	return b
 }

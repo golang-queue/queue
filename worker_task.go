@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/golang-queue/queue/core"
+	"github.com/golang-queue/queue/job"
 )
 
 var _ core.Worker = (*taskWorker)(nil)
@@ -15,7 +16,7 @@ type taskWorker struct {
 }
 
 func (w *taskWorker) Run(task core.QueuedMessage) error {
-	if v, ok := task.(*Job); ok {
+	if v, ok := task.(*job.Message); ok {
 		if v.Task != nil {
 			_ = v.Task(context.Background())
 		}

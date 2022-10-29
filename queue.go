@@ -1,20 +1,17 @@
 package queue
 
 import (
-	"context"
 	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/golang-queue/queue/core"
+	"github.com/golang-queue/queue/job"
 )
 
 // ErrQueueShutdown the queue is released and closed.
 var ErrQueueShutdown = errors.New("queue has been closed and released")
-
-// TaskFunc is the task function
-type TaskFunc func(context.Context) error
 
 type (
 	// A Queue is a message queue.
@@ -117,30 +114,26 @@ func (q *Queue) Wait() {
 }
 
 // Queue to queue all job
-func (q *Queue) Queue(job core.QueuedMessage, opts ...JobOption) error {
+func (q *Queue) Queue(m core.QueuedMessage, opts ...job.Option) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
 
-	o := &JobConfig{
-		retryCount: 0,
-		retryDelay: 100 * time.Millisecond,
-		timeout:    q.timeout,
-	}
+	o := job.DefaultOptions(job.WithTimeout(q.timeout))
 
 	// Loop through each option
 	for _, opt := range opts {
 		// Call the option giving the instantiated
-		opt.apply(o)
+		opt.Apply(o)
 	}
 
-	if err := q.worker.Queue(&Job{
-		Payload: (&Job{
-			RetryCount: o.retryCount,
-			RetryDelay: o.retryDelay,
-			Timeout:    o.timeout,
-			Payload:    job.Bytes(),
-		}).encode(),
+	if err := q.worker.Queue(&job.Message{
+		Payload: (&job.Message{
+			RetryCount: o.RetryCount,
+			RetryDelay: o.RetryDelay,
+			Timeout:    o.Timeout,
+			Payload:    m.Bytes(),
+		}).Encode(),
 	}); err != nil {
 		return err
 	}
@@ -151,21 +144,21 @@ func (q *Queue) Queue(job core.QueuedMessage, opts ...JobOption) error {
 }
 
 // QueueTask to queue job task
-func (q *Queue) QueueTask(task TaskFunc) error {
+func (q *Queue) QueueTask(task job.TaskFunc) error {
 	return q.handleQueueTask(q.timeout, task)
 }
 
 // QueueTaskWithTimeout to queue job task with timeout
-func (q *Queue) QueueTaskWithTimeout(timeout time.Duration, task TaskFunc) error {
+func (q *Queue) QueueTaskWithTimeout(timeout time.Duration, task job.TaskFunc) error {
 	return q.handleQueueTask(timeout, task)
 }
 
-func (q *Queue) handleQueueTask(timeout time.Duration, task TaskFunc) error {
+func (q *Queue) handleQueueTask(timeout time.Duration, task job.TaskFunc) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
 
-	if err := q.worker.Queue(&Job{
+	if err := q.worker.Queue(&job.Message{
 		Timeout: timeout,
 		Task:    task,
 	}); err != nil {
