@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-queue/queue"
+	"github.com/golang-queue/queue/job"
 )
 
 func ExampleNewPool_queueTask() {
@@ -57,7 +58,7 @@ func ExampleNewPool_queueTaskTimeout() {
 	// assign tasks to asynchronous goroutine pool
 	for i := 0; i < taskN; i++ {
 		idx := i
-		if err := q.QueueTaskWithTimeout(100*time.Millisecond, func(ctx context.Context) error {
+		if err := q.QueueTask(func(ctx context.Context) error {
 			// panic job
 			if idx == 5 {
 				panic("system error")
@@ -74,7 +75,7 @@ func ExampleNewPool_queueTaskTimeout() {
 
 			rets <- idx
 			return nil
-		}); err != nil {
+		}, job.WithTimeout(100*time.Millisecond)); err != nil {
 			log.Println(err)
 		}
 	}
