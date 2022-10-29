@@ -46,11 +46,6 @@ func (m *Message) Encode() []byte {
 
 func NewMessage(m core.QueuedMessage, opts ...Option) *Message {
 	o := NewOptions(opts...)
-	// Loop through each option
-	for _, opt := range opts {
-		// Call the option giving the instantiated
-		opt.Apply(o)
-	}
 
 	return &Message{
 		RetryCount: o.retryCount,
@@ -62,11 +57,6 @@ func NewMessage(m core.QueuedMessage, opts ...Option) *Message {
 
 func NewTask(task TaskFunc, opts ...Option) *Message {
 	o := NewOptions(opts...)
-	// Loop through each option
-	for _, opt := range opts {
-		// Call the option giving the instantiated
-		opt.Apply(o)
-	}
 
 	return &Message{
 		Timeout:    o.timeout,
