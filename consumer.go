@@ -9,6 +9,7 @@ import (
 
 	"github.com/goccy/go-json"
 	"github.com/golang-queue/queue/core"
+	"github.com/golang-queue/queue/job"
 )
 
 var _ core.Worker = (*Consumer)(nil)
@@ -26,12 +27,12 @@ type Consumer struct {
 	stopFlag  int32
 }
 
-func (s *Consumer) handle(job *Job) error {
+func (s *Consumer) handle(m *job.Message) error {
 	// create channel with buffer size 1 to avoid goroutine leak
 	done := make(chan error, 1)
 	panicChan := make(chan interface{}, 1)
 	startTime := time.Now()
-	ctx, cancel := context.WithTimeout(context.Background(), job.Timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), m.Timeout)
 	defer func() {
 		cancel()
 	}()
@@ -46,10 +47,10 @@ func (s *Consumer) handle(job *Job) error {
 		}()
 
 		// run custom process function
-		if job.Task != nil {
-			done <- job.Task(ctx)
+		if m.Task != nil {
+			done <- m.Task(ctx)
 		} else {
-			done <- s.runFunc(ctx, job)
+			done <- s.runFunc(ctx, m)
 		}
 	}()
 
@@ -62,7 +63,7 @@ func (s *Consumer) handle(job *Job) error {
 		// cancel job
 		cancel()
 
-		leftTime := job.Timeout - time.Since(startTime)
+		leftTime := m.Timeout - time.Since(startTime)
 		// wait job
 		select {
 		case <-time.After(leftTime):
@@ -79,7 +80,7 @@ func (s *Consumer) handle(job *Job) error {
 
 // Run to execute new task
 func (s *Consumer) Run(task core.QueuedMessage) error {
-	data := task.(*Job)
+	data := task.(*job.Message)
 	if data.Task == nil {
 		_ = json.Unmarshal(task.Bytes(), data)
 	}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-queue/queue/core"
+	"github.com/golang-queue/queue/job"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -32,10 +33,10 @@ func TestQueueTaskJob(t *testing.T) {
 		q.logger.Info("Add new task 2")
 		return nil
 	}))
-	assert.NoError(t, q.QueueTaskWithTimeout(50*time.Millisecond, func(ctx context.Context) error {
+	assert.NoError(t, q.QueueTask(func(ctx context.Context) error {
 		time.Sleep(80 * time.Millisecond)
 		return nil
-	}))
+	}, job.WithTimeout(50*time.Millisecond)))
 	time.Sleep(50 * time.Millisecond)
 	q.Shutdown()
 	assert.Equal(t, ErrQueueShutdown, q.QueueTask(func(ctx context.Context) error {

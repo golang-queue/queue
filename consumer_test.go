@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/golang-queue/queue/core"
+	"github.com/golang-queue/queue/job"
 	"github.com/golang-queue/queue/mocks"
 
 	"github.com/golang/mock/gomock"
@@ -103,7 +104,7 @@ func TestJobReachTimeout(t *testing.T) {
 		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
-	assert.NoError(t, q.QueueWithTimeout(30*time.Millisecond, m))
+	assert.NoError(t, q.Queue(m, job.WithTimeout(30*time.Millisecond)))
 	q.Start()
 	time.Sleep(50 * time.Millisecond)
 	q.Release()
@@ -137,8 +138,8 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
-	assert.NoError(t, q.QueueWithTimeout(100*time.Millisecond, m))
-	assert.NoError(t, q.QueueWithTimeout(100*time.Millisecond, m))
+	assert.NoError(t, q.Queue(m, job.WithTimeout(100*time.Millisecond)))
+	assert.NoError(t, q.Queue(m, job.WithTimeout(100*time.Millisecond)))
 	q.Start()
 	time.Sleep(10 * time.Millisecond)
 	assert.Equal(t, 2, int(q.metric.busyWorkers))
@@ -207,7 +208,7 @@ func TestGoroutinePanic(t *testing.T) {
 }
 
 func TestHandleTimeout(t *testing.T) {
-	job := &Job{
+	m := &job.Message{
 		Timeout: 100 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
@@ -218,11 +219,11 @@ func TestHandleTimeout(t *testing.T) {
 		}),
 	)
 
-	err := w.handle(job)
+	err := w.handle(m)
 	assert.Error(t, err)
 	assert.Equal(t, context.DeadlineExceeded, err)
 
-	job = &Job{
+	m = &job.Message{
 		Timeout: 150 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
@@ -236,7 +237,7 @@ func TestHandleTimeout(t *testing.T) {
 
 	done := make(chan error)
 	go func() {
-		done <- w.handle(job)
+		done <- w.handle(m)
 	}()
 
 	err = <-done
@@ -245,7 +246,7 @@ func TestHandleTimeout(t *testing.T) {
 }
 
 func TestJobComplete(t *testing.T) {
-	job := &Job{
+	m := &job.Message{
 		Timeout: 100 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
@@ -255,11 +256,11 @@ func TestJobComplete(t *testing.T) {
 		}),
 	)
 
-	err := w.handle(job)
+	err := w.handle(m)
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("job completed"), err)
 
-	job = &Job{
+	m = &job.Message{
 		Timeout: 250 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
@@ -273,7 +274,7 @@ func TestJobComplete(t *testing.T) {
 
 	done := make(chan error)
 	go func() {
-		done <- w.handle(job)
+		done <- w.handle(m)
 	}()
 
 	err = <-done
@@ -282,7 +283,7 @@ func TestJobComplete(t *testing.T) {
 }
 
 func TestTaskJobComplete(t *testing.T) {
-	job := &Job{
+	m := &job.Message{
 		Timeout: 100 * time.Millisecond,
 		Task: func(ctx context.Context) error {
 			return errors.New("job completed")
@@ -290,11 +291,11 @@ func TestTaskJobComplete(t *testing.T) {
 	}
 	w := NewConsumer()
 
-	err := w.handle(job)
+	err := w.handle(m)
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("job completed"), err)
 
-	job = &Job{
+	m = &job.Message{
 		Timeout: 250 * time.Millisecond,
 		Task: func(ctx context.Context) error {
 			return nil
@@ -304,21 +305,21 @@ func TestTaskJobComplete(t *testing.T) {
 	w = NewConsumer()
 	done := make(chan error)
 	go func() {
-		done <- w.handle(job)
+		done <- w.handle(m)
 	}()
 
 	err = <-done
 	assert.NoError(t, err)
 
 	// job timeout
-	job = &Job{
+	m = &job.Message{
 		Timeout: 50 * time.Millisecond,
 		Task: func(ctx context.Context) error {
 			time.Sleep(60 * time.Millisecond)
 			return nil
 		},
 	}
-	assert.Equal(t, context.DeadlineExceeded, w.handle(job))
+	assert.Equal(t, context.DeadlineExceeded, w.handle(m))
 }
 
 func TestIncreaseWorkerCount(t *testing.T) {

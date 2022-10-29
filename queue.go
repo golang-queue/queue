@@ -1,21 +1,17 @@
 package queue
 
 import (
-	"context"
 	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/goccy/go-json"
 	"github.com/golang-queue/queue/core"
+	"github.com/golang-queue/queue/job"
 )
 
 // ErrQueueShutdown the queue is released and closed.
 var ErrQueueShutdown = errors.New("queue has been closed and released")
-
-// TaskFunc is the task function
-type TaskFunc func(context.Context) error
 
 type (
 	// A Queue is a message queue.
@@ -29,37 +25,9 @@ type (
 		ready        chan struct{}
 		worker       core.Worker
 		stopOnce     sync.Once
-		timeout      time.Duration
 		stopFlag     int32
 	}
-
-	// Job describes a task and its metadata.
-	Job struct {
-		Task TaskFunc `json:"-"`
-
-		// Timeout is the duration the task can be processed by Handler.
-		// zero if not specified
-		Timeout time.Duration `json:"timeout"`
-
-		// Payload is the payload data of the task.
-		Payload []byte `json:"body"`
-	}
 )
-
-// Bytes get string body
-func (j *Job) Bytes() []byte {
-	if j.Task != nil {
-		return nil
-	}
-	return j.Payload
-}
-
-// Encode for encoding the structure
-func (j *Job) Encode() []byte {
-	b, _ := json.Marshal(j)
-
-	return b
-}
 
 // ErrMissingWorker missing define worker
 var ErrMissingWorker = errors.New("missing worker module")
@@ -73,7 +41,6 @@ func NewQueue(opts ...Option) (*Queue, error) {
 		ready:        make(chan struct{}, 1),
 		workerCount:  o.workerCount,
 		logger:       o.logger,
-		timeout:      o.timeout,
 		worker:       o.worker,
 		metric:       &metric{},
 	}
@@ -145,25 +112,15 @@ func (q *Queue) Wait() {
 }
 
 // Queue to queue all job
-func (q *Queue) Queue(job core.QueuedMessage) error {
-	return q.handleQueue(q.timeout, job)
-}
-
-// QueueWithTimeout to queue all job with specified timeout.
-func (q *Queue) QueueWithTimeout(timeout time.Duration, job core.QueuedMessage) error {
-	return q.handleQueue(timeout, job)
-}
-
-func (q *Queue) handleQueue(timeout time.Duration, job core.QueuedMessage) error {
+func (q *Queue) Queue(m core.QueuedMessage, opts ...job.Option) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
 
-	if err := q.worker.Queue(&Job{
-		Payload: (&Job{
-			Timeout: timeout,
-			Payload: job.Bytes(),
-		}).Encode(),
+	message := job.NewMessage(m, opts...)
+
+	if err := q.worker.Queue(&job.Message{
+		Payload: message.Encode(),
 	}); err != nil {
 		return err
 	}
@@ -174,24 +131,14 @@ func (q *Queue) handleQueue(timeout time.Duration, job core.QueuedMessage) error
 }
 
 // QueueTask to queue job task
-func (q *Queue) QueueTask(task TaskFunc) error {
-	return q.handleQueueTask(q.timeout, task)
-}
-
-// QueueTaskWithTimeout to queue job task with timeout
-func (q *Queue) QueueTaskWithTimeout(timeout time.Duration, task TaskFunc) error {
-	return q.handleQueueTask(timeout, task)
-}
-
-func (q *Queue) handleQueueTask(timeout time.Duration, task TaskFunc) error {
+func (q *Queue) QueueTask(task job.TaskFunc, opts ...job.Option) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
 
-	if err := q.worker.Queue(&Job{
-		Timeout: timeout,
-		Task:    task,
-	}); err != nil {
+	message := job.NewTask(task, opts...)
+
+	if err := q.worker.Queue(message); err != nil {
 		return err
 	}
 

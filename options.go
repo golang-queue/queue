@@ -3,7 +3,6 @@ package queue
 import (
 	"context"
 	"runtime"
-	"time"
 
 	"github.com/golang-queue/queue/core"
 )
@@ -11,7 +10,6 @@ import (
 var (
 	defaultQueueSize   = 4096
 	defaultWorkerCount = runtime.NumCPU()
-	defaultTimeout     = 60 * time.Minute
 	defaultNewLogger   = NewLogger()
 	defaultFn          = func(context.Context, core.QueuedMessage) error { return nil }
 	defaultMetric      = NewMetric()
@@ -72,17 +70,9 @@ func WithFn(fn func(context.Context, core.QueuedMessage) error) Option {
 	})
 }
 
-// WithTimeOut set custom timeout
-func WithTimeOut(t time.Duration) Option {
-	return OptionFunc(func(q *Options) {
-		q.timeout = t
-	})
-}
-
 // Options for custom args in Queue
 type Options struct {
 	workerCount int
-	timeout     time.Duration
 	logger      Logger
 	queueSize   int
 	worker      core.Worker
@@ -95,7 +85,6 @@ func NewOptions(opts ...Option) *Options {
 	o := &Options{
 		workerCount: defaultWorkerCount,
 		queueSize:   defaultQueueSize,
-		timeout:     defaultTimeout,
 		logger:      defaultNewLogger,
 		worker:      nil,
 		fn:          defaultFn,
