@@ -449,3 +449,73 @@ func TestHandleAllJobBeforeShutdownConsumerInQueue(t *testing.T) {
 	q.Release()
 	assert.Len(t, messages, 2)
 }
+
+func TestRetryCountWithNewMessage(t *testing.T) {
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	m := mocks.NewMockQueuedMessage(controller)
+	m.EXPECT().Bytes().Return([]byte("test")).AnyTimes()
+
+	messages := make(chan string, 10)
+	count := 1
+
+	w := NewConsumer(
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+			if count%3 != 0 {
+				count++
+				return errors.New("count not correct")
+			}
+			messages <- string(m.Bytes())
+			return nil
+		}),
+	)
+
+	q, err := NewQueue(
+		WithLogger(NewLogger()),
+		WithWorker(w),
+		WithWorkerCount(1),
+	)
+	assert.NoError(t, err)
+
+	assert.NoError(t, q.Queue(
+		m,
+		job.WithRetryCount(3),
+		job.WithRetryDelay(50*time.Millisecond),
+	))
+	assert.Len(t, messages, 0)
+	q.Start()
+	q.Release()
+	assert.Len(t, messages, 1)
+}
+
+func TestRetryCountWithNewTask(t *testing.T) {
+	messages := make(chan string, 10)
+	count := 1
+
+	w := NewConsumer()
+
+	q, err := NewQueue(
+		WithLogger(NewLogger()),
+		WithWorker(w),
+		WithWorkerCount(1),
+	)
+	assert.NoError(t, err)
+
+	assert.NoError(t, q.QueueTask(
+		func(ctx context.Context) error {
+			if count%3 != 0 {
+				count++
+				return errors.New("count not correct")
+			}
+			messages <- "foobar"
+			return nil
+		},
+		job.WithRetryCount(3),
+		job.WithRetryDelay(50*time.Millisecond),
+	))
+	assert.Len(t, messages, 0)
+	q.Start()
+	q.Release()
+	assert.Len(t, messages, 1)
+}

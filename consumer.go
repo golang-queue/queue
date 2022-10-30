@@ -47,11 +47,21 @@ func (s *Consumer) handle(m *job.Message) error {
 		}()
 
 		// run custom process function
-		if m.Task != nil {
-			done <- m.Task(ctx)
-		} else {
-			done <- s.runFunc(ctx, m)
+		var err error
+		for i := 0; i < (int(m.RetryCount) + 1); i++ {
+			if i != 0 {
+				time.Sleep(m.RetryDelay)
+			}
+			if m.Task != nil {
+				err = m.Task(ctx)
+			} else {
+				err = s.runFunc(ctx, m)
+			}
+			if err == nil {
+				break
+			}
 		}
+		done <- err
 	}()
 
 	select {

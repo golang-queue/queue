@@ -17,15 +17,18 @@ type Message struct {
 
 	// Timeout is the duration the task can be processed by Handler.
 	// zero if not specified
+	// default is 60 time.Minute
 	Timeout time.Duration `json:"timeout"`
 
 	// Payload is the payload data of the task.
 	Payload []byte `json:"body"`
 
-	// RetryCount retry count if failure
+	// RetryCount set count of retry
+	// default is 10
 	RetryCount int64 `json:"retry_count"`
 
-	// RetryCount retry count if failure
+	// RetryDelay set delay between retry
+	// default is 100ms
 	RetryDelay time.Duration `json:"retry_delay"`
 }
 
