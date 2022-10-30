@@ -99,11 +99,7 @@ func (s *Consumer) Run(task core.QueuedMessage) error {
 		_ = json.Unmarshal(task.Bytes(), data)
 	}
 
-	if err := s.handle(data); err != nil {
-		return err
-	}
-
-	return nil
+	return s.handle(data)
 }
 
 // Shutdown the worker
