@@ -21,12 +21,17 @@ func (f OptionFunc) apply(option *Options) {
 	f(option)
 }
 
-func NewOptions(opts ...Option) *Options {
-	o := &Options{
+func newDefaultOptions() *Options {
+	return &Options{
 		retryCount: 0,
 		retryDelay: 100 * time.Millisecond,
 		timeout:    60 * time.Minute,
 	}
+}
+
+// NewOptions with custom parameter
+func NewOptions(opts ...Option) *Options {
+	o := newDefaultOptions()
 
 	// Loop through each option
 	for _, opt := range opts {
