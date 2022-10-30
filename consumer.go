@@ -48,19 +48,23 @@ func (s *Consumer) handle(m *job.Message) error {
 
 		// run custom process function
 		var err error
-		for i := 0; i < (int(m.RetryCount) + 1); i++ {
-			if i != 0 {
-				time.Sleep(m.RetryDelay)
-			}
+		shouldRetry := true
+		for shouldRetry {
 			if m.Task != nil {
 				err = m.Task(ctx)
 			} else {
 				err = s.runFunc(ctx, m)
 			}
-			if err == nil {
+
+			// check error and retry count
+			if err == nil || m.RetryCount == 0 {
 				break
 			}
+			m.RetryCount--
+
+			<-time.After(m.RetryDelay)
 		}
+
 		done <- err
 	}()
 
