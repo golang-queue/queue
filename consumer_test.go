@@ -458,6 +458,119 @@ func TestRetryCountWithNewMessage(t *testing.T) {
 	m.EXPECT().Bytes().Return([]byte("test")).AnyTimes()
 
 	messages := make(chan string, 10)
+	keep := make(chan struct{})
+	count := 1
+
+	w := NewConsumer(
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+			if count%3 != 0 {
+				count++
+				return errors.New("count not correct")
+			}
+			close(keep)
+			messages <- string(m.Bytes())
+			return nil
+		}),
+	)
+
+	q, err := NewQueue(
+		WithLogger(NewLogger()),
+		WithWorker(w),
+		WithWorkerCount(1),
+	)
+	assert.NoError(t, err)
+
+	assert.NoError(t, q.Queue(
+		m,
+		job.WithRetryCount(3),
+		job.WithRetryDelay(50*time.Millisecond),
+	))
+	assert.Len(t, messages, 0)
+	q.Start()
+	// wait retry twice.
+	<-keep
+	q.Release()
+	assert.Len(t, messages, 1)
+}
+
+func TestRetryCountWithNewTask(t *testing.T) {
+	messages := make(chan string, 10)
+	count := 1
+
+	w := NewConsumer()
+
+	q, err := NewQueue(
+		WithLogger(NewLogger()),
+		WithWorker(w),
+		WithWorkerCount(1),
+	)
+	assert.NoError(t, err)
+
+	keep := make(chan struct{})
+
+	assert.NoError(t, q.QueueTask(
+		func(ctx context.Context) error {
+			if count%3 != 0 {
+				count++
+				return errors.New("count not correct")
+			}
+			close(keep)
+			messages <- "foobar"
+			return nil
+		},
+		job.WithRetryCount(3),
+		job.WithRetryDelay(50*time.Millisecond),
+	))
+	assert.Len(t, messages, 0)
+	q.Start()
+	// wait retry twice.
+	<-keep
+	q.Release()
+	assert.Len(t, messages, 1)
+}
+
+func TestCancelRetryCountWithNewTask(t *testing.T) {
+	messages := make(chan string, 10)
+	count := 1
+
+	w := NewConsumer()
+
+	q, err := NewQueue(
+		WithLogger(NewLogger()),
+		WithWorker(w),
+		WithWorkerCount(1),
+	)
+	assert.NoError(t, err)
+
+	assert.NoError(t, q.QueueTask(
+		func(ctx context.Context) error {
+			if count%3 != 0 {
+				count++
+				q.logger.Info("add count")
+				return errors.New("count not correct")
+			}
+			messages <- "foobar"
+			return nil
+		},
+		job.WithRetryCount(3),
+		job.WithRetryDelay(100*time.Millisecond),
+	))
+	assert.Len(t, messages, 0)
+	q.Start()
+	time.Sleep(50 * time.Millisecond)
+	q.Release()
+	assert.Len(t, messages, 0)
+	assert.Equal(t, 2, count)
+}
+
+func TestCancelRetryCountWithNewMessage(t *testing.T) {
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	m := mocks.NewMockQueuedMessage(controller)
+	m.EXPECT().Bytes().Return([]byte("test")).AnyTimes()
+
+	messages := make(chan string, 10)
 	count := 1
 
 	w := NewConsumer(
@@ -481,41 +594,12 @@ func TestRetryCountWithNewMessage(t *testing.T) {
 	assert.NoError(t, q.Queue(
 		m,
 		job.WithRetryCount(3),
-		job.WithRetryDelay(50*time.Millisecond),
+		job.WithRetryDelay(100*time.Millisecond),
 	))
 	assert.Len(t, messages, 0)
 	q.Start()
+	time.Sleep(50 * time.Millisecond)
 	q.Release()
-	assert.Len(t, messages, 1)
-}
-
-func TestRetryCountWithNewTask(t *testing.T) {
-	messages := make(chan string, 10)
-	count := 1
-
-	w := NewConsumer()
-
-	q, err := NewQueue(
-		WithLogger(NewLogger()),
-		WithWorker(w),
-		WithWorkerCount(1),
-	)
-	assert.NoError(t, err)
-
-	assert.NoError(t, q.QueueTask(
-		func(ctx context.Context) error {
-			if count%3 != 0 {
-				count++
-				return errors.New("count not correct")
-			}
-			messages <- "foobar"
-			return nil
-		},
-		job.WithRetryCount(3),
-		job.WithRetryDelay(50*time.Millisecond),
-	))
 	assert.Len(t, messages, 0)
-	q.Start()
-	q.Release()
-	assert.Len(t, messages, 1)
+	assert.Equal(t, 2, count)
 }
