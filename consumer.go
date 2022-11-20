@@ -48,8 +48,8 @@ func (s *Consumer) handle(m *job.Message) error {
 
 		// run custom process function
 		var err error
-		shouldRetry := true
-		for shouldRetry {
+	loop:
+		for {
 			if m.Task != nil {
 				err = m.Task(ctx)
 			} else {
@@ -62,7 +62,12 @@ func (s *Consumer) handle(m *job.Message) error {
 			}
 			m.RetryCount--
 
-			<-time.After(m.RetryDelay)
+			select {
+			case <-time.After(m.RetryDelay): // retry delay time
+			case <-ctx.Done(): // timeout reached
+				err = ctx.Err()
+				break loop
+			}
 		}
 
 		done <- err
