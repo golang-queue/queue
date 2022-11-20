@@ -24,7 +24,7 @@ type Message struct {
 	Payload []byte `json:"body"`
 
 	// RetryCount set count of retry
-	// default is 10
+	// default is 0, no retry.
 	RetryCount int64 `json:"retry_count"`
 
 	// RetryDelay set delay between retry
