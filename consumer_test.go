@@ -603,3 +603,16 @@ func TestCancelRetryCountWithNewMessage(t *testing.T) {
 	assert.Len(t, messages, 0)
 	assert.Equal(t, 2, count)
 }
+
+func TestRequestTimeout(t *testing.T) {
+	w := NewConsumer(
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+			return nil
+		}),
+		WithRequestTimeout(10*time.Millisecond),
+	)
+	task, err := w.Request()
+	assert.Nil(t, task)
+	assert.Error(t, err)
+	assert.Equal(t, ErrNoTaskInQueue, err)
+}
