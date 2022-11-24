@@ -25,6 +25,8 @@ type Consumer struct {
 	logger    Logger
 	stopOnce  sync.Once
 	stopFlag  int32
+
+	requestTimeout time.Duration
 }
 
 func (s *Consumer) handle(m *job.Message) error {
@@ -139,28 +141,19 @@ func (s *Consumer) Queue(task core.QueuedMessage) error {
 
 // Request a new task from channel
 func (s *Consumer) Request() (core.QueuedMessage, error) {
-	clock := 0
-loop:
-	for {
-		select {
-		case task, ok := <-s.taskQueue:
-			if !ok {
-				select {
-				case s.exit <- struct{}{}:
-				default:
-				}
-				return nil, ErrQueueHasBeenClosed
+	select {
+	case task, ok := <-s.taskQueue:
+		if !ok {
+			select {
+			case s.exit <- struct{}{}:
+			default:
 			}
-			return task, nil
-		case <-time.After(1 * time.Second):
-			if clock == 5 {
-				break loop
-			}
-			clock += 1
+			return nil, ErrQueueHasBeenClosed
 		}
+		return task, nil
+	case <-time.After(s.requestTimeout):
+		return nil, ErrNoTaskInQueue
 	}
-
-	return nil, ErrNoTaskInQueue
 }
 
 // NewConsumer for create new consumer instance
@@ -172,6 +165,8 @@ func NewConsumer(opts ...Option) *Consumer {
 		exit:      make(chan struct{}),
 		logger:    o.logger,
 		runFunc:   o.fn,
+
+		requestTimeout: o.requestTimeout,
 	}
 
 	return w
