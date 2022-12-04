@@ -7,9 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/goccy/go-json"
 	"github.com/golang-queue/queue/core"
-	"github.com/golang-queue/queue/job"
 )
 
 var _ core.Worker = (*Consumer)(nil)
@@ -29,84 +27,9 @@ type Consumer struct {
 	requestTimeout time.Duration
 }
 
-func (s *Consumer) handle(m *job.Message) error {
-	// create channel with buffer size 1 to avoid goroutine leak
-	done := make(chan error, 1)
-	panicChan := make(chan interface{}, 1)
-	startTime := time.Now()
-	ctx, cancel := context.WithTimeout(context.Background(), m.Timeout)
-	defer func() {
-		cancel()
-	}()
-
-	// run the job
-	go func() {
-		// handle panic issue
-		defer func() {
-			if p := recover(); p != nil {
-				panicChan <- p
-			}
-		}()
-
-		// run custom process function
-		var err error
-	loop:
-		for {
-			if m.Task != nil {
-				err = m.Task(ctx)
-			} else {
-				err = s.runFunc(ctx, m)
-			}
-
-			// check error and retry count
-			if err == nil || m.RetryCount == 0 {
-				break
-			}
-			m.RetryCount--
-
-			select {
-			case <-time.After(m.RetryDelay): // retry delay time
-			case <-ctx.Done(): // timeout reached
-				err = ctx.Err()
-				break loop
-			}
-		}
-
-		done <- err
-	}()
-
-	select {
-	case p := <-panicChan:
-		panic(p)
-	case <-ctx.Done(): // timeout reached
-		return ctx.Err()
-	case <-s.stop: // shutdown service
-		// cancel job
-		cancel()
-
-		leftTime := m.Timeout - time.Since(startTime)
-		// wait job
-		select {
-		case <-time.After(leftTime):
-			return context.DeadlineExceeded
-		case err := <-done: // job finish
-			return err
-		case p := <-panicChan:
-			panic(p)
-		}
-	case err := <-done: // job finish
-		return err
-	}
-}
-
 // Run to execute new task
-func (s *Consumer) Run(task core.QueuedMessage) error {
-	data := task.(*job.Message)
-	if data.Task == nil {
-		_ = json.Unmarshal(task.Bytes(), data)
-	}
-
-	return s.handle(data)
+func (s *Consumer) Run(ctx context.Context, task core.QueuedMessage) error {
+	return s.runFunc(ctx, task)
 }
 
 // Shutdown the worker
