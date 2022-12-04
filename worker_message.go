@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -14,7 +15,7 @@ type messageWorker struct {
 	messages chan core.QueuedMessage
 }
 
-func (w *messageWorker) Run(task core.QueuedMessage) error {
+func (w *messageWorker) Run(_ context.Context, task core.QueuedMessage) error {
 	if string(task.Bytes()) == "panic" {
 		panic("show panic")
 	}

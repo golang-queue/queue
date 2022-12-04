@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	core "github.com/golang-queue/queue/core"
@@ -64,17 +65,17 @@ func (mr *MockWorkerMockRecorder) Request() *gomock.Call {
 }
 
 // Run mocks base method.
-func (m *MockWorker) Run(arg0 core.QueuedMessage) error {
+func (m *MockWorker) Run(arg0 context.Context, arg1 core.QueuedMessage) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Run", arg0)
+	ret := m.ctrl.Call(m, "Run", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Run indicates an expected call of Run.
-func (mr *MockWorkerMockRecorder) Run(arg0 interface{}) *gomock.Call {
+func (mr *MockWorkerMockRecorder) Run(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockWorker)(nil).Run), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockWorker)(nil).Run), arg0, arg1)
 }
 
 // Shutdown mocks base method.

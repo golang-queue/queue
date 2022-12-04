@@ -1,6 +1,8 @@
 package queue
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -61,7 +63,7 @@ func TestNewQueueWithDefaultWorker(t *testing.T) {
 	m.EXPECT().Bytes().Return([]byte("test")).AnyTimes()
 	w.EXPECT().Shutdown().Return(nil)
 	w.EXPECT().Request().Return(m, nil).AnyTimes()
-	w.EXPECT().Run(m).Return(nil).AnyTimes()
+	w.EXPECT().Run(context.Background(), m).Return(nil).AnyTimes()
 	q, err = NewQueue(
 		WithWorker(w),
 	)
@@ -140,4 +142,119 @@ func TestCloseQueueAfterShutdown(t *testing.T) {
 	}, job.WithTimeout(10*time.Millisecond))
 	assert.Error(t, err)
 	assert.Equal(t, ErrQueueShutdown, err)
+}
+
+func TestHandleTimeout(t *testing.T) {
+	m := &job.Message{
+		Timeout: 100 * time.Millisecond,
+		Payload: []byte("foo"),
+	}
+	w := NewConsumer(
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+			time.Sleep(200 * time.Millisecond)
+			return nil
+		}),
+	)
+
+	q, err := NewQueue(
+		WithWorker(w),
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, q)
+
+	err = q.handle(m)
+	assert.Error(t, err)
+	assert.Equal(t, context.DeadlineExceeded, err)
+
+	done := make(chan error)
+	go func() {
+		done <- q.handle(m)
+	}()
+
+	err = <-done
+	assert.Error(t, err)
+	assert.Equal(t, context.DeadlineExceeded, err)
+}
+
+func TestJobComplete(t *testing.T) {
+	m := &job.Message{
+		Timeout: 100 * time.Millisecond,
+		Payload: []byte("foo"),
+	}
+	w := NewConsumer(
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+			return errors.New("job completed")
+		}),
+	)
+
+	q, err := NewQueue(
+		WithWorker(w),
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, q)
+
+	err = q.handle(m)
+	assert.Error(t, err)
+	assert.Equal(t, errors.New("job completed"), err)
+
+	m = &job.Message{
+		Timeout: 250 * time.Millisecond,
+		Payload: []byte("foo"),
+	}
+
+	w = NewConsumer(
+		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+			time.Sleep(200 * time.Millisecond)
+			return errors.New("job completed")
+		}),
+	)
+
+	q, err = NewQueue(
+		WithWorker(w),
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, q)
+
+	err = q.handle(m)
+	assert.Error(t, err)
+	assert.Equal(t, errors.New("job completed"), err)
+}
+
+func TestTaskJobComplete(t *testing.T) {
+	m := &job.Message{
+		Timeout: 100 * time.Millisecond,
+		Task: func(ctx context.Context) error {
+			return errors.New("job completed")
+		},
+	}
+	w := NewConsumer()
+
+	q, err := NewQueue(
+		WithWorker(w),
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, q)
+
+	err = q.handle(m)
+	assert.Error(t, err)
+	assert.Equal(t, errors.New("job completed"), err)
+
+	m = &job.Message{
+		Timeout: 250 * time.Millisecond,
+		Task: func(ctx context.Context) error {
+			return nil
+		},
+	}
+
+	assert.NoError(t, q.handle(m))
+
+	// job timeout
+	m = &job.Message{
+		Timeout: 50 * time.Millisecond,
+		Task: func(ctx context.Context) error {
+			time.Sleep(60 * time.Millisecond)
+			return nil
+		},
+	}
+	assert.Equal(t, context.DeadlineExceeded, q.handle(m))
 }
