@@ -166,13 +166,6 @@ func TestHandleTimeout(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, context.DeadlineExceeded, err)
 
-	w = NewConsumer(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
-			time.Sleep(200 * time.Millisecond)
-			return nil
-		}),
-	)
-
 	done := make(chan error)
 	go func() {
 		done <- q.handle(m)
