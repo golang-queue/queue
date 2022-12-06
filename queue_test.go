@@ -75,75 +75,6 @@ func TestNewQueueWithDefaultWorker(t *testing.T) {
 	assert.Equal(t, 0, q.BusyWorkers())
 }
 
-func TestShtdonwOnce(t *testing.T) {
-	w := &messageWorker{
-		messages: make(chan core.QueuedMessage, 100),
-	}
-	q, err := NewQueue(
-		WithWorker(w),
-		WithWorkerCount(2),
-	)
-	assert.NoError(t, err)
-	assert.NotNil(t, q)
-
-	q.Start()
-	assert.Equal(t, 0, q.BusyWorkers())
-	q.Shutdown()
-	// don't panic here
-	q.Shutdown()
-	q.Wait()
-	assert.Equal(t, 0, q.BusyWorkers())
-}
-
-func TestCapacityReached(t *testing.T) {
-	w := &messageWorker{
-		messages: make(chan core.QueuedMessage, 1),
-	}
-	q, err := NewQueue(
-		WithWorker(w),
-		WithWorkerCount(5),
-		WithLogger(NewEmptyLogger()),
-	)
-	assert.NoError(t, err)
-	assert.NotNil(t, q)
-
-	assert.NoError(t, q.Queue(mockMessage{
-		message: "foobar",
-	}))
-	// max capacity reached
-	assert.Error(t, q.Queue(mockMessage{
-		message: "foobar",
-	}))
-}
-
-func TestCloseQueueAfterShutdown(t *testing.T) {
-	w := &messageWorker{
-		messages: make(chan core.QueuedMessage, 10),
-	}
-	q, err := NewQueue(
-		WithWorker(w),
-		WithWorkerCount(5),
-		WithLogger(NewEmptyLogger()),
-	)
-	assert.NoError(t, err)
-	assert.NotNil(t, q)
-
-	assert.NoError(t, q.Queue(mockMessage{
-		message: "foobar",
-	}))
-	q.Shutdown()
-	err = q.Queue(mockMessage{
-		message: "foobar",
-	})
-	assert.Error(t, err)
-	assert.Equal(t, ErrQueueShutdown, err)
-	err = q.Queue(mockMessage{
-		message: "foobar",
-	}, job.WithTimeout(10*time.Millisecond))
-	assert.Error(t, err)
-	assert.Equal(t, ErrQueueShutdown, err)
-}
-
 func TestHandleTimeout(t *testing.T) {
 	m := &job.Message{
 		Timeout: 100 * time.Millisecond,
@@ -257,4 +188,27 @@ func TestTaskJobComplete(t *testing.T) {
 		},
 	}
 	assert.Equal(t, context.DeadlineExceeded, q.handle(m))
+}
+
+func TestMockWorkerAndMessage(t *testing.T) {
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	m := mocks.NewMockQueuedMessage(controller)
+
+	w := mocks.NewMockWorker(controller)
+	w.EXPECT().Shutdown().Return(nil)
+	w.EXPECT().Request().DoAndReturn(func() (core.QueuedMessage, error) {
+		return m, errors.New("nil")
+	})
+
+	q, err := NewQueue(
+		WithWorker(w),
+		WithWorkerCount(1),
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, q)
+	q.Start()
+	time.Sleep(50 * time.Millisecond)
+	q.Release()
 }
