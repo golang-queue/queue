@@ -7,9 +7,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/goccy/go-json"
 	"github.com/golang-queue/queue/core"
 	"github.com/golang-queue/queue/job"
+
+	"github.com/goccy/go-json"
+	"github.com/jpillora/backoff"
 )
 
 // ErrQueueShutdown the queue is released and closed.
@@ -204,6 +206,13 @@ func (q *Queue) handle(m *job.Message) error {
 
 		// run custom process function
 		var err error
+
+		b := &backoff.Backoff{
+			Min:    m.RetryMin,
+			Max:    m.RetryMax,
+			Factor: m.RetryFactor,
+		}
+		delay := m.RetryDelay
 	loop:
 		for {
 			if m.Task != nil {
@@ -218,8 +227,12 @@ func (q *Queue) handle(m *job.Message) error {
 			}
 			m.RetryCount--
 
+			if m.RetryDelay != 0 {
+				delay = b.Duration()
+			}
+
 			select {
-			case <-time.After(m.RetryDelay): // retry delay time
+			case <-time.After(delay): // retry delay time
 			case <-ctx.Done(): // timeout reached
 				err = ctx.Err()
 				break loop
