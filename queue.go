@@ -114,7 +114,7 @@ func (q *Queue) Wait() {
 }
 
 // Queue to queue all job
-func (q *Queue) Queue(m core.QueuedMessage, opts ...job.Option) error {
+func (q *Queue) Queue(m core.QueuedMessage, opts ...job.AllowOption) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
@@ -133,7 +133,7 @@ func (q *Queue) Queue(m core.QueuedMessage, opts ...job.Option) error {
 }
 
 // QueueTask to queue job task
-func (q *Queue) QueueTask(task job.TaskFunc, opts ...job.Option) error {
+func (q *Queue) QueueTask(task job.TaskFunc, opts ...job.AllowOption) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}

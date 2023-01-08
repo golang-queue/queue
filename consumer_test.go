@@ -104,7 +104,7 @@ func TestJobReachTimeout(t *testing.T) {
 		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
-	assert.NoError(t, q.Queue(m, job.WithTimeout(30*time.Millisecond)))
+	assert.NoError(t, q.Queue(m, job.AllowOption{Timeout: job.Time(30 * time.Millisecond)}))
 	q.Start()
 	time.Sleep(50 * time.Millisecond)
 	q.Release()
@@ -138,8 +138,8 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 		WithWorkerCount(2),
 	)
 	assert.NoError(t, err)
-	assert.NoError(t, q.Queue(m, job.WithTimeout(100*time.Millisecond)))
-	assert.NoError(t, q.Queue(m, job.WithTimeout(100*time.Millisecond)))
+	assert.NoError(t, q.Queue(m, job.AllowOption{Timeout: job.Time(100 * time.Millisecond)}))
+	assert.NoError(t, q.Queue(m, job.AllowOption{Timeout: job.Time(100 * time.Millisecond)}))
 	q.Start()
 	time.Sleep(10 * time.Millisecond)
 	assert.Equal(t, 2, int(q.metric.busyWorkers))
@@ -367,8 +367,10 @@ func TestRetryCountWithNewMessage(t *testing.T) {
 
 	assert.NoError(t, q.Queue(
 		m,
-		job.WithRetryCount(3),
-		job.WithRetryDelay(50*time.Millisecond),
+		job.AllowOption{
+			RetryCount: job.Int64(3),
+			RetryDelay: job.Time(50 * time.Millisecond),
+		},
 	))
 	assert.Len(t, messages, 0)
 	q.Start()
@@ -403,8 +405,10 @@ func TestRetryCountWithNewTask(t *testing.T) {
 			messages <- "foobar"
 			return nil
 		},
-		job.WithRetryCount(3),
-		job.WithRetryDelay(50*time.Millisecond),
+		job.AllowOption{
+			RetryCount: job.Int64(3),
+			RetryDelay: job.Time(50 * time.Millisecond),
+		},
 	))
 	assert.Len(t, messages, 0)
 	q.Start()
@@ -437,8 +441,10 @@ func TestCancelRetryCountWithNewTask(t *testing.T) {
 			messages <- "foobar"
 			return nil
 		},
-		job.WithRetryCount(3),
-		job.WithRetryDelay(100*time.Millisecond),
+		job.AllowOption{
+			RetryCount: job.Int64(3),
+			RetryDelay: job.Time(100 * time.Millisecond),
+		},
 	))
 	assert.Len(t, messages, 0)
 	q.Start()
@@ -478,8 +484,10 @@ func TestCancelRetryCountWithNewMessage(t *testing.T) {
 
 	assert.NoError(t, q.Queue(
 		m,
-		job.WithRetryCount(3),
-		job.WithRetryDelay(100*time.Millisecond),
+		job.AllowOption{
+			RetryCount: job.Int64(3),
+			RetryDelay: job.Time(100 * time.Millisecond),
+		},
 	))
 	assert.Len(t, messages, 0)
 	q.Start()
