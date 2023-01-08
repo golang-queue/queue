@@ -68,3 +68,14 @@ func NewTask(task TaskFunc, opts ...Option) *Message {
 		Task:       task,
 	}
 }
+
+func NewTask2(task TaskFunc, opts ...AllowOption) *Message {
+	o := NewOption3s(opts...)
+
+	return &Message{
+		Timeout:    o.timeout,
+		RetryCount: o.retryCount,
+		RetryDelay: o.retryDelay,
+		Task:       task,
+	}
+}
