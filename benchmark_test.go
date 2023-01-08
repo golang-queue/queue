@@ -11,7 +11,7 @@ import (
 
 func BenchmarkQueueTask(b *testing.B) {
 	b.ReportAllocs()
-	q := NewPool(5)
+	q := NewPool(5, WithLogger(emptyLogger{}))
 	defer q.Release()
 	for n := 0; n < b.N; n++ {
 		_ = q.QueueTask(func(context.Context) error {
@@ -25,7 +25,7 @@ func BenchmarkQueue(b *testing.B) {
 	m := &mockMessage{
 		message: "foo",
 	}
-	q := NewPool(5)
+	q := NewPool(5, WithLogger(emptyLogger{}))
 	defer q.Release()
 	for n := 0; n < b.N; n++ {
 		_ = q.Queue(m)
@@ -47,6 +47,7 @@ func BenchmarkConsumerPayload(b *testing.B) {
 
 	q, _ := NewQueue(
 		WithWorker(w),
+		WithLogger(emptyLogger{}),
 	)
 
 	for n := 0; n < b.N; n++ {
@@ -71,6 +72,7 @@ func BenchmarkConsumerTask(b *testing.B) {
 
 	q, _ := NewQueue(
 		WithWorker(w),
+		WithLogger(emptyLogger{}),
 	)
 
 	for n := 0; n < b.N; n++ {

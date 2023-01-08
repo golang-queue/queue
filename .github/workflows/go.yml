@@ -61,7 +61,7 @@ jobs:
 
       - name: Run Benchmark
         run: |
-          go test -v -run=^$ -benchmem -bench .
+          go test -v -run=^$ -count 5 -benchmem -bench . ./...
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
