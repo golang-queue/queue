@@ -75,7 +75,9 @@ func ExampleNewPool_queueTaskTimeout() {
 
 			rets <- idx
 			return nil
-		}, job.WithTimeout(100*time.Millisecond)); err != nil {
+		}, job.AllowOption{
+			Timeout: job.Time(100 * time.Millisecond),
+		}); err != nil {
 			log.Println(err)
 		}
 	}

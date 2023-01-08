@@ -47,7 +47,7 @@ func (m *Message) Encode() []byte {
 	return b
 }
 
-func NewMessage(m core.QueuedMessage, opts ...Option) *Message {
+func NewMessage(m core.QueuedMessage, opts ...AllowOption) *Message {
 	o := NewOptions(opts...)
 
 	return &Message{
@@ -58,19 +58,8 @@ func NewMessage(m core.QueuedMessage, opts ...Option) *Message {
 	}
 }
 
-func NewTask(task TaskFunc, opts ...Option) *Message {
+func NewTask(task TaskFunc, opts ...AllowOption) *Message {
 	o := NewOptions(opts...)
-
-	return &Message{
-		Timeout:    o.timeout,
-		RetryCount: o.retryCount,
-		RetryDelay: o.retryDelay,
-		Task:       task,
-	}
-}
-
-func NewTask2(task TaskFunc, opts ...AllowOption) *Message {
-	o := NewOption3s(opts...)
 
 	return &Message{
 		Timeout:    o.timeout,
