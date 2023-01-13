@@ -290,7 +290,7 @@ func TestHandleAllJobBeforeShutdownConsumer(t *testing.T) {
 		assert.NoError(t, w.Shutdown())
 		done <- struct{}{}
 	}()
-
+	time.Sleep(50 * time.Millisecond)
 	task, err := w.Request()
 	assert.NotNil(t, task)
 	assert.NoError(t, err)
