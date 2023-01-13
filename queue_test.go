@@ -37,6 +37,7 @@ func TestNewQueueWithZeroWorker(t *testing.T) {
 
 	w := mocks.NewMockWorker(controller)
 	w.EXPECT().Shutdown().Return(nil)
+	w.EXPECT().Request().Return(nil, nil).AnyTimes()
 	q, err = NewQueue(
 		WithWorker(w),
 		WithWorkerCount(0),
