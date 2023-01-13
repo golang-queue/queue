@@ -33,6 +33,9 @@ func (f OptionFunc) apply(option *Options) {
 // WithWorkerCount set worker count
 func WithWorkerCount(num int) Option {
 	return OptionFunc(func(q *Options) {
+		if num <= 0 {
+			num = defaultWorkerCount
+		}
 		q.workerCount = num
 	})
 }
