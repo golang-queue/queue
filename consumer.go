@@ -5,7 +5,6 @@ import (
 	"errors"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/golang-queue/queue/core"
 )
@@ -23,8 +22,6 @@ type Consumer struct {
 	logger    Logger
 	stopOnce  sync.Once
 	stopFlag  int32
-
-	requestTimeout time.Duration
 }
 
 // Run to execute new task
@@ -74,7 +71,7 @@ func (s *Consumer) Request() (core.QueuedMessage, error) {
 			return nil, ErrQueueHasBeenClosed
 		}
 		return task, nil
-	case <-time.After(s.requestTimeout):
+	default:
 		return nil, ErrNoTaskInQueue
 	}
 }
@@ -88,8 +85,6 @@ func NewConsumer(opts ...Option) *Consumer {
 		exit:      make(chan struct{}),
 		logger:    o.logger,
 		runFunc:   o.fn,
-
-		requestTimeout: o.requestTimeout,
 	}
 
 	return w

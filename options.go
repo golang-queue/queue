@@ -3,18 +3,16 @@ package queue
 import (
 	"context"
 	"runtime"
-	"time"
 
 	"github.com/golang-queue/queue/core"
 )
 
 var (
-	defaultQueueSize      = 4096
-	defaultWorkerCount    = runtime.NumCPU()
-	defaultNewLogger      = NewLogger()
-	defaultFn             = func(context.Context, core.QueuedMessage) error { return nil }
-	defaultMetric         = NewMetric()
-	defaultRequestTimeout = 5 * time.Second
+	defaultQueueSize   = 4096
+	defaultWorkerCount = runtime.NumCPU()
+	defaultNewLogger   = NewLogger()
+	defaultFn          = func(context.Context, core.QueuedMessage) error { return nil }
+	defaultMetric      = NewMetric()
 )
 
 // An Option configures a mutex.
@@ -44,13 +42,6 @@ func WithWorkerCount(num int) Option {
 func WithQueueSize(num int) Option {
 	return OptionFunc(func(q *Options) {
 		q.queueSize = num
-	})
-}
-
-// WithQueueSize set worker count
-func WithRequestTimeout(timeout time.Duration) Option {
-	return OptionFunc(func(q *Options) {
-		q.requestTimeout = timeout
 	})
 }
 
@@ -90,9 +81,6 @@ type Options struct {
 	worker      core.Worker
 	fn          func(context.Context, core.QueuedMessage) error
 	metric      Metric
-
-	// timeout for request single task
-	requestTimeout time.Duration
 }
 
 // NewOptions initialize the default value for the options
@@ -104,8 +92,6 @@ func NewOptions(opts ...Option) *Options {
 		worker:      nil,
 		fn:          defaultFn,
 		metric:      defaultMetric,
-
-		requestTimeout: defaultRequestTimeout,
 	}
 
 	// Loop through each option
