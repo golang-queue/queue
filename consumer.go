@@ -15,6 +15,7 @@ var errMaxCapacity = errors.New("max capacity reached")
 
 // Consumer for simple queue using buffer channel
 type Consumer struct {
+	sync.Mutex
 	taskQueue []core.QueuedMessage
 	runFunc   func(context.Context, core.QueuedMessage) error
 	capacity  int
@@ -55,12 +56,14 @@ func (s *Consumer) Queue(task core.QueuedMessage) error { //nolint:stylecheck
 		return errMaxCapacity
 	}
 
+	s.Lock()
 	if s.count == len(s.taskQueue) {
 		s.resize(s.count * 2)
 	}
 	s.taskQueue[s.tail] = task
 	s.tail = (s.tail + 1) % len(s.taskQueue)
 	s.count++
+	s.Unlock()
 
 	return nil
 }
@@ -78,6 +81,7 @@ func (s *Consumer) Request() (core.QueuedMessage, error) {
 	if s.count == 0 {
 		return nil, ErrNoTaskInQueue
 	}
+	s.Lock()
 	data := s.taskQueue[s.head]
 	s.head = (s.head + 1) % len(s.taskQueue)
 	s.count--
@@ -85,6 +89,7 @@ func (s *Consumer) Request() (core.QueuedMessage, error) {
 	if n := len(s.taskQueue) / 2; n > 2 && s.count <= n {
 		s.resize(n)
 	}
+	s.Unlock()
 
 	return data, nil
 }
