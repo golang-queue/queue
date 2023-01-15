@@ -24,33 +24,12 @@ func BenchmarkNewCusumer(b *testing.B) {
 		},
 	)
 
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		_ = pool.Queue(message)
 		_, _ = pool.Request()
 	}
 }
-
-// func BenchmarkNewCusumerSlice(b *testing.B) {
-// 	b.ReportAllocs()
-// 	pool := NewConsumerSlice(
-// 		WithQueueSize(b.N),
-// 		WithLogger(emptyLogger{}),
-// 	)
-// 	message := job.NewTask(func(context.Context) error {
-// 		return nil
-// 	},
-// 		job.AllowOption{
-// 			RetryCount: job.Int64(100),
-// 			RetryDelay: job.Time(30 * time.Millisecond),
-// 			Timeout:    job.Time(3 * time.Millisecond),
-// 		},
-// 	)
-
-// 	for n := 0; n < b.N; n++ {
-// 		_ = pool.Queue(message)
-// 		_, _ = pool.Request()
-// 	}
-// }
 
 func BenchmarkNewCusumerList(b *testing.B) {
 	b.ReportAllocs()
@@ -68,6 +47,7 @@ func BenchmarkNewCusumerList(b *testing.B) {
 		},
 	)
 
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		_ = pool.Queue(message)
 		_, _ = pool.Request()
@@ -90,57 +70,153 @@ func BenchmarkNewCusumerRing(b *testing.B) {
 		},
 	)
 
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		_ = pool.Queue(message)
 		_, _ = pool.Request()
 	}
 }
 
-// func BenchmarkQueueTask(b *testing.B) {
-// 	b.ReportAllocs()
-// 	q := NewPool(
-// 		0,
-// 		WithLogger(emptyLogger{}),
-// 	)
-// 	defer q.Release()
-// 	for n := 0; n < b.N; n++ {
-// 		_ = q.QueueTask(func(context.Context) error {
-// 			return nil
-// 		})
-// 	}
-// }
+func BenchmarkQueueTask(b *testing.B) {
+	b.ReportAllocs()
+	w := NewConsumer(
+		WithQueueSize(b.N),
+		WithLogger(emptyLogger{}),
+	)
+	q, _ := NewQueue(
+		WithWorker(w),
+		WithLogger(emptyLogger{}),
+	)
 
-// func BenchmarkQueueTaskList(b *testing.B) {
-// 	b.ReportAllocs()
-// 	w := NewConsumerList(
-// 		WithLogger(emptyLogger{}),
-// 	)
-// 	q, err := NewQueue(
-// 		WithWorker(w),
-// 		WithLogger(emptyLogger{}),
-// 	)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	defer q.Release()
-// 	for n := 0; n < b.N; n++ {
-// 		_ = q.QueueTask(func(context.Context) error {
-// 			return nil
-// 		})
-// 	}
-// }
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_ = q.QueueTask(func(context.Context) error {
+			return nil
+		},
+			job.AllowOption{
+				RetryCount: job.Int64(100),
+				RetryDelay: job.Time(30 * time.Millisecond),
+				Timeout:    job.Time(3 * time.Millisecond),
+			},
+		)
+		_, _ = w.Request()
+	}
+}
 
-// func BenchmarkQueue(b *testing.B) {
-// 	b.ReportAllocs()
-// 	m := &mockMessage{
-// 		message: "foo",
-// 	}
-// 	q := NewPool(5, WithLogger(emptyLogger{}))
-// 	defer q.Release()
-// 	for n := 0; n < b.N; n++ {
-// 		_ = q.Queue(m)
-// 	}
-// }
+func BenchmarkQueueTaskList(b *testing.B) {
+	b.ReportAllocs()
+	w := NewConsumerList(
+		WithQueueSize(b.N),
+		WithLogger(emptyLogger{}),
+	)
+	q, _ := NewQueue(
+		WithWorker(w),
+		WithLogger(emptyLogger{}),
+	)
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_ = q.QueueTask(func(context.Context) error {
+			return nil
+		},
+			job.AllowOption{
+				RetryCount: job.Int64(100),
+				RetryDelay: job.Time(30 * time.Millisecond),
+				Timeout:    job.Time(3 * time.Millisecond),
+			},
+		)
+		_, _ = w.Request()
+	}
+}
+
+func BenchmarkQueueTaskRing(b *testing.B) {
+	b.ReportAllocs()
+	w := NewConsumerRing(
+		WithQueueSize(b.N),
+		WithLogger(emptyLogger{}),
+	)
+	q, _ := NewQueue(
+		WithWorker(w),
+		WithLogger(emptyLogger{}),
+	)
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_ = q.QueueTask(func(context.Context) error {
+			return nil
+		},
+			job.AllowOption{
+				RetryCount: job.Int64(100),
+				RetryDelay: job.Time(30 * time.Millisecond),
+				Timeout:    job.Time(3 * time.Millisecond),
+			},
+		)
+		_, _ = w.Request()
+	}
+}
+
+func BenchmarkQueue(b *testing.B) {
+	b.ReportAllocs()
+	m := &mockMessage{
+		message: "foo",
+	}
+	w := NewConsumer(
+		WithQueueSize(b.N),
+		WithLogger(emptyLogger{}),
+	)
+	q, _ := NewQueue(
+		WithWorker(w),
+		WithLogger(emptyLogger{}),
+	)
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_ = q.Queue(m)
+		_, _ = w.Request()
+	}
+}
+
+func BenchmarkQueueList(b *testing.B) {
+	b.ReportAllocs()
+	m := &mockMessage{
+		message: "foo",
+	}
+	w := NewConsumerList(
+		WithQueueSize(b.N),
+		WithLogger(emptyLogger{}),
+	)
+	q, _ := NewQueue(
+		WithWorker(w),
+		WithLogger(emptyLogger{}),
+	)
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_ = q.Queue(m)
+		_, _ = w.Request()
+	}
+}
+
+func BenchmarkQueueRing(b *testing.B) {
+	b.ReportAllocs()
+	m := &mockMessage{
+		message: "foo",
+	}
+	w := NewConsumerRing(
+		WithQueueSize(b.N),
+		WithLogger(emptyLogger{}),
+	)
+	q, _ := NewQueue(
+		WithWorker(w),
+		WithLogger(emptyLogger{}),
+	)
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_ = q.Queue(m)
+		_, _ = w.Request()
+	}
+}
 
 // func BenchmarkConsumerPayload(b *testing.B) {
 // 	b.ReportAllocs()
