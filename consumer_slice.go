@@ -16,7 +16,8 @@ type ConsumerSlice struct {
 	taskQueue []core.QueuedMessage
 	runFunc   func(context.Context, core.QueuedMessage) error
 	capacity  int
-	count     int
+	head      int
+	tail      int
 	exit      chan struct{}
 	logger    Logger
 	stopOnce  sync.Once
@@ -35,7 +36,7 @@ func (s *ConsumerSlice) Shutdown() error {
 	}
 
 	s.stopOnce.Do(func() {
-		if s.count > 0 {
+		if !s.IsEmpty() {
 			<-s.exit
 		}
 	})
@@ -47,13 +48,13 @@ func (s *ConsumerSlice) Queue(task core.QueuedMessage) error {
 	if atomic.LoadInt32(&s.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
-	if s.count >= s.capacity {
+	if s.IsFull() {
 		return errMaxCapacity
 	}
 
 	s.Lock()
-	s.taskQueue[s.count] = task
-	s.count++
+	s.taskQueue[s.tail] = task
+	s.tail = (s.tail + 1) % s.capacity
 	s.Unlock()
 
 	return nil
@@ -61,7 +62,7 @@ func (s *ConsumerSlice) Queue(task core.QueuedMessage) error {
 
 // Request a new task from channel
 func (s *ConsumerSlice) Request() (core.QueuedMessage, error) {
-	if atomic.LoadInt32(&s.stopFlag) == 1 && s.count == 0 {
+	if atomic.LoadInt32(&s.stopFlag) == 1 && s.IsEmpty() {
 		select {
 		case s.exit <- struct{}{}:
 		default:
@@ -69,18 +70,26 @@ func (s *ConsumerSlice) Request() (core.QueuedMessage, error) {
 		return nil, ErrQueueHasBeenClosed
 	}
 
-	if s.count == 0 {
+	if s.IsEmpty() {
 		return nil, ErrNoTaskInQueue
 	}
 
 	s.Lock()
-	peak := s.taskQueue[0]
-	copy(s.taskQueue, s.taskQueue[1:])
-	s.taskQueue = s.taskQueue[:len(s.taskQueue)-1]
-	s.count--
+	data := s.taskQueue[s.head]
+	s.head = (s.head + 1) % s.capacity
 	s.Unlock()
 
-	return peak, nil
+	return data, nil
+}
+
+// IsEmpty returns true if queue is empty
+func (s *ConsumerSlice) IsEmpty() bool {
+	return s.head == s.tail
+}
+
+// IsFull returns true if queue is full
+func (s *ConsumerSlice) IsFull() bool {
+	return s.head == (s.tail+1)%s.capacity
 }
 
 // NewConsumerSlice for create new ConsumerSlice instance

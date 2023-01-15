@@ -5,15 +5,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-queue/queue/core"
 	"github.com/golang-queue/queue/job"
 )
 
-func BenchmarkNewCusumer(b *testing.B) {
-	b.ReportAllocs()
-	pool := NewConsumer(
-		WithQueueSize(b.N),
-		WithLogger(emptyLogger{}),
-	)
+type testqueue interface {
+	Queue(task core.QueuedMessage) error
+	Request() (core.QueuedMessage, error)
+}
+
+var count = 1
+
+func testQueue(b *testing.B, pool testqueue) {
 	message := job.NewTask(func(context.Context) error {
 		return nil
 	},
@@ -24,57 +27,48 @@ func BenchmarkNewCusumer(b *testing.B) {
 		},
 	)
 
+	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_ = pool.Queue(message)
-		_, _ = pool.Request()
+		for i := 0; i < count; i++ {
+			_ = pool.Queue(message)
+			_, _ = pool.Request()
+		}
 	}
+}
+
+func BenchmarkNewCusumer(b *testing.B) {
+	pool := NewConsumer(
+		WithQueueSize(b.N*count),
+		WithLogger(emptyLogger{}),
+	)
+
+	testQueue(b, pool)
+}
+
+func BenchmarkNewCusumerSlice(b *testing.B) {
+	pool := NewConsumerSlice(
+		WithQueueSize(b.N*count),
+		WithLogger(emptyLogger{}),
+	)
+
+	testQueue(b, pool)
 }
 
 func BenchmarkNewCusumerList(b *testing.B) {
-	b.ReportAllocs()
 	pool := NewConsumerList(
-		WithQueueSize(b.N),
+		WithQueueSize(b.N*count),
 		WithLogger(emptyLogger{}),
 	)
-	message := job.NewTask(func(context.Context) error {
-		return nil
-	},
-		job.AllowOption{
-			RetryCount: job.Int64(100),
-			RetryDelay: job.Time(30 * time.Millisecond),
-			Timeout:    job.Time(3 * time.Millisecond),
-		},
-	)
-
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		_ = pool.Queue(message)
-		_, _ = pool.Request()
-	}
+	testQueue(b, pool)
 }
 
 func BenchmarkNewCusumerRing(b *testing.B) {
-	b.ReportAllocs()
 	pool := NewConsumerRing(
-		WithQueueSize(b.N),
+		WithQueueSize(b.N*count),
 		WithLogger(emptyLogger{}),
 	)
-	message := job.NewTask(func(context.Context) error {
-		return nil
-	},
-		job.AllowOption{
-			RetryCount: job.Int64(100),
-			RetryDelay: job.Time(30 * time.Millisecond),
-			Timeout:    job.Time(3 * time.Millisecond),
-		},
-	)
-
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		_ = pool.Queue(message)
-		_, _ = pool.Request()
-	}
+	testQueue(b, pool)
 }
 
 func BenchmarkQueueTask(b *testing.B) {
