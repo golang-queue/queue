@@ -9,6 +9,43 @@ import (
 	"github.com/golang-queue/queue/job"
 )
 
+var count = 1
+
+type testqueue interface {
+	Queue(task core.QueuedMessage) error
+	Request() (core.QueuedMessage, error)
+}
+
+func testQueue(b *testing.B, pool testqueue) {
+	message := job.NewTask(func(context.Context) error {
+		return nil
+	},
+		job.AllowOption{
+			RetryCount: job.Int64(100),
+			RetryDelay: job.Time(30 * time.Millisecond),
+			Timeout:    job.Time(3 * time.Millisecond),
+		},
+	)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		for i := 0; i < count; i++ {
+			_ = pool.Queue(message)
+			_, _ = pool.Request()
+		}
+	}
+}
+
+func BenchmarkNewCusumer(b *testing.B) {
+	pool := NewConsumer(
+		WithQueueSize(b.N*count),
+		WithLogger(emptyLogger{}),
+	)
+
+	testQueue(b, pool)
+}
+
 func BenchmarkQueueTask(b *testing.B) {
 	b.ReportAllocs()
 	q := NewPool(5, WithLogger(emptyLogger{}))

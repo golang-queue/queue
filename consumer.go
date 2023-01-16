@@ -15,9 +15,13 @@ var errMaxCapacity = errors.New("max capacity reached")
 
 // Consumer for simple queue using buffer channel
 type Consumer struct {
-	taskQueue chan core.QueuedMessage
+	sync.Mutex
+	taskQueue []core.QueuedMessage
 	runFunc   func(context.Context, core.QueuedMessage) error
-	stop      chan struct{}
+	capacity  int
+	count     int
+	head      int
+	tail      int
 	exit      chan struct{}
 	logger    Logger
 	stopOnce  sync.Once
@@ -36,9 +40,7 @@ func (s *Consumer) Shutdown() error {
 	}
 
 	s.stopOnce.Do(func() {
-		close(s.stop)
-		close(s.taskQueue)
-		if len(s.taskQueue) > 0 {
+		if s.count > 0 {
 			<-s.exit
 		}
 	})
@@ -46,42 +48,72 @@ func (s *Consumer) Shutdown() error {
 }
 
 // Queue send task to the buffer channel
-func (s *Consumer) Queue(task core.QueuedMessage) error {
+func (s *Consumer) Queue(task core.QueuedMessage) error { //nolint:stylecheck
 	if atomic.LoadInt32(&s.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
-
-	select {
-	case s.taskQueue <- task:
-		return nil
-	default:
+	if s.count >= s.capacity {
 		return errMaxCapacity
 	}
+
+	s.Lock()
+	if s.count == len(s.taskQueue) {
+		s.resize(s.count * 2)
+	}
+	s.taskQueue[s.tail] = task
+	s.tail = (s.tail + 1) % len(s.taskQueue)
+	s.count++
+	s.Unlock()
+
+	return nil
 }
 
 // Request a new task from channel
 func (s *Consumer) Request() (core.QueuedMessage, error) {
-	select {
-	case task, ok := <-s.taskQueue:
-		if !ok {
-			select {
-			case s.exit <- struct{}{}:
-			default:
-			}
-			return nil, ErrQueueHasBeenClosed
+	if atomic.LoadInt32(&s.stopFlag) == 1 && s.count == 0 {
+		select {
+		case s.exit <- struct{}{}:
+		default:
 		}
-		return task, nil
-	default:
+		return nil, ErrQueueHasBeenClosed
+	}
+
+	if s.count == 0 {
 		return nil, ErrNoTaskInQueue
 	}
+	s.Lock()
+	data := s.taskQueue[s.head]
+	s.head = (s.head + 1) % len(s.taskQueue)
+	s.count--
+
+	if n := len(s.taskQueue) / 2; n > 2 && s.count <= n {
+		s.resize(n)
+	}
+	s.Unlock()
+
+	return data, nil
 }
 
-// NewConsumer for create new consumer instance
+func (q *Consumer) resize(n int) {
+	nodes := make([]core.QueuedMessage, n)
+	if q.head < q.tail {
+		copy(nodes, q.taskQueue[q.head:q.tail])
+	} else {
+		copy(nodes, q.taskQueue[q.head:])
+		copy(nodes[len(q.taskQueue)-q.head:], q.taskQueue[:q.tail])
+	}
+
+	q.tail = q.count % n
+	q.head = 0
+	q.taskQueue = nodes
+}
+
+// NewConsumer for create new Consumer instance
 func NewConsumer(opts ...Option) *Consumer {
 	o := NewOptions(opts...)
 	w := &Consumer{
-		taskQueue: make(chan core.QueuedMessage, o.queueSize),
-		stop:      make(chan struct{}),
+		taskQueue: make([]core.QueuedMessage, 2),
+		capacity:  o.queueSize,
 		exit:      make(chan struct{}),
 		logger:    o.logger,
 		runFunc:   o.fn,
