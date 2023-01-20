@@ -83,6 +83,7 @@ func (s *Consumer) Request() (core.QueuedMessage, error) {
 	}
 	s.Lock()
 	data := s.taskQueue[s.head]
+	s.taskQueue[s.head] = nil
 	s.head = (s.head + 1) % len(s.taskQueue)
 	s.count--
 
