@@ -52,7 +52,7 @@ func (s *Consumer) Queue(task core.QueuedMessage) error { //nolint:stylecheck
 	if atomic.LoadInt32(&s.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
-	if s.count >= s.capacity {
+	if s.capacity > 0 && s.count >= s.capacity {
 		return errMaxCapacity
 	}
 
