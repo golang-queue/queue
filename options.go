@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	defaultQueueSize   = 4096
+	defaultCapacity    = 0
 	defaultWorkerCount = runtime.NumCPU()
 	defaultNewLogger   = NewLogger()
 	defaultFn          = func(context.Context, core.QueuedMessage) error { return nil }
@@ -87,7 +87,7 @@ type Options struct {
 func NewOptions(opts ...Option) *Options {
 	o := &Options{
 		workerCount: defaultWorkerCount,
-		queueSize:   defaultQueueSize,
+		queueSize:   defaultCapacity,
 		logger:      defaultNewLogger,
 		worker:      nil,
 		fn:          defaultFn,
