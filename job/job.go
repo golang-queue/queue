@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/goccy/go-json"
 	"github.com/golang-queue/queue/core"
+
+	"github.com/goccy/go-json"
 )
 
 // TaskFunc is the task function
@@ -45,6 +46,35 @@ func (m *Message) Encode() []byte {
 	b, _ := json.Marshal(m)
 
 	return b
+}
+
+// Reset struct value
+func (m *Message) Reset() {
+	m.Task = nil
+	m.Timeout = 0
+	m.Payload = nil
+	m.RetryCount = 0
+	m.RetryDelay = 0
+}
+
+func (m *Message) UpdateTask(task TaskFunc, opts ...AllowOption) {
+	o := NewOptions(opts...)
+
+	m.Task = task
+	m.Payload = nil
+	m.Timeout = o.timeout
+	m.RetryCount = o.retryCount
+	m.RetryDelay = o.retryDelay
+}
+
+func (m *Message) UpdateMessage(message core.QueuedMessage, opts ...AllowOption) {
+	o := NewOptions(opts...)
+
+	m.Task = nil
+	m.Payload = m.Bytes()
+	m.Timeout = o.timeout
+	m.RetryCount = o.retryCount
+	m.RetryDelay = o.retryDelay
 }
 
 func NewMessage(m core.QueuedMessage, opts ...AllowOption) *Message {

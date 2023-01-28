@@ -28,6 +28,7 @@ type (
 		worker       core.Worker
 		stopOnce     sync.Once
 		stopFlag     int32
+		pool         sync.Pool
 	}
 )
 
@@ -45,6 +46,10 @@ func NewQueue(opts ...Option) (*Queue, error) {
 		logger:       o.logger,
 		worker:       o.worker,
 		metric:       &metric{},
+	}
+
+	q.pool.New = func() any {
+		return new(job.Message)
 	}
 
 	if q.worker == nil {
@@ -113,36 +118,41 @@ func (q *Queue) Wait() {
 	q.routineGroup.Wait()
 }
 
-// Queue to queue all job
+// Queue to queue single message
 func (q *Queue) Queue(m core.QueuedMessage, opts ...job.AllowOption) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
 
-	message := job.NewMessage(m, opts...)
-
-	if err := q.worker.Queue(&job.Message{
-		Payload: message.Encode(),
-	}); err != nil {
+	message := q.pool.Get().(*job.Message)
+	message.Reset()
+	message.UpdateMessage(m, opts...)
+	payload := message.Encode()
+	message.Reset()
+	message.Payload = payload
+	if err := q.worker.Queue(message); err != nil {
 		return err
 	}
+	q.pool.Put(message)
 
 	q.metric.IncSubmittedTask()
 
 	return nil
 }
 
-// QueueTask to queue job task
+// QueueTask to queue single task
 func (q *Queue) QueueTask(task job.TaskFunc, opts ...job.AllowOption) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
 
-	message := job.NewTask(task, opts...)
-
+	message := q.pool.Get().(*job.Message)
+	message.Reset()
+	message.UpdateTask(task, opts...)
 	if err := q.worker.Queue(message); err != nil {
 		return err
 	}
+	q.pool.Put(message)
 
 	q.metric.IncSubmittedTask()
 

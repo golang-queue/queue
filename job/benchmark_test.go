@@ -9,7 +9,7 @@ import (
 func BenchmarkNewTask(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		NewTask(func(context.Context) error {
+		_ = NewTask(func(context.Context) error {
 			return nil
 		},
 			AllowOption{
