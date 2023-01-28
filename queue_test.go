@@ -81,7 +81,7 @@ func TestHandleTimeout(t *testing.T) {
 		Timeout: 100 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return nil
@@ -113,7 +113,7 @@ func TestJobComplete(t *testing.T) {
 		Timeout: 100 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			return errors.New("job completed")
 		}),
@@ -134,7 +134,7 @@ func TestJobComplete(t *testing.T) {
 		Payload: []byte("foo"),
 	}
 
-	w = NewConsumer(
+	w = NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return errors.New("job completed")
@@ -159,7 +159,7 @@ func TestTaskJobComplete(t *testing.T) {
 			return errors.New("job completed")
 		},
 	}
-	w := NewConsumer()
+	w := NewRing()
 
 	q, err := NewQueue(
 		WithWorker(w),

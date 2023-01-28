@@ -8,10 +8,10 @@ import (
 	"github.com/golang-queue/queue/core"
 )
 
-var _ core.Worker = (*Consumer)(nil)
+var _ core.Worker = (*Ring)(nil)
 
-// Consumer for simple queue using buffer channel
-type Consumer struct {
+// Ring for simple queue using buffer channel
+type Ring struct {
 	sync.Mutex
 	taskQueue []core.QueuedMessage
 	runFunc   func(context.Context, core.QueuedMessage) error
@@ -26,12 +26,12 @@ type Consumer struct {
 }
 
 // Run to execute new task
-func (s *Consumer) Run(ctx context.Context, task core.QueuedMessage) error {
+func (s *Ring) Run(ctx context.Context, task core.QueuedMessage) error {
 	return s.runFunc(ctx, task)
 }
 
 // Shutdown the worker
-func (s *Consumer) Shutdown() error {
+func (s *Ring) Shutdown() error {
 	if !atomic.CompareAndSwapInt32(&s.stopFlag, 0, 1) {
 		return ErrQueueShutdown
 	}
@@ -45,7 +45,7 @@ func (s *Consumer) Shutdown() error {
 }
 
 // Queue send task to the buffer channel
-func (s *Consumer) Queue(task core.QueuedMessage) error { //nolint:stylecheck
+func (s *Ring) Queue(task core.QueuedMessage) error { //nolint:stylecheck
 	if atomic.LoadInt32(&s.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
@@ -66,7 +66,7 @@ func (s *Consumer) Queue(task core.QueuedMessage) error { //nolint:stylecheck
 }
 
 // Request a new task from channel
-func (s *Consumer) Request() (core.QueuedMessage, error) {
+func (s *Ring) Request() (core.QueuedMessage, error) {
 	if atomic.LoadInt32(&s.stopFlag) == 1 && s.count == 0 {
 		select {
 		case s.exit <- struct{}{}:
@@ -92,7 +92,7 @@ func (s *Consumer) Request() (core.QueuedMessage, error) {
 	return data, nil
 }
 
-func (q *Consumer) resize(n int) {
+func (q *Ring) resize(n int) {
 	nodes := make([]core.QueuedMessage, n)
 	if q.head < q.tail {
 		copy(nodes, q.taskQueue[q.head:q.tail])
@@ -106,10 +106,10 @@ func (q *Consumer) resize(n int) {
 	q.taskQueue = nodes
 }
 
-// NewConsumer for create new Consumer instance
-func NewConsumer(opts ...Option) *Consumer {
+// NewRing for create new Ring instance
+func NewRing(opts ...Option) *Ring {
 	o := NewOptions(opts...)
-	w := &Consumer{
+	w := &Ring{
 		taskQueue: make([]core.QueuedMessage, 2),
 		capacity:  o.queueSize,
 		exit:      make(chan struct{}),

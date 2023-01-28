@@ -4,7 +4,7 @@ package queue
 func NewPool(size int, opts ...Option) *Queue {
 	o := []Option{
 		WithWorkerCount(size),
-		WithWorker(NewConsumer(opts...)),
+		WithWorker(NewRing(opts...)),
 	}
 	o = append(
 		o,

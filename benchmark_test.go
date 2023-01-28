@@ -38,7 +38,7 @@ func testQueue(b *testing.B, pool testqueue) {
 }
 
 func BenchmarkNewCusumer(b *testing.B) {
-	pool := NewConsumer(
+	pool := NewRing(
 		WithQueueSize(b.N*count),
 		WithLogger(emptyLogger{}),
 	)
@@ -69,14 +69,14 @@ func BenchmarkQueue(b *testing.B) {
 	}
 }
 
-func BenchmarkConsumerPayload(b *testing.B) {
+func BenchmarkRingPayload(b *testing.B) {
 	b.ReportAllocs()
 
 	task := &job.Message{
 		Timeout: 100 * time.Millisecond,
 		Payload: []byte(`{"timeout":3600000000000}`),
 	}
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			return nil
 		}),
@@ -92,7 +92,7 @@ func BenchmarkConsumerPayload(b *testing.B) {
 	}
 }
 
-func BenchmarkConsumerTask(b *testing.B) {
+func BenchmarkRingTask(b *testing.B) {
 	b.ReportAllocs()
 
 	task := &job.Message{
@@ -101,7 +101,7 @@ func BenchmarkConsumerTask(b *testing.B) {
 			return nil
 		},
 	}
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			return nil
 		}),

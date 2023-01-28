@@ -12,7 +12,7 @@ import (
 )
 
 func TestMetricData(t *testing.T) {
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			switch string(m.Bytes()) {
 			case "foo1":

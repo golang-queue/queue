@@ -18,7 +18,7 @@ import (
 )
 
 func TestMaxCapacity(t *testing.T) {
-	w := NewConsumer(WithQueueSize(2))
+	w := NewRing(WithQueueSize(2))
 
 	assert.NoError(t, w.Queue(&mockMessage{}))
 	assert.NoError(t, w.Queue(&mockMessage{}))
@@ -32,7 +32,7 @@ func TestCustomFuncAndWait(t *testing.T) {
 	m := mockMessage{
 		message: "foo",
 	}
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(500 * time.Millisecond)
 			return nil
@@ -61,7 +61,7 @@ func TestEnqueueJobAfterShutdown(t *testing.T) {
 	m := mockMessage{
 		message: "foo",
 	}
-	w := NewConsumer()
+	w := NewRing()
 	q, err := NewQueue(
 		WithWorker(w),
 		WithWorkerCount(2),
@@ -81,7 +81,7 @@ func TestJobReachTimeout(t *testing.T) {
 	m := mockMessage{
 		message: "foo",
 	}
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			for {
 				select {
@@ -114,7 +114,7 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 	m := mockMessage{
 		message: "foo",
 	}
-	w := NewConsumer(
+	w := NewRing(
 		WithLogger(NewEmptyLogger()),
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			for {
@@ -147,7 +147,7 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 }
 
 func TestGoroutineLeak(t *testing.T) {
-	w := NewConsumer(
+	w := NewRing(
 		WithLogger(NewLogger()),
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			for {
@@ -191,7 +191,7 @@ func TestGoroutinePanic(t *testing.T) {
 	m := mockMessage{
 		message: "foo",
 	}
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			panic("missing something")
 		}),
@@ -208,7 +208,7 @@ func TestGoroutinePanic(t *testing.T) {
 }
 
 func TestIncreaseWorkerCount(t *testing.T) {
-	w := NewConsumer(
+	w := NewRing(
 		WithLogger(NewEmptyLogger()),
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(500 * time.Millisecond)
@@ -239,7 +239,7 @@ func TestIncreaseWorkerCount(t *testing.T) {
 }
 
 func TestDecreaseWorkerCount(t *testing.T) {
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(100 * time.Millisecond)
 			return nil
@@ -270,13 +270,13 @@ func TestDecreaseWorkerCount(t *testing.T) {
 	q.Release()
 }
 
-func TestHandleAllJobBeforeShutdownConsumer(t *testing.T) {
+func TestHandleAllJobBeforeShutdownRing(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 
 	m := mocks.NewMockQueuedMessage(controller)
 
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(10 * time.Millisecond)
 			return nil
@@ -303,7 +303,7 @@ func TestHandleAllJobBeforeShutdownConsumer(t *testing.T) {
 	<-done
 }
 
-func TestHandleAllJobBeforeShutdownConsumerInQueue(t *testing.T) {
+func TestHandleAllJobBeforeShutdownRingInQueue(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 
@@ -312,7 +312,7 @@ func TestHandleAllJobBeforeShutdownConsumerInQueue(t *testing.T) {
 
 	messages := make(chan string, 10)
 
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			time.Sleep(10 * time.Millisecond)
 			messages <- string(m.Bytes())
@@ -346,7 +346,7 @@ func TestRetryCountWithNewMessage(t *testing.T) {
 	keep := make(chan struct{})
 	count := 1
 
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			if count%3 != 0 {
 				count++
@@ -384,7 +384,7 @@ func TestRetryCountWithNewTask(t *testing.T) {
 	messages := make(chan string, 10)
 	count := 1
 
-	w := NewConsumer()
+	w := NewRing()
 
 	q, err := NewQueue(
 		WithLogger(NewLogger()),
@@ -422,7 +422,7 @@ func TestCancelRetryCountWithNewTask(t *testing.T) {
 	messages := make(chan string, 10)
 	count := 1
 
-	w := NewConsumer()
+	w := NewRing()
 
 	q, err := NewQueue(
 		WithLogger(NewLogger()),
@@ -464,7 +464,7 @@ func TestCancelRetryCountWithNewMessage(t *testing.T) {
 	messages := make(chan string, 10)
 	count := 1
 
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			if count%3 != 0 {
 				count++
@@ -498,7 +498,7 @@ func TestCancelRetryCountWithNewMessage(t *testing.T) {
 }
 
 func TestErrNoTaskInQueue(t *testing.T) {
-	w := NewConsumer(
+	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			return nil
 		}),
