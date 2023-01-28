@@ -25,7 +25,7 @@ func TestMaxCapacity(t *testing.T) {
 	assert.Error(t, w.Queue(&mockMessage{}))
 
 	err := w.Queue(&mockMessage{})
-	assert.Equal(t, errMaxCapacity, err)
+	assert.Equal(t, ErrMaxCapacity, err)
 }
 
 func TestCustomFuncAndWait(t *testing.T) {
