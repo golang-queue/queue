@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"log"
 	"testing"
 	"time"
 
@@ -47,25 +48,39 @@ func BenchmarkNewRing(b *testing.B) {
 }
 
 func BenchmarkQueueTask(b *testing.B) {
+	w := NewRing()
+	q, _ := NewQueue(
+		WithWorker(w),
+		WithLogger(emptyLogger{}),
+	)
 	b.ReportAllocs()
-	q := NewPool(5, WithLogger(emptyLogger{}))
-	defer q.Release()
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_ = q.QueueTask(func(context.Context) error {
+		err := q.QueueTask(func(context.Context) error {
 			return nil
 		})
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
 func BenchmarkQueue(b *testing.B) {
-	b.ReportAllocs()
 	m := &mockMessage{
 		message: "foo",
 	}
-	q := NewPool(5, WithLogger(emptyLogger{}))
-	defer q.Release()
+	w := NewRing()
+	q, _ := NewQueue(
+		WithWorker(w),
+		WithLogger(emptyLogger{}),
+	)
+	b.ReportAllocs()
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_ = q.Queue(m)
+		err := q.Queue(m)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
