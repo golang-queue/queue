@@ -48,7 +48,7 @@ func NewQueue(opts ...Option) (*Queue, error) {
 		metric:       &metric{},
 	}
 
-	q.pool.New = func() any {
+	q.pool.New = func() interface{} {
 		return new(job.Message)
 	}
 
