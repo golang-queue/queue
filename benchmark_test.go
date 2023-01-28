@@ -37,7 +37,7 @@ func testQueue(b *testing.B, pool testqueue) {
 	}
 }
 
-func BenchmarkNewCusumer(b *testing.B) {
+func BenchmarkNewRing(b *testing.B) {
 	pool := NewRing(
 		WithQueueSize(b.N*count),
 		WithLogger(emptyLogger{}),
