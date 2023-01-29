@@ -3,8 +3,8 @@ package job
 import (
 	"context"
 	"time"
+	"unsafe"
 
-	"github.com/goccy/go-json"
 	"github.com/golang-queue/queue/core"
 )
 
@@ -30,30 +30,23 @@ type Message struct {
 	// RetryDelay set delay between retry
 	// default is 100ms
 	RetryDelay time.Duration `json:"retry_delay"`
+
+	// Data to save Unsafe cast
+	Data []byte
 }
 
-// Bytes get string body
+const (
+	movementSize = int(unsafe.Sizeof(Message{}))
+)
+
+// Bytes get internal data
 func (m *Message) Bytes() []byte {
-	if m.Task != nil {
-		return nil
-	}
-	return m.Payload
+	return m.Data
 }
 
 // Encode for encoding the structure
-func (m *Message) Encode() []byte {
-	b, _ := json.Marshal(m)
-
-	return b
-}
-
-// Rest for reset default value
-func (m *Message) Rest() {
-	m.Task = nil
-	m.Payload = nil
-	m.RetryCount = 0
-	m.Timeout = 0
-	m.RetryDelay = 0
+func (m *Message) Encode() {
+	m.Data = Encode(m)
 }
 
 func NewMessage(m core.QueuedMessage, opts ...AllowOption) *Message {
@@ -76,4 +69,12 @@ func NewTask(task TaskFunc, opts ...AllowOption) *Message {
 		RetryDelay: o.retryDelay,
 		Task:       task,
 	}
+}
+
+func Encode(m *Message) []byte {
+	return (*[movementSize]byte)(unsafe.Pointer(m))[:]
+}
+
+func Decode(m []byte) *Message {
+	return (*Message)(unsafe.Pointer(&m[0]))
 }

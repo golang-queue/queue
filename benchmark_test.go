@@ -2,7 +2,6 @@ package queue
 
 import (
 	"context"
-	"log"
 	"testing"
 	"time"
 
@@ -55,20 +54,19 @@ func BenchmarkQueueTask(b *testing.B) {
 	)
 	b.ReportAllocs()
 	b.ResetTimer()
+
+	m := job.NewTask(func(context.Context) error {
+		return nil
+	})
+
 	for n := 0; n < b.N; n++ {
-		err := q.QueueTask(func(context.Context) error {
-			return nil
-		})
-		if err != nil {
-			log.Fatal(err)
+		if err := q.queue(m); err != nil {
+			b.Fatal(err)
 		}
 	}
 }
 
 func BenchmarkQueue(b *testing.B) {
-	m := &mockMessage{
-		message: "foo",
-	}
 	w := NewRing()
 	q, _ := NewQueue(
 		WithWorker(w),
@@ -76,38 +74,43 @@ func BenchmarkQueue(b *testing.B) {
 	)
 	b.ReportAllocs()
 	b.ResetTimer()
+
+	m := job.NewMessage(&mockMessage{
+		message: "foo",
+	})
+	m.Encode()
+
 	for n := 0; n < b.N; n++ {
-		err := q.Queue(m)
-		if err != nil {
-			log.Fatal(err)
+		if err := q.queue(m); err != nil {
+			b.Fatal(err)
 		}
 	}
 }
 
-func BenchmarkRingPayload(b *testing.B) {
-	b.ReportAllocs()
+// func BenchmarkRingPayload(b *testing.B) {
+// 	b.ReportAllocs()
 
-	task := &job.Message{
-		Timeout: 100 * time.Millisecond,
-		Payload: []byte(`{"timeout":3600000000000}`),
-	}
-	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
-			return nil
-		}),
-	)
+// 	task := &job.Message{
+// 		Timeout: 100 * time.Millisecond,
+// 		Payload: []byte(`{"timeout":3600000000000}`),
+// 	}
+// 	w := NewRing(
+// 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+// 			return nil
+// 		}),
+// 	)
 
-	q, _ := NewQueue(
-		WithWorker(w),
-		WithLogger(emptyLogger{}),
-	)
+// 	q, _ := NewQueue(
+// 		WithWorker(w),
+// 		WithLogger(emptyLogger{}),
+// 	)
 
-	for n := 0; n < b.N; n++ {
-		_ = q.run(task)
-	}
-}
+// 	for n := 0; n < b.N; n++ {
+// 		_ = q.run(task)
+// 	}
+// }
 
-func BenchmarkRingTask(b *testing.B) {
+func BenchmarkRingWithTask(b *testing.B) {
 	b.ReportAllocs()
 
 	task := &job.Message{

@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/goccy/go-json"
 	"github.com/golang-queue/queue/core"
 	"github.com/golang-queue/queue/job"
 )
@@ -113,35 +112,26 @@ func (q *Queue) Wait() {
 	q.routineGroup.Wait()
 }
 
-// Queue to queue all job
-func (q *Queue) Queue(m core.QueuedMessage, opts ...job.AllowOption) error {
-	if atomic.LoadInt32(&q.stopFlag) == 1 {
-		return ErrQueueShutdown
-	}
+// Queue to queue single job with binary
+func (q *Queue) Queue(message core.QueuedMessage, opts ...job.AllowOption) error {
+	data := job.NewMessage(message, opts...)
+	data.Encode()
 
-	message := job.NewMessage(m, opts...)
-	payload := message.Encode()
-	message.Rest()
-	message.Payload = payload
-
-	if err := q.worker.Queue(message); err != nil {
-		return err
-	}
-
-	q.metric.IncSubmittedTask()
-
-	return nil
+	return q.queue(data)
 }
 
-// QueueTask to queue job task
+// QueueTask to queue single task
 func (q *Queue) QueueTask(task job.TaskFunc, opts ...job.AllowOption) error {
+	data := job.NewTask(task, opts...)
+	return q.queue(data)
+}
+
+func (q *Queue) queue(m *job.Message) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
 
-	message := job.NewTask(task, opts...)
-
-	if err := q.worker.Queue(message); err != nil {
+	if err := q.worker.Queue(m); err != nil {
 		return err
 	}
 
@@ -178,7 +168,8 @@ func (q *Queue) work(task core.QueuedMessage) {
 func (q *Queue) run(task core.QueuedMessage) error {
 	data := task.(*job.Message)
 	if data.Task == nil {
-		_ = json.Unmarshal(task.Bytes(), data)
+		data = job.Decode(task.Bytes())
+		data.Data = data.Payload
 	}
 
 	return q.handle(data)
