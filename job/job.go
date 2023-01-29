@@ -47,6 +47,15 @@ func (m *Message) Encode() []byte {
 	return b
 }
 
+// Rest for reset default value
+func (m *Message) Rest() {
+	m.Task = nil
+	m.Payload = nil
+	m.RetryCount = 0
+	m.Timeout = 0
+	m.RetryDelay = 0
+}
+
 func NewMessage(m core.QueuedMessage, opts ...AllowOption) *Message {
 	o := NewOptions(opts...)
 

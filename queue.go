@@ -120,10 +120,11 @@ func (q *Queue) Queue(m core.QueuedMessage, opts ...job.AllowOption) error {
 	}
 
 	message := job.NewMessage(m, opts...)
+	payload := message.Encode()
+	message.Rest()
+	message.Payload = payload
 
-	if err := q.worker.Queue(&job.Message{
-		Payload: message.Encode(),
-	}); err != nil {
+	if err := q.worker.Queue(message); err != nil {
 		return err
 	}
 
