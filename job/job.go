@@ -3,9 +3,11 @@ package job
 import (
 	"context"
 	"time"
+	"unsafe"
+
+	"github.com/golang-queue/queue/core"
 
 	"github.com/goccy/go-json"
-	"github.com/golang-queue/queue/core"
 )
 
 // TaskFunc is the task function
@@ -30,14 +32,20 @@ type Message struct {
 	// RetryDelay set delay between retry
 	// default is 100ms
 	RetryDelay time.Duration `json:"retry_delay"`
+
+	Data []byte
 }
+
+const (
+	movementSize = int(unsafe.Sizeof(Message{}))
+)
 
 // Bytes get string body
 func (m *Message) Bytes() []byte {
-	if m.Task != nil {
-		return nil
-	}
-	return m.Payload
+	// if m.Task != nil {
+	// 	return nil
+	// }
+	return m.Data
 }
 
 // Encode for encoding the structure
@@ -47,11 +55,23 @@ func (m *Message) Encode() []byte {
 	return b
 }
 
+// Encode for encoding the structure
+func (m *Message) UnsafeEncode() {
+	m.Data = (*[movementSize]byte)(unsafe.Pointer(m))[:]
+}
+
+// Encode for encoding the structure
+func (m *Message) UnsafeDecode() *Message {
+	return (*Message)(unsafe.Pointer(&m.Payload[0]))
+}
+
 // Rest for reset default value
 func (m *Message) Rest() {
 	m.Task = nil
 	m.Payload = nil
 	m.RetryCount = 0
+	// m.Timeout = 60 * time.Minute
+	// m.RetryDelay = 100 * time.Millisecond
 	m.Timeout = 0
 	m.RetryDelay = 0
 }
@@ -76,4 +96,12 @@ func NewTask(task TaskFunc, opts ...AllowOption) *Message {
 		RetryDelay: o.retryDelay,
 		Task:       task,
 	}
+}
+
+func Encode(m *Message) []byte {
+	return (*[movementSize]byte)(unsafe.Pointer(m))[:]
+}
+
+func Decode(m []byte) *Message {
+	return (*Message)(unsafe.Pointer(&m[0]))
 }

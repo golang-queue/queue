@@ -2,7 +2,6 @@ package queue
 
 import (
 	"context"
-	"log"
 	"testing"
 	"time"
 
@@ -55,12 +54,14 @@ func BenchmarkQueueTask(b *testing.B) {
 	)
 	b.ReportAllocs()
 	b.ResetTimer()
+
+	m := job.NewTask(func(context.Context) error {
+		return nil
+	})
+
 	for n := 0; n < b.N; n++ {
-		err := q.QueueTask(func(context.Context) error {
-			return nil
-		})
-		if err != nil {
-			log.Fatal(err)
+		if err := q.queue(m); err != nil {
+			b.Fatal(err)
 		}
 	}
 }
@@ -76,20 +77,48 @@ func BenchmarkQueue(b *testing.B) {
 	)
 	b.ReportAllocs()
 	b.ResetTimer()
+
+	message := job.NewMessage(m)
+	message.UnsafeEncode()
+
 	for n := 0; n < b.N; n++ {
-		err := q.Queue(m)
-		if err != nil {
-			log.Fatal(err)
+		if err := q.queue(message); err != nil {
+			b.Fatal(err)
 		}
 	}
 }
 
-func BenchmarkRingPayload(b *testing.B) {
+// func BenchmarkRingPayload(b *testing.B) {
+// 	b.ReportAllocs()
+
+// 	task := &job.Message{
+// 		Timeout: 100 * time.Millisecond,
+// 		Payload: []byte(`{"timeout":3600000000000}`),
+// 	}
+// 	w := NewRing(
+// 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+// 			return nil
+// 		}),
+// 	)
+
+// 	q, _ := NewQueue(
+// 		WithWorker(w),
+// 		WithLogger(emptyLogger{}),
+// 	)
+
+// 	for n := 0; n < b.N; n++ {
+// 		_ = q.run(task)
+// 	}
+// }
+
+func BenchmarkRingWithTask(b *testing.B) {
 	b.ReportAllocs()
 
 	task := &job.Message{
 		Timeout: 100 * time.Millisecond,
-		Payload: []byte(`{"timeout":3600000000000}`),
+		Task: func(_ context.Context) error {
+			return nil
+		},
 	}
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
@@ -107,15 +136,21 @@ func BenchmarkRingPayload(b *testing.B) {
 	}
 }
 
-func BenchmarkRingTask(b *testing.B) {
+func BenchmarkRingWithMessage(b *testing.B) {
 	b.ReportAllocs()
 
-	task := &job.Message{
-		Timeout: 100 * time.Millisecond,
-		Task: func(_ context.Context) error {
-			return nil
-		},
+	// task := &job.Message{
+	// 	Timeout: 100 * time.Millisecond,
+	// 	Data:    []byte(`{"timeout":3600000000000}`),
+	// }
+
+	m := &mockMessage{
+		message: "foo",
 	}
+
+	task := job.NewMessage(m)
+	task.UnsafeEncode()
+
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
 			return nil

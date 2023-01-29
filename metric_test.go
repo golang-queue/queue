@@ -14,6 +14,8 @@ import (
 func TestMetricData(t *testing.T) {
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+			// log.Println(m.Bytes())
+			// log.Println(string(m.Bytes()))
 			switch string(m.Bytes()) {
 			case "foo1":
 				panic("missing something")

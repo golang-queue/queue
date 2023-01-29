@@ -1,6 +1,8 @@
 package core
 
-import "context"
+import (
+	"context"
+)
 
 // Worker interface
 type Worker interface {
