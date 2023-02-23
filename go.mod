@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.8.1
-	go.uber.org/goleak v1.2.0
+	go.uber.org/goleak v1.2.1
 )
 
 require (
