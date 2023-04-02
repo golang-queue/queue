@@ -2,17 +2,29 @@ direction: right
 
 user01: User01 {
   shape: person
-  style.multiple: true
+  style: {
+    multiple: true
+    bold: true
+    font-size: 28
+  }
 }
 
 user02: User02 {
   shape: person
-  style.multiple: true
+  style: {
+    multiple: true
+    bold: true
+    font-size: 28
+  }
 }
 
 user03: User03 {
   shape: person
-  style.multiple: true
+  style: {
+    multiple: true
+    bold: true
+    font-size: 28
+  }
 }
 
 user01 -> container.task01: Create Task {
@@ -74,10 +86,19 @@ container: Application {
 
   queue: Queue Library {
     icon: https://icons.terrastruct.com/dev%2Fgo.svg
+    style: {
+      bold: true
+      font-size: 32
+      fill: honeydew
+    }
     producer: Producer {
       style: {
         bold: true
         font-size: 32
+        fill: PapayaWhip
+        fill-pattern: grain
+        border-radius: 8
+        font: mono
       }
     }
 
@@ -85,19 +106,25 @@ container: Application {
       style: {
         bold: true
         font-size: 32
+        fill: PapayaWhip
+        fill-pattern: grain
+        border-radius: 8
+        font: mono
       }
     }
 
-    channel: Ring\nBuffer {
+    database: Ring\nBuffer {
       shape: cylinder
       style: {
         bold: true
         font-size: 32
+        fill-pattern: lines
+        font: mono
       }
     }
 
-    producer -> channel
-    channel -> consumer
+    producer -> database
+    database -> consumer
   }
 
   worker01: {
