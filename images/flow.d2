@@ -1,0 +1,102 @@
+direction: right
+
+user01: User01 {
+  shape: person
+  style.multiple: true
+}
+
+user02: User02 {
+  shape: person
+  style.multiple: true
+}
+
+user03: User03 {
+  shape: person
+  style.multiple: true
+}
+
+user01 -> container.task01: Create Task {
+  style:{
+    animated: true
+    bold: true
+    font-size: 28
+  }
+}
+user02 -> container.task02: Create Task{
+  style:{
+    animated: true
+    bold: true
+    font-size: 28
+  }
+}
+user03 -> container.task03: Create Task{
+  style:{
+    animated: true
+    bold: true
+    font-size: 28
+  }
+}
+
+container: Application {
+  direction: right
+  icon: https://icons.terrastruct.com/dev%2Fgo.svg
+
+  task01:  {
+    icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
+    style.multiple: true
+  }
+
+  task02:  {
+    icon: https://icons.terrastruct.com/essentials%2F095-download.svg
+    style.multiple: true
+  }
+
+  task03:  {
+    icon: https://icons.terrastruct.com/essentials%2F195-attachment.svg
+    style.multiple: true
+  }
+
+  queue: Queue Library {
+    icon: https://icons.terrastruct.com/dev%2Fgo.svg
+    producer: Producer {
+
+    }
+
+    consumer: Consumer {
+
+    }
+
+    channel: Ring Buffer {
+      shape: cylinder
+    }
+
+    producer -> channel
+    channel -> consumer
+  }
+
+
+
+  worker01: {
+    icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
+  }
+
+  worker02: {
+    icon: https://icons.terrastruct.com/essentials%2F095-download.svg
+  }
+
+  worker03: {
+    icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
+  }
+
+  worker04: {
+    icon: https://icons.terrastruct.com/essentials%2F195-attachment.svg
+  }
+
+  task01 -> queue.producer: Enqueue Task
+  task02 -> queue.producer: Enqueue Task
+  task03 -> queue.producer: Enqueue Task
+  queue.consumer -> worker01: dispatch task
+  queue.consumer -> worker02: dispatch task
+  queue.consumer -> worker03: dispatch task
+  queue.consumer -> worker04: dispatch task
+}

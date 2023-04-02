@@ -19,7 +19,7 @@ Queue is a Golang library for spawning and managing a Goroutine pool, allowing y
 
 In Single Container or VM
 
-![queue01](./images/queue-01.png)
+![queue01](./images/flow.svg)
 
 Multile Container with Queue service like NSQ, NATs or Redis
 
