@@ -16,21 +16,21 @@ user03: User03 {
 }
 
 user01 -> container.task01: Create Task {
-  style:{
+  style: {
     animated: true
     bold: true
     font-size: 28
   }
 }
-user02 -> container.task02: Create Task{
-  style:{
+user02 -> container.task02: Create Task {
+  style: {
     animated: true
     bold: true
     font-size: 28
   }
 }
-user03 -> container.task03: Create Task{
-  style:{
+user03 -> container.task03: Create Task {
+  style: {
     animated: true
     bold: true
     font-size: 28
@@ -39,64 +39,139 @@ user03 -> container.task03: Create Task{
 
 container: Application {
   direction: right
+  style: {
+    bold: true
+    font-size: 28
+  }
   icon: https://icons.terrastruct.com/dev%2Fgo.svg
 
-  task01:  {
+  task01: {
     icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
-    style.multiple: true
+    style: {
+      multiple: true
+      bold: true
+      font-size: 32
+    }
   }
 
-  task02:  {
+  task02: {
     icon: https://icons.terrastruct.com/essentials%2F095-download.svg
-    style.multiple: true
+    style: {
+      multiple: true
+      bold: true
+      font-size: 32
+    }
   }
 
-  task03:  {
+  task03: {
     icon: https://icons.terrastruct.com/essentials%2F195-attachment.svg
-    style.multiple: true
+    style: {
+      multiple: true
+      bold: true
+      font-size: 32
+    }
   }
 
   queue: Queue Library {
     icon: https://icons.terrastruct.com/dev%2Fgo.svg
     producer: Producer {
-
+      style: {
+        bold: true
+        font-size: 32
+      }
     }
 
     consumer: Consumer {
-
+      style: {
+        bold: true
+        font-size: 32
+      }
     }
 
-    channel: Ring Buffer {
+    channel: Ring\nBuffer {
       shape: cylinder
+      style: {
+        bold: true
+        font-size: 32
+      }
     }
 
     producer -> channel
     channel -> consumer
   }
 
-
-
   worker01: {
     icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
+    style: {
+      bold: true
+      font-size: 32
+    }
   }
 
   worker02: {
     icon: https://icons.terrastruct.com/essentials%2F095-download.svg
+    style: {
+      bold: true
+      font-size: 32
+    }
   }
 
   worker03: {
     icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
+    style: {
+      bold: true
+      font-size: 32
+    }
   }
 
   worker04: {
     icon: https://icons.terrastruct.com/essentials%2F195-attachment.svg
+    style: {
+      bold: true
+      font-size: 32
+    }
   }
 
-  task01 -> queue.producer: Enqueue Task
-  task02 -> queue.producer: Enqueue Task
-  task03 -> queue.producer: Enqueue Task
-  queue.consumer -> worker01: dispatch task
-  queue.consumer -> worker02: dispatch task
-  queue.consumer -> worker03: dispatch task
-  queue.consumer -> worker04: dispatch task
+  task01 -> queue.producer: Enqueue Task {
+    style: {
+      bold: true
+      font-size: 28
+    }
+  }
+  task02 -> queue.producer: Enqueue Task {
+    style: {
+      bold: true
+      font-size: 28
+    }
+  }
+  task03 -> queue.producer: Enqueue Task {
+    style: {
+      bold: true
+      font-size: 28
+    }
+  }
+  queue.consumer -> worker01: dispatch task {
+    style: {
+      bold: true
+      font-size: 28
+    }
+  }
+  queue.consumer -> worker02: dispatch task {
+    style: {
+      bold: true
+      font-size: 28
+    }
+  }
+  queue.consumer -> worker03: dispatch task {
+    style: {
+      bold: true
+      font-size: 28
+    }
+  }
+  queue.consumer -> worker04: dispatch task {
+    style: {
+      bold: true
+      font-size: 28
+    }
+  }
 }
