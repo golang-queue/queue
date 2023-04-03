@@ -17,13 +17,13 @@ Queue is a Golang library for spawning and managing a Goroutine pool, allowing y
 
 ## Queue Scenario
 
-In Single Container or VM
+Simple Queue service using Ring Buffer as default backend.
 
-![queue01](./images/flow.svg)
+![queue01](./images/flow-01.svg)
 
-Multile Container with Queue service like NSQ, NATs or Redis
+Change Queue service like NSQ, NATs or Redis.
 
-![queue02](./images/queue-02.png)
+![queue02](./images/flow-02.svg)
 
 ## Requirements
 
