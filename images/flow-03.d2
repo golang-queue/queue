@@ -172,8 +172,6 @@ database: Ring\nBuffer {
   }
 }
 
-
-
 other_store: "" {
   style: {
     opacity: 0
@@ -186,6 +184,7 @@ other_store: "" {
       bold: true
       font-size: 32
       font: mono
+      opacity: 0.7
     }
   }
 
@@ -206,11 +205,10 @@ other_store: "" {
       bold: true
       font-size: 32
       font: mono
+      opacity: 0.7
     }
   }
 }
-
-
 
 container_consumer_01: Worker01 {
   direction: right
@@ -258,7 +256,7 @@ container_consumer_01: Worker01 {
     }
   }
 
-  queue.consumer -> task01 : Handle Task {
+  queue.consumer -> task01: Handle Task {
     style: {
       animated: true
       bold: true
@@ -266,7 +264,7 @@ container_consumer_01: Worker01 {
     }
   }
 
-  queue.consumer -> task02 : Handle Task {
+  queue.consumer -> task02: Handle Task {
     style: {
       bold: true
       font-size: 28
@@ -358,7 +356,7 @@ container_consumer_02: Worker02 {
     }
   }
 
-  queue01.consumer -> task01 : Handle Task {
+  queue01.consumer -> task01: Handle Task {
     style: {
       animated: true
       bold: true
@@ -366,7 +364,7 @@ container_consumer_02: Worker02 {
     }
   }
 
-  queue01.consumer -> task02 : Handle Task {
+  queue01.consumer -> task02: Handle Task {
     style: {
       animated: true
       bold: true
@@ -374,7 +372,7 @@ container_consumer_02: Worker02 {
     }
   }
 
-  queue02.consumer -> task03 : Handle Task {
+  queue02.consumer -> task03: Handle Task {
     style: {
       animated: true
       bold: true
@@ -382,7 +380,7 @@ container_consumer_02: Worker02 {
     }
   }
 
-  queue02.consumer -> task04 : Handle Task {
+  queue02.consumer -> task04: Handle Task {
     style: {
       animated: true
       bold: true
@@ -494,274 +492,3 @@ other_store.nats -> container_consumer_02.queue02.consumer: "" {
     opacity: 0.3
   }
 }
-
-# container: Application {
-#   direction: right
-#   style: {
-#     bold: true
-#     font-size: 28
-#   }
-#   icon: https://icons.terrastruct.com/dev%2Fgo.svg
-
-#   task01: {
-#     icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
-#     style: {
-#       multiple: true
-#       bold: true
-#       font-size: 32
-#     }
-#   }
-
-#   task02: {
-#     icon: https://icons.terrastruct.com/essentials%2F095-download.svg
-#     style: {
-#       multiple: true
-#       bold: true
-#       font-size: 32
-#     }
-#   }
-
-#   task03: {
-#     icon: https://icons.terrastruct.com/essentials%2F195-attachment.svg
-#     style: {
-#       multiple: true
-#       bold: true
-#       font-size: 32
-#     }
-#   }
-
-#   task04: {
-#     icon: https://icons.terrastruct.com/essentials%2F213-alarm.svg
-#     style: {
-#       multiple: true
-#       bold: true
-#       font-size: 32
-#     }
-#   }
-
-#   queue: Queue Library {
-#     icon: https://icons.terrastruct.com/dev%2Fgo.svg
-#     style: {
-#       bold: true
-#       font-size: 32
-#       fill: honeydew
-#     }
-#     producer01: Producer01 {
-#       style: {
-#         bold: true
-#         font-size: 32
-#         fill: PapayaWhip
-#         fill-pattern: grain
-#         border-radius: 8
-#         font: mono
-#       }
-#     }
-
-#     producer02: Producer02 {
-#       style: {
-#         bold: true
-#         font-size: 32
-#         fill: PapayaWhip
-#         fill-pattern: grain
-#         border-radius: 8
-#         font: mono
-#       }
-#     }
-
-#     producer03: Producer03 {
-#       style: {
-#         bold: true
-#         font-size: 32
-#         fill: PapayaWhip
-#         fill-pattern: grain
-#         border-radius: 8
-#         font: mono
-#       }
-#     }
-
-#     producer04: Producer04 {
-#       style: {
-#         bold: true
-#         font-size: 32
-#         fill: PapayaWhip
-#         fill-pattern: grain
-#         border-radius: 8
-#         font: mono
-#       }
-#     }
-
-#     consumer01: Consumer01 {
-#       style: {
-#         bold: true
-#         font-size: 32
-#         fill: PapayaWhip
-#         fill-pattern: grain
-#         border-radius: 8
-#         font: mono
-#       }
-#     }
-
-#     consumer02: Consumer02 {
-#       style: {
-#         bold: true
-#         font-size: 32
-#         fill: PapayaWhip
-#         fill-pattern: grain
-#         border-radius: 8
-#         font: mono
-#       }
-#     }
-
-#     consumer03: Consumer03 {
-#       style: {
-#         bold: true
-#         font-size: 32
-#         fill: PapayaWhip
-#         fill-pattern: grain
-#         border-radius: 8
-#         font: mono
-#       }
-#     }
-
-#     consumer04: Consumer04 {
-#       style: {
-#         bold: true
-#         font-size: 32
-#         fill: PapayaWhip
-#         fill-pattern: grain
-#         border-radius: 8
-#         font: mono
-#       }
-#     }
-
-#     database: Ring\nBuffer {
-#       shape: cylinder
-#       style: {
-#         bold: true
-#         font-size: 32
-#         fill-pattern: lines
-#         font: mono
-#       }
-#     }
-
-#     redis: Redis {
-#       icon: https://icons.terrastruct.com/dev%2Fredis.svg
-#       shape: image
-#       style: {
-#         bold: true
-#         font-size: 32
-#         font: mono
-#       }
-#     }
-
-#     rabbitmq: RabbotMQ {
-#       icon: ./rabbitmq.svg
-#       shape: image
-#       style: {
-#         bold: true
-#         font-size: 32
-#         font: mono
-#       }
-#     }
-
-#     nats: NATS {
-#       icon: ./nats.svg
-#       shape: image
-#       style: {
-#         bold: true
-#         font-size: 32
-#         font: mono
-#       }
-#     }
-
-#     producer01 -> database
-#     producer02 -> redis
-#     producer03 -> rabbitmq
-#     producer04 -> nats
-#     database -> consumer01
-#     redis -> consumer02
-#     rabbitmq -> consumer03
-#     nats -> consumer04
-#   }
-
-#   worker01: {
-#     icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
-#     style: {
-#       bold: true
-#       font-size: 32
-#     }
-#   }
-
-#   worker02: {
-#     icon: https://icons.terrastruct.com/essentials%2F095-download.svg
-#     style: {
-#       bold: true
-#       font-size: 32
-#     }
-#   }
-
-#   worker03: {
-#     icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
-#     style: {
-#       bold: true
-#       font-size: 32
-#     }
-#   }
-
-#   worker04: {
-#     icon: https://icons.terrastruct.com/essentials%2F213-alarm.svg
-#     style: {
-#       bold: true
-#       font-size: 32
-#     }
-#   }
-
-#   task01 -> queue.producer01: Enqueue Task {
-#     style: {
-#       bold: true
-#       font-size: 28
-#     }
-#   }
-#   task02 -> queue.producer02: Enqueue Task {
-#     style: {
-#       bold: true
-#       font-size: 28
-#     }
-#   }
-#   task03 -> queue.producer03: Enqueue Task {
-#     style: {
-#       bold: true
-#       font-size: 28
-#     }
-#   }
-#   task04 -> queue.producer04: Enqueue Task {
-#     style: {
-#       bold: true
-#       font-size: 28
-#     }
-#   }
-#   queue.consumer01 -> worker01: dispatch task {
-#     style: {
-#       bold: true
-#       font-size: 28
-#     }
-#   }
-#   queue.consumer02 -> worker02: dispatch task {
-#     style: {
-#       bold: true
-#       font-size: 28
-#     }
-#   }
-#   queue.consumer03 -> worker03: dispatch task {
-#     style: {
-#       bold: true
-#       font-size: 28
-#     }
-#   }
-#   queue.consumer04 -> worker04: dispatch task {
-#     style: {
-#       bold: true
-#       font-size: 28
-#     }
-#   }
-# }
