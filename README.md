@@ -25,6 +25,10 @@ Change Queue service like NSQ, NATs or Redis.
 
 ![queue02](./images/flow-02.svg)
 
+Multiple Producer and Consumer.
+
+![queue03](./images/flow-03.svg)
+
 ## Requirements
 
 Go version **1.13** above
