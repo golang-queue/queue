@@ -9,6 +9,27 @@ classes: {
       font-size: 28
     }
   }
+
+  connect: {
+    style: {
+      bold: true
+      font-size: 28
+    }
+  }
+
+  animated: {
+    style: {
+      animated: true
+    }
+  }
+
+  enqueue: {
+    label: Enqueue Task
+  }
+
+  dispatch: {
+    label: Dispatch Task
+  }
 }
 
 user01: {
@@ -26,26 +47,17 @@ user03: {
   class: user
 }
 
-user01 -> container.task01: Create Task {
-  style: {
-    animated: true
-    bold: true
-    font-size: 28
-  }
+user01 -> container.task01: {
+  label: Create Task
+  class: [connect; animated]
 }
-user02 -> container.task02: Create Task {
-  style: {
-    animated: true
-    bold: true
-    font-size: 28
-  }
+user02 -> container.task02: {
+  label: Create Task
+  class: [connect; animated]
 }
-user03 -> container.task03: Create Task {
-  style: {
-    animated: true
-    bold: true
-    font-size: 28
-  }
+user03 -> container.task03:  {
+  label: Create Task
+  class: [connect; animated]
 }
 
 container: Application {
@@ -158,46 +170,25 @@ container: Application {
     }
   }
 
-  task01 -> queue.producer: Enqueue Task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  task01 -> queue.producer: {
+    class: [connect; enqueue]
   }
-  task02 -> queue.producer: Enqueue Task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  task02 -> queue.producer: {
+    class: [connect; enqueue]
   }
-  task03 -> queue.producer: Enqueue Task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  task03 -> queue.producer: {
+    class: [connect; enqueue]
   }
-  queue.consumer -> worker01: dispatch task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  queue.consumer -> worker01: {
+    class: [connect; dispatch]
   }
-  queue.consumer -> worker02: dispatch task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  queue.consumer -> worker02: {
+    class: [connect; dispatch]
   }
-  queue.consumer -> worker03: dispatch task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  queue.consumer -> worker03: {
+    class: [connect; dispatch]
   }
-  queue.consumer -> worker04: dispatch task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  queue.consumer -> worker04: {
+    class: [connect; dispatch]
   }
 }
