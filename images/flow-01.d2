@@ -1,25 +1,26 @@
 direction: right
 
 classes: {
-  user: {
-    shape: person
+  base: {
     style: {
-      multiple: true
       bold: true
       font-size: 28
     }
   }
 
-  connect: {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  person: {
+    shape: person
   }
 
   animated: {
     style: {
       animated: true
+    }
+  }
+
+  multiple: {
+    style: {
+      multiple: true
     }
   }
 
@@ -48,40 +49,34 @@ classes: {
       font-size: 32
     }
   }
-
-  multiple: {
-    style: {
-      multiple: true
-    }
-  }
 }
 
 user01: {
   label: User01
-  class: user
+  class: [base; person; multiple]
 }
 
 user02: {
   label: User02
-  class: user
+  class: [base; person; multiple]
 }
 
 user03: {
   label: User03
-  class: user
+  class: [base; person; multiple]
 }
 
 user01 -> container.task01: {
   label: Create Task
-  class: [connect; animated]
+  class: [base; animated]
 }
 user02 -> container.task02: {
   label: Create Task
-  class: [connect; animated]
+  class: [base; animated]
 }
 user03 -> container.task03:  {
   label: Create Task
-  class: [connect; animated]
+  class: [base; animated]
 }
 
 container: Application {
@@ -162,24 +157,24 @@ container: Application {
   }
 
   task01 -> queue.producer: {
-    class: [connect; enqueue]
+    class: [base; enqueue]
   }
   task02 -> queue.producer: {
-    class: [connect; enqueue]
+    class: [base; enqueue]
   }
   task03 -> queue.producer: {
-    class: [connect; enqueue]
+    class: [base; enqueue]
   }
   queue.consumer -> worker01: {
-    class: [connect; dispatch]
+    class: [base; dispatch]
   }
   queue.consumer -> worker02: {
-    class: [connect; dispatch]
+    class: [base; dispatch]
   }
   queue.consumer -> worker03: {
-    class: [connect; dispatch]
+    class: [base; dispatch]
   }
   queue.consumer -> worker04: {
-    class: [connect; dispatch]
+    class: [base; dispatch]
   }
 }
