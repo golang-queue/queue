@@ -30,6 +30,30 @@ classes: {
   dispatch: {
     label: Dispatch Task
   }
+
+  library: {
+    style: {
+      bold: true
+      font-size: 32
+      fill: PapayaWhip
+      fill-pattern: grain
+      border-radius: 8
+      font: mono
+    }
+  }
+
+  task: {
+    style: {
+      bold: true
+      font-size: 32
+    }
+  }
+
+  multiple: {
+    style: {
+      multiple: true
+    }
+  }
 }
 
 user01: {
@@ -70,61 +94,40 @@ container: Application {
 
   task01: {
     icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
-    style: {
-      multiple: true
-      bold: true
-      font-size: 32
-    }
+    class: [task; multiple]
   }
 
   task02: {
     icon: https://icons.terrastruct.com/essentials%2F095-download.svg
-    style: {
-      multiple: true
-      bold: true
-      font-size: 32
-    }
+    class: [task; multiple]
   }
 
   task03: {
     icon: https://icons.terrastruct.com/essentials%2F195-attachment.svg
-    style: {
-      multiple: true
-      bold: true
-      font-size: 32
-    }
+    class: [task; multiple]
   }
 
-  queue: Queue Library {
+  queue: {
+    label: Queue Library
     icon: https://icons.terrastruct.com/dev%2Fgo.svg
     style: {
       bold: true
       font-size: 32
       fill: honeydew
     }
-    producer: Producer {
-      style: {
-        bold: true
-        font-size: 32
-        fill: PapayaWhip
-        fill-pattern: grain
-        border-radius: 8
-        font: mono
-      }
+
+    producer: {
+      label: Producer
+      class: library
     }
 
-    consumer: Consumer {
-      style: {
-        bold: true
-        font-size: 32
-        fill: PapayaWhip
-        fill-pattern: grain
-        border-radius: 8
-        font: mono
-      }
+    consumer: {
+      label: Consumer
+      class: library
     }
 
-    database: Ring\nBuffer {
+    database: {
+      label: Ring\nBuffer
       shape: cylinder
       style: {
         bold: true
@@ -140,34 +143,22 @@ container: Application {
 
   worker01: {
     icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
-    style: {
-      bold: true
-      font-size: 32
-    }
+    class: [task]
   }
 
   worker02: {
     icon: https://icons.terrastruct.com/essentials%2F095-download.svg
-    style: {
-      bold: true
-      font-size: 32
-    }
+    class: [task]
   }
 
   worker03: {
     icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
-    style: {
-      bold: true
-      font-size: 32
-    }
+    class: [task]
   }
 
   worker04: {
     icon: https://icons.terrastruct.com/essentials%2F195-attachment.svg
-    style: {
-      bold: true
-      font-size: 32
-    }
+    class: [task]
   }
 
   task01 -> queue.producer: {
