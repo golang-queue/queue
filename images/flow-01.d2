@@ -1,30 +1,29 @@
 direction: right
 
-user01: User01 {
-  shape: person
-  style: {
-    multiple: true
-    bold: true
-    font-size: 28
+classes: {
+  user: {
+    shape: person
+    style: {
+      multiple: true
+      bold: true
+      font-size: 28
+    }
   }
 }
 
-user02: User02 {
-  shape: person
-  style: {
-    multiple: true
-    bold: true
-    font-size: 28
-  }
+user01: {
+  label: User01
+  class: user
 }
 
-user03: User03 {
-  shape: person
-  style: {
-    multiple: true
-    bold: true
-    font-size: 28
-  }
+user02: {
+  label: User02
+  class: user
+}
+
+user03: {
+  label: User03
+  class: user
 }
 
 user01 -> container.task01: Create Task {
