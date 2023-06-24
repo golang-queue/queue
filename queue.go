@@ -203,6 +203,7 @@ func (q *Queue) handle(m *job.Message) error {
 			Min:    m.RetryMin,
 			Max:    m.RetryMax,
 			Factor: m.RetryFactor,
+			Jitter: m.Jitter,
 		}
 		delay := m.RetryDelay
 	loop:

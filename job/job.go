@@ -46,6 +46,9 @@ type Message struct {
 	// Defaults to 10 seconds.
 	RetryMax time.Duration `json:"retry_max"`
 
+	// Jitter eases contention by randomizing backoff steps
+	Jitter bool `json:"jitter"`
+
 	// Data to save Unsafe cast
 	Data []byte
 }

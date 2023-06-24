@@ -9,6 +9,7 @@ type Options struct {
 	retryFactor float64
 	retryMin    time.Duration
 	retryMax    time.Duration
+	jitter      bool
 
 	timeout time.Duration
 }
@@ -22,6 +23,7 @@ func newDefaultOptions() Options {
 		retryMin:    100 * time.Millisecond,
 		retryMax:    10 * time.Second,
 		timeout:     60 * time.Minute,
+		jitter:      false,
 	}
 }
 
@@ -32,6 +34,7 @@ type AllowOption struct {
 	RetryFactor *float64
 	RetryMin    *time.Duration
 	RetryMax    *time.Duration
+	Jitter      *bool
 	Timeout     *time.Duration
 }
 
@@ -63,6 +66,10 @@ func NewOptions(opts ...AllowOption) Options {
 		if opts[0].RetryMax != nil && *opts[0].RetryMax != o.retryMax {
 			o.retryMax = *opts[0].RetryMax
 		}
+
+		if opts[0].Jitter != nil && *opts[0].Jitter != o.jitter {
+			o.jitter = *opts[0].Jitter
+		}
 	}
 
 	return o
@@ -81,4 +88,9 @@ func Float64(val float64) *float64 {
 // Time is a helper routine that allocates a new time value
 func Time(v time.Duration) *time.Duration {
 	return &v
+}
+
+// Bool is a helper routine that allocates a new bool value
+func Bool(val bool) *bool {
+	return &val
 }
