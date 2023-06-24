@@ -77,7 +77,7 @@ func TestNewQueueWithDefaultWorker(t *testing.T) {
 }
 
 func TestHandleTimeout(t *testing.T) {
-	m := &job.Message{
+	m := job.Message{
 		Timeout: 100 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
@@ -109,7 +109,7 @@ func TestHandleTimeout(t *testing.T) {
 }
 
 func TestJobComplete(t *testing.T) {
-	m := &job.Message{
+	m := job.Message{
 		Timeout: 100 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
@@ -129,7 +129,7 @@ func TestJobComplete(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("job completed"), err)
 
-	m = &job.Message{
+	m = job.Message{
 		Timeout: 250 * time.Millisecond,
 		Payload: []byte("foo"),
 	}
@@ -153,7 +153,7 @@ func TestJobComplete(t *testing.T) {
 }
 
 func TestTaskJobComplete(t *testing.T) {
-	m := &job.Message{
+	m := job.Message{
 		Timeout: 100 * time.Millisecond,
 		Task: func(ctx context.Context) error {
 			return errors.New("job completed")
@@ -171,7 +171,7 @@ func TestTaskJobComplete(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("job completed"), err)
 
-	m = &job.Message{
+	m = job.Message{
 		Timeout: 250 * time.Millisecond,
 		Task: func(ctx context.Context) error {
 			return nil
@@ -181,7 +181,7 @@ func TestTaskJobComplete(t *testing.T) {
 	assert.NoError(t, q.handle(m))
 
 	// job timeout
-	m = &job.Message{
+	m = job.Message{
 		Timeout: 50 * time.Millisecond,
 		Task: func(ctx context.Context) error {
 			time.Sleep(60 * time.Millisecond)

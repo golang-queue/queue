@@ -75,7 +75,7 @@ func BenchmarkQueue(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	m := job.NewMessage(&mockMessage{
+	m := job.NewMessage(mockMessage{
 		message: "foo",
 	})
 	m.Encode()
@@ -90,7 +90,7 @@ func BenchmarkQueue(b *testing.B) {
 // func BenchmarkRingPayload(b *testing.B) {
 // 	b.ReportAllocs()
 
-// 	task := &job.Message{
+// 	task := job.Message{
 // 		Timeout: 100 * time.Millisecond,
 // 		Payload: []byte(`{"timeout":3600000000000}`),
 // 	}
@@ -113,7 +113,7 @@ func BenchmarkQueue(b *testing.B) {
 func BenchmarkRingWithTask(b *testing.B) {
 	b.ReportAllocs()
 
-	task := &job.Message{
+	task := job.Message{
 		Timeout: 100 * time.Millisecond,
 		Task: func(_ context.Context) error {
 			return nil

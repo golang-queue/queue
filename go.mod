@@ -3,6 +3,7 @@ module github.com/golang-queue/queue
 go 1.18
 
 require (
+	github.com/appleboy/com v0.1.7
 	github.com/golang/mock v1.6.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/stretchr/testify v1.8.4

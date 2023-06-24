@@ -128,7 +128,7 @@ func (q *Queue) QueueTask(task job.TaskFunc, opts ...job.AllowOption) error {
 	return q.queue(data)
 }
 
-func (q *Queue) queue(m *job.Message) error {
+func (q *Queue) queue(m job.Message) error {
 	if atomic.LoadInt32(&q.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
@@ -168,16 +168,16 @@ func (q *Queue) work(task core.QueuedMessage) {
 }
 
 func (q *Queue) run(task core.QueuedMessage) error {
-	data := task.(*job.Message)
+	data := task.(job.Message)
 	if data.Task == nil {
-		data = job.Decode(task.Bytes())
+		data = *job.Decode(task.Bytes())
 		data.Data = data.Payload
 	}
 
 	return q.handle(data)
 }
 
-func (q *Queue) handle(m *job.Message) error {
+func (q *Queue) handle(m job.Message) error {
 	// create channel with buffer size 1 to avoid goroutine leak
 	done := make(chan error, 1)
 	panicChan := make(chan interface{}, 1)
