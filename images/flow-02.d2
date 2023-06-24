@@ -1,70 +1,44 @@
 direction: right
 
+...@_base
+
 user01: User01 {
-  shape: person
-  style: {
-    multiple: true
-    bold: true
-    font-size: 28
-  }
+  label: User01
+  class: [base; person; multiple]
 }
 
 user02: User02 {
-  shape: person
-  style: {
-    multiple: true
-    bold: true
-    font-size: 28
-  }
+  label: User02
+  class: [base; person; multiple]
 }
 
 user03: User03 {
-  shape: person
-  style: {
-    multiple: true
-    bold: true
-    font-size: 28
-  }
+  label: User03
+  class: [base; person; multiple]
 }
 
 user04: User04 {
-  shape: person
-  style: {
-    multiple: true
-    bold: true
-    font-size: 28
-  }
+  label: User04
+  class: [base; person; multiple]
 }
 
 user01 -> container.task01: Create Task {
-  style: {
-    animated: true
-    bold: true
-    font-size: 28
-  }
+  label: Create Task
+  class: [base; animated]
 }
 user02 -> container.task02: Create Task {
-  style: {
-    animated: true
-    bold: true
-    font-size: 28
-  }
+  label: Create Task
+  class: [base; animated]
 }
 
 user03 -> container.task03: Create Task {
-  style: {
-    animated: true
-    bold: true
-    font-size: 28
-  }
+  label: Create Task
+  class: [base; animated]
 }
 
 user04 -> container.task04: Create Task {
-  style: {
-    animated: true
-    bold: true
-    font-size: 28
-  }
+  label: Create Task
+  class: [base; animated]
 }
 
 container: Application {
@@ -77,38 +51,22 @@ container: Application {
 
   task01: {
     icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
-    style: {
-      multiple: true
-      bold: true
-      font-size: 32
-    }
+    class: [task; multiple]
   }
 
   task02: {
     icon: https://icons.terrastruct.com/essentials%2F095-download.svg
-    style: {
-      multiple: true
-      bold: true
-      font-size: 32
-    }
+    class: [task; multiple]
   }
 
   task03: {
     icon: https://icons.terrastruct.com/essentials%2F195-attachment.svg
-    style: {
-      multiple: true
-      bold: true
-      font-size: 32
-    }
+    class: [task; multiple]
   }
 
   task04: {
     icon: https://icons.terrastruct.com/essentials%2F213-alarm.svg
-    style: {
-      multiple: true
-      bold: true
-      font-size: 32
-    }
+    class: [task; multiple]
   }
 
   queue: Queue Library {
@@ -118,92 +76,44 @@ container: Application {
       font-size: 32
       fill: honeydew
     }
-    producer01: Producer01 {
-      style: {
-        bold: true
-        font-size: 32
-        fill: PapayaWhip
-        fill-pattern: grain
-        border-radius: 8
-        font: mono
-      }
+    producer01: {
+      label: Producer01
+      class: library
     }
 
-    producer02: Producer02 {
-      style: {
-        bold: true
-        font-size: 32
-        fill: PapayaWhip
-        fill-pattern: grain
-        border-radius: 8
-        font: mono
-      }
+    producer02: {
+      label: Producer02
+      class: library
     }
 
-    producer03: Producer03 {
-      style: {
-        bold: true
-        font-size: 32
-        fill: PapayaWhip
-        fill-pattern: grain
-        border-radius: 8
-        font: mono
-      }
+    producer03: {
+      label: Producer03
+      class: library
     }
 
-    producer04: Producer04 {
-      style: {
-        bold: true
-        font-size: 32
-        fill: PapayaWhip
-        fill-pattern: grain
-        border-radius: 8
-        font: mono
-      }
+    producer04: {
+      label: Producer04
+      class: library
     }
 
-    consumer01: Consumer01 {
-      style: {
-        bold: true
-        font-size: 32
-        fill: PapayaWhip
-        fill-pattern: grain
-        border-radius: 8
-        font: mono
-      }
+    consumer01: {
+      label: Consumer01
+      class: library
     }
 
-    consumer02: Consumer02 {
-      style: {
-        bold: true
-        font-size: 32
-        fill: PapayaWhip
-        fill-pattern: grain
-        border-radius: 8
-        font: mono
-      }
+    consumer02: {
+      label: Consumer02
+      class: library
     }
 
-    consumer03: Consumer03 {
-      style: {
-        bold: true
-        font-size: 32
-        fill: PapayaWhip
-        fill-pattern: grain
-        border-radius: 8
-        font: mono
-      }
+    consumer03: {
+      label: Consumer03
+      class: library
     }
 
-    consumer04: Consumer04 {
-      style: {
-        bold: true
-        font-size: 32
-        fill: PapayaWhip
-        fill-pattern: grain
-        border-radius: 8
-        font: mono
-      }
+    consumer04: {
+      label: Consumer04
+      class: library
     }
 
     database: Ring\nBuffer {
@@ -258,82 +168,54 @@ container: Application {
 
   worker01: {
     icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
-    style: {
-      bold: true
-      font-size: 32
-    }
+    class: [task]
   }
 
   worker02: {
     icon: https://icons.terrastruct.com/essentials%2F095-download.svg
-    style: {
-      bold: true
-      font-size: 32
-    }
+    class: [task]
   }
 
   worker03: {
     icon: https://icons.terrastruct.com/essentials%2F092-graph%20bar.svg
-    style: {
-      bold: true
-      font-size: 32
-    }
+    class: [task]
   }
 
   worker04: {
     icon: https://icons.terrastruct.com/essentials%2F213-alarm.svg
-    style: {
-      bold: true
-      font-size: 32
-    }
+    class: [task]
   }
 
-  task01 -> queue.producer01: Enqueue Task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  task01 -> queue.producer01: {
+    label: Enqueue Task
+    class: [base; enqueue]
   }
-  task02 -> queue.producer02: Enqueue Task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  task02 -> queue.producer02: {
+    label: Enqueue Task
+    class: [base; enqueue]
   }
-  task03 -> queue.producer03: Enqueue Task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  task03 -> queue.producer03: {
+    label: Enqueue Task
+    class: [base; enqueue]
   }
-  task04 -> queue.producer04: Enqueue Task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  task04 -> queue.producer04: {
+    label: Enqueue Task
+    class: [base; enqueue]
   }
-  queue.consumer01 -> worker01: dispatch task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  queue.consumer01 -> worker01: {
+    label: dispatch task
+    class: [base; dispatch]
   }
-  queue.consumer02 -> worker02: dispatch task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  queue.consumer02 -> worker02: {
+    label: dispatch task
+    class: [base; dispatch]
   }
-  queue.consumer03 -> worker03: dispatch task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  queue.consumer03 -> worker03: {
+    label: dispatch task
+    class: [base; dispatch]
   }
-  queue.consumer04 -> worker04: dispatch task {
-    style: {
-      bold: true
-      font-size: 28
-    }
+  queue.consumer04 -> worker04: {
+    label: dispatch task
+    class: [base; dispatch]
   }
 }
