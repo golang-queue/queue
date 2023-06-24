@@ -22,21 +22,21 @@ user04: User04 {
   class: [base; person; multiple]
 }
 
-user01 -> container.task01: Create Task {
+user01 -> container.task01: {
   label: Create Task
   class: [base; animated]
 }
-user02 -> container.task02: Create Task {
-  label: Create Task
-  class: [base; animated]
-}
-
-user03 -> container.task03: Create Task {
+user02 -> container.task02: {
   label: Create Task
   class: [base; animated]
 }
 
-user04 -> container.task04: Create Task {
+user03 -> container.task03: {
+  label: Create Task
+  class: [base; animated]
+}
+
+user04 -> container.task04: {
   label: Create Task
   class: [base; animated]
 }
@@ -187,35 +187,27 @@ container: Application {
   }
 
   task01 -> queue.producer01: {
-    label: Enqueue Task
     class: [base; enqueue]
   }
   task02 -> queue.producer02: {
-    label: Enqueue Task
     class: [base; enqueue]
   }
   task03 -> queue.producer03: {
-    label: Enqueue Task
     class: [base; enqueue]
   }
   task04 -> queue.producer04: {
-    label: Enqueue Task
     class: [base; enqueue]
   }
   queue.consumer01 -> worker01: {
-    label: dispatch task
     class: [base; dispatch]
   }
   queue.consumer02 -> worker02: {
-    label: dispatch task
     class: [base; dispatch]
   }
   queue.consumer03 -> worker03: {
-    label: dispatch task
     class: [base; dispatch]
   }
   queue.consumer04 -> worker04: {
-    label: dispatch task
     class: [base; dispatch]
   }
 }
