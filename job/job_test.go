@@ -20,10 +20,12 @@ func TestMessageEncodeDecode(t *testing.T) {
 		message: "foo",
 	},
 		AllowOption{
-			RetryCount: Int64(100),
-			RetryDelay: Time(30 * time.Millisecond),
-			Timeout:    Time(3 * time.Millisecond),
-			RetryMin:   Time(200 * time.Millisecond),
+			RetryCount:  Int64(100),
+			RetryDelay:  Time(30 * time.Millisecond),
+			Timeout:     Time(3 * time.Millisecond),
+			RetryMin:    Time(200 * time.Millisecond),
+			RetryMax:    Time(20 * time.Second),
+			RetryFactor: Float64(4.0),
 		},
 	)
 
@@ -35,6 +37,6 @@ func TestMessageEncodeDecode(t *testing.T) {
 	assert.Equal(t, 3*time.Millisecond, out.Timeout)
 	assert.Equal(t, "foo", string(out.Payload))
 	assert.Equal(t, 200*time.Millisecond, out.RetryMin)
-	assert.Equal(t, 10*time.Second, out.RetryMax)
-	assert.Equal(t, 2.0, out.RetryFactor)
+	assert.Equal(t, 20*time.Second, out.RetryMax)
+	assert.Equal(t, 4.0, out.RetryFactor)
 }

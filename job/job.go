@@ -31,9 +31,6 @@ type Message struct {
 	// default is 100ms
 	RetryDelay time.Duration `json:"retry_delay"`
 
-	// Data to save Unsafe cast
-	Data []byte
-
 	// RetryFactor is the multiplying factor for each increment step.
 	//
 	// Defaults to 2.
@@ -48,6 +45,9 @@ type Message struct {
 	//
 	// Defaults to 10 seconds.
 	RetryMax time.Duration `json:"retry_max"`
+
+	// Data to save Unsafe cast
+	Data []byte
 }
 
 const (
@@ -64,6 +64,7 @@ func (m *Message) Encode() {
 	m.Data = Encode(m)
 }
 
+// NewMessage create new message
 func NewMessage(m core.QueuedMessage, opts ...AllowOption) *Message {
 	o := NewOptions(opts...)
 
@@ -78,6 +79,7 @@ func NewMessage(m core.QueuedMessage, opts ...AllowOption) *Message {
 	}
 }
 
+// NewTask create new task
 func NewTask(task TaskFunc, opts ...AllowOption) *Message {
 	o := NewOptions(opts...)
 
@@ -92,10 +94,12 @@ func NewTask(task TaskFunc, opts ...AllowOption) *Message {
 	}
 }
 
+// Encode for encoding the structure
 func Encode(m *Message) []byte {
 	return (*[movementSize]byte)(unsafe.Pointer(m))[:]
 }
 
+// Decode for decoding the structure
 func Decode(m []byte) *Message {
 	return (*Message)(unsafe.Pointer(&m[0]))
 }

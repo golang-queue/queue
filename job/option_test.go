@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestMessageEncodeDecode test message encode and decode
 func TestOptions(t *testing.T) {
 	o := NewOptions(
 		AllowOption{

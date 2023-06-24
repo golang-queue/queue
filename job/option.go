@@ -2,6 +2,7 @@ package job
 
 import "time"
 
+// Options is a set of options for the queue
 type Options struct {
 	retryCount  int64
 	retryDelay  time.Duration
@@ -12,6 +13,7 @@ type Options struct {
 	timeout time.Duration
 }
 
+// newDefaultOptions create new default options
 func newDefaultOptions() Options {
 	return Options{
 		retryCount:  0,
@@ -23,6 +25,7 @@ func newDefaultOptions() Options {
 	}
 }
 
+// AllowOption is a function that sets some option on the Options
 type AllowOption struct {
 	RetryCount  *int64
 	RetryDelay  *time.Duration
@@ -32,7 +35,7 @@ type AllowOption struct {
 	Timeout     *time.Duration
 }
 
-// NewOptions with custom parameter
+// NewOptions create new options
 func NewOptions(opts ...AllowOption) Options {
 	o := newDefaultOptions()
 
@@ -65,10 +68,17 @@ func NewOptions(opts ...AllowOption) Options {
 	return o
 }
 
+// Int64 is a helper routine that allocates a new int64 value
 func Int64(val int64) *int64 {
 	return &val
 }
 
+// Float64 is a helper routine that allocates a new float64 value
+func Float64(val float64) *float64 {
+	return &val
+}
+
+// Time is a helper routine that allocates a new time value
 func Time(v time.Duration) *time.Duration {
 	return &v
 }
