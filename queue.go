@@ -220,7 +220,7 @@ func (q *Queue) handle(m *job.Message) error {
 			}
 			m.RetryCount--
 
-			if m.RetryDelay != 0 {
+			if m.RetryDelay == 0 {
 				delay = b.Duration()
 			}
 

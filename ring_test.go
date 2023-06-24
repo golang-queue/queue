@@ -407,7 +407,6 @@ func TestRetryCountWithNewTask(t *testing.T) {
 		},
 		job.AllowOption{
 			RetryCount: job.Int64(3),
-			RetryDelay: job.Time(50 * time.Millisecond),
 		},
 	))
 	assert.Len(t, messages, 0)
