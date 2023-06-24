@@ -68,10 +68,10 @@ func (m *Message) Encode() {
 }
 
 // NewMessage create new message
-func NewMessage(m core.QueuedMessage, opts ...AllowOption) *Message {
+func NewMessage(m core.QueuedMessage, opts ...AllowOption) Message {
 	o := NewOptions(opts...)
 
-	return &Message{
+	return Message{
 		RetryCount:  o.retryCount,
 		RetryDelay:  o.retryDelay,
 		RetryFactor: o.retryFactor,
@@ -83,10 +83,10 @@ func NewMessage(m core.QueuedMessage, opts ...AllowOption) *Message {
 }
 
 // NewTask create new task
-func NewTask(task TaskFunc, opts ...AllowOption) *Message {
+func NewTask(task TaskFunc, opts ...AllowOption) Message {
 	o := NewOptions(opts...)
 
-	return &Message{
+	return Message{
 		Timeout:     o.timeout,
 		RetryCount:  o.retryCount,
 		RetryDelay:  o.retryDelay,

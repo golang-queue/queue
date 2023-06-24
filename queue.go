@@ -119,13 +119,13 @@ func (q *Queue) Queue(message core.QueuedMessage, opts ...job.AllowOption) error
 	data := job.NewMessage(message, opts...)
 	data.Encode()
 
-	return q.queue(data)
+	return q.queue(&data)
 }
 
 // QueueTask to queue single task
 func (q *Queue) QueueTask(task job.TaskFunc, opts ...job.AllowOption) error {
 	data := job.NewTask(task, opts...)
-	return q.queue(data)
+	return q.queue(&data)
 }
 
 func (q *Queue) queue(m *job.Message) error {
@@ -266,6 +266,7 @@ func (q *Queue) UpdateWorkerCount(num int) {
 	q.schedule()
 }
 
+// schedule to check worker number
 func (q *Queue) schedule() {
 	q.Lock()
 	defer q.Unlock()
@@ -279,7 +280,7 @@ func (q *Queue) schedule() {
 	}
 }
 
-// start handle job
+// start to start all worker
 func (q *Queue) start() {
 	tasks := make(chan core.QueuedMessage, 1)
 

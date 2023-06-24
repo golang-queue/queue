@@ -31,7 +31,7 @@ func testQueue(b *testing.B, pool testqueue) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		for i := 0; i < count; i++ {
-			_ = pool.Queue(message)
+			_ = pool.Queue(&message)
 			_, _ = pool.Request()
 		}
 	}
@@ -60,7 +60,7 @@ func BenchmarkQueueTask(b *testing.B) {
 	})
 
 	for n := 0; n < b.N; n++ {
-		if err := q.queue(m); err != nil {
+		if err := q.queue(&m); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -81,7 +81,7 @@ func BenchmarkQueue(b *testing.B) {
 	m.Encode()
 
 	for n := 0; n < b.N; n++ {
-		if err := q.queue(m); err != nil {
+		if err := q.queue(&m); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -113,7 +113,7 @@ func BenchmarkQueue(b *testing.B) {
 func BenchmarkRingWithTask(b *testing.B) {
 	b.ReportAllocs()
 
-	task := &job.Message{
+	task := job.Message{
 		Timeout: 100 * time.Millisecond,
 		Task: func(_ context.Context) error {
 			return nil
@@ -131,6 +131,6 @@ func BenchmarkRingWithTask(b *testing.B) {
 	)
 
 	for n := 0; n < b.N; n++ {
-		_ = q.run(task)
+		_ = q.run(&task)
 	}
 }

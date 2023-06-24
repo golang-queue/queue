@@ -21,6 +21,21 @@ func BenchmarkNewTask(b *testing.B) {
 	}
 }
 
+func BenchmarkNewMessage(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = NewMessage(mockMessage{
+			message: "foo",
+		},
+			AllowOption{
+				RetryCount: Int64(100),
+				RetryDelay: Time(30 * time.Millisecond),
+				Timeout:    Time(3 * time.Millisecond),
+			},
+		)
+	}
+}
+
 func BenchmarkNewOption(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {

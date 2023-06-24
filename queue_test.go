@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/appleboy/com/bytesconv"
 	"github.com/golang-queue/queue/core"
 	"github.com/golang-queue/queue/job"
 	"github.com/golang-queue/queue/mocks"
@@ -24,7 +25,7 @@ type mockMessage struct {
 }
 
 func (m mockMessage) Bytes() []byte {
-	return []byte(m.message)
+	return bytesconv.StrToBytes(m.message)
 }
 
 func TestNewQueueWithZeroWorker(t *testing.T) {

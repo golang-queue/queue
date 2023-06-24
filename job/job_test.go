@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/appleboy/com/bytesconv"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +13,7 @@ type mockMessage struct {
 }
 
 func (m mockMessage) Bytes() []byte {
-	return []byte(m.message)
+	return bytesconv.StrToBytes(m.message)
 }
 
 func TestMessageEncodeDecode(t *testing.T) {
