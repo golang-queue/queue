@@ -26,9 +26,9 @@ func newDefaultOptions() Options {
 type AllowOption struct {
 	RetryCount  *int64
 	RetryDelay  *time.Duration
-	retryFactor *float64
-	retryMin    *time.Duration
-	retryMax    *time.Duration
+	RetryFactor *float64
+	RetryMin    *time.Duration
+	RetryMax    *time.Duration
 	Timeout     *time.Duration
 }
 
@@ -49,16 +49,16 @@ func NewOptions(opts ...AllowOption) Options {
 			o.timeout = *opts[0].Timeout
 		}
 
-		if opts[0].retryFactor != nil && *opts[0].retryFactor != o.retryFactor {
-			o.retryFactor = *opts[0].retryFactor
+		if opts[0].RetryFactor != nil && *opts[0].RetryFactor != o.retryFactor {
+			o.retryFactor = *opts[0].RetryFactor
 		}
 
-		if opts[0].retryMin != nil && *opts[0].retryMin != o.retryMin {
-			o.retryMin = *opts[0].retryMin
+		if opts[0].RetryMin != nil && *opts[0].RetryMin != o.retryMin {
+			o.retryMin = *opts[0].RetryMin
 		}
 
-		if opts[0].retryMax != nil && *opts[0].retryMax != o.retryMax {
-			o.retryMax = *opts[0].retryMax
+		if opts[0].RetryMax != nil && *opts[0].RetryMax != o.retryMax {
+			o.retryMax = *opts[0].RetryMax
 		}
 	}
 

@@ -19,4 +19,7 @@ func TestOptions(t *testing.T) {
 	assert.Equal(t, int64(100), o.retryCount)
 	assert.Equal(t, 30*time.Millisecond, o.retryDelay)
 	assert.Equal(t, 3*time.Millisecond, o.timeout)
+	assert.Equal(t, 100*time.Millisecond, o.retryMin)
+	assert.Equal(t, 10*time.Second, o.retryMax)
+	assert.Equal(t, 2.0, o.retryFactor)
 }

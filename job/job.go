@@ -68,10 +68,13 @@ func NewMessage(m core.QueuedMessage, opts ...AllowOption) *Message {
 	o := NewOptions(opts...)
 
 	return &Message{
-		RetryCount: o.retryCount,
-		RetryDelay: o.retryDelay,
-		Timeout:    o.timeout,
-		Payload:    m.Bytes(),
+		RetryCount:  o.retryCount,
+		RetryDelay:  o.retryDelay,
+		RetryFactor: o.retryFactor,
+		RetryMin:    o.retryMin,
+		RetryMax:    o.retryMax,
+		Timeout:     o.timeout,
+		Payload:     m.Bytes(),
 	}
 }
 
@@ -79,10 +82,13 @@ func NewTask(task TaskFunc, opts ...AllowOption) *Message {
 	o := NewOptions(opts...)
 
 	return &Message{
-		Timeout:    o.timeout,
-		RetryCount: o.retryCount,
-		RetryDelay: o.retryDelay,
-		Task:       task,
+		Timeout:     o.timeout,
+		RetryCount:  o.retryCount,
+		RetryDelay:  o.retryDelay,
+		RetryFactor: o.retryFactor,
+		RetryMin:    o.retryMin,
+		RetryMax:    o.retryMax,
+		Task:        task,
 	}
 }
 

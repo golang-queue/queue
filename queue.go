@@ -225,6 +225,7 @@ func (q *Queue) handle(m *job.Message) error {
 
 			select {
 			case <-time.After(delay): // retry delay
+				q.logger.Infof("retry remaining times: %d, delay time: %s", m.RetryCount, delay)
 			case <-ctx.Done(): // timeout reached
 				err = ctx.Err()
 				break loop
