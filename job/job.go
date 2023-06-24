@@ -33,6 +33,21 @@ type Message struct {
 
 	// Data to save Unsafe cast
 	Data []byte
+
+	// RetryFactor is the multiplying factor for each increment step.
+	//
+	// Defaults to 2.
+	RetryFactor float64 `json:"retry_factor"`
+
+	// Minimum value of the counter.
+	//
+	// Defaults to 100 milliseconds.
+	RetryMin time.Duration `json:"retry_min"`
+
+	// Maximum value of the counter.
+	//
+	// Defaults to 10 seconds.
+	RetryMax time.Duration `json:"retry_max"`
 }
 
 const (
