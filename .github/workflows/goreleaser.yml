@@ -6,13 +6,7 @@ on:
       - "*"
 
 permissions:
-  actions: read
-  contents: read
-  statuses: write
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  contents: write
 
 jobs:
   goreleaser:
