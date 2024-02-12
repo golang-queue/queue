@@ -21,7 +21,7 @@ type (
 	Queue struct {
 		sync.Mutex
 		metric       *metric
-		logger       Logger
+		logger       core.Logger
 		workerCount  int
 		routineGroup *routineGroup
 		quit         chan struct{}

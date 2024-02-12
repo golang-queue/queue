@@ -20,7 +20,7 @@ type Ring struct {
 	head      int
 	tail      int
 	exit      chan struct{}
-	logger    Logger
+	logger    core.Logger
 	stopOnce  sync.Once
 	stopFlag  int32
 }

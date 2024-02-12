@@ -46,7 +46,7 @@ func WithQueueSize(num int) Option {
 }
 
 // WithLogger set custom logger
-func WithLogger(l Logger) Option {
+func WithLogger(l core.Logger) Option {
 	return OptionFunc(func(q *Options) {
 		q.logger = l
 	})
@@ -76,7 +76,7 @@ func WithFn(fn func(context.Context, core.QueuedMessage) error) Option {
 // Options for custom args in Queue
 type Options struct {
 	workerCount int
-	logger      Logger
+	logger      core.Logger
 	queueSize   int
 	worker      core.Worker
 	fn          func(context.Context, core.QueuedMessage) error
