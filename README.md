@@ -31,7 +31,7 @@ Multiple Producer and Consumer.
 
 ## Requirements
 
-Go version **1.13** above
+Go version **1.18** above
 
 ## Installation
 
