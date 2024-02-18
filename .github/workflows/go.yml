@@ -21,13 +21,15 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
       - name: Setup go
         uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
           check-latest: true
-      - name: Checkout repository
-        uses: actions/checkout@v4
       - name: Setup golangci-lint
         uses: golangci/golangci-lint-action@v4
         with:
