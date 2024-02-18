@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/goccy/go-json v0.9.11 // indirect
+	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/rs/zerolog v1.26.1 // indirect
 )
 
