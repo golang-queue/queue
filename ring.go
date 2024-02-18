@@ -37,7 +37,10 @@ func (s *Ring) Shutdown() error {
 	}
 
 	s.stopOnce.Do(func() {
-		if s.count > 0 {
+		s.Lock()
+		count := s.count
+		s.Unlock()
+		if count > 0 {
 			<-s.exit
 		}
 	})
@@ -75,10 +78,11 @@ func (s *Ring) Request() (core.QueuedMessage, error) {
 		return nil, ErrQueueHasBeenClosed
 	}
 
+	s.Lock()
+	defer s.Unlock()
 	if s.count == 0 {
 		return nil, ErrNoTaskInQueue
 	}
-	s.Lock()
 	data := s.taskQueue[s.head]
 	s.taskQueue[s.head] = nil
 	s.head = (s.head + 1) % len(s.taskQueue)
@@ -87,7 +91,6 @@ func (s *Ring) Request() (core.QueuedMessage, error) {
 	if n := len(s.taskQueue) / 2; n > 2 && s.count <= n {
 		s.resize(n)
 	}
-	s.Unlock()
 
 	return data, nil
 }
