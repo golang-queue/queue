@@ -142,7 +142,7 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 	assert.NoError(t, q.Queue(m, job.AllowOption{Timeout: job.Time(100 * time.Millisecond)}))
 	q.Start()
 	time.Sleep(10 * time.Millisecond)
-	assert.Equal(t, 2, int(q.metric.busyWorkers))
+	assert.Equal(t, 2, q.BusyWorkers())
 	q.Release()
 }
 

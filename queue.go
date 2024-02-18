@@ -57,7 +57,10 @@ func NewQueue(opts ...Option) (*Queue, error) {
 
 // Start to enable all worker
 func (q *Queue) Start() {
-	if q.workerCount == 0 {
+	q.Lock()
+	count := q.workerCount
+	q.Unlock()
+	if count == 0 {
 		return
 	}
 	q.routineGroup.Run(func() {
@@ -262,7 +265,9 @@ func (q *Queue) handle(m *job.Message) error {
 
 // UpdateWorkerCount to update worker number dynamically.
 func (q *Queue) UpdateWorkerCount(num int) {
+	q.Lock()
 	q.workerCount = num
+	q.Unlock()
 	q.schedule()
 }
 
