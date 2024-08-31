@@ -11,9 +11,9 @@ import (
 	"github.com/golang-queue/queue/job"
 	"github.com/golang-queue/queue/mocks"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/goleak"
+	"go.uber.org/mock/gomock"
 )
 
 func TestMain(m *testing.M) {

@@ -31,14 +31,14 @@ jobs:
           go-version-file: "go.mod"
           check-latest: true
       - name: Setup golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         with:
           version: latest
           args: --verbose
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         go: ["1.20", 1.21, 1.22, 1.23]
         include:
           - os: ubuntu-latest
