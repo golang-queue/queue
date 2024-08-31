@@ -73,6 +73,13 @@ func WithFn(fn func(context.Context, core.QueuedMessage) error) Option {
 	})
 }
 
+// WithAfterFn set callback function after job done
+func WithAfterFn(afterFn func()) Option {
+	return OptionFunc(func(q *Options) {
+		q.afterFn = afterFn
+	})
+}
+
 // Options for custom args in Queue
 type Options struct {
 	workerCount int
@@ -80,6 +87,7 @@ type Options struct {
 	queueSize   int
 	worker      core.Worker
 	fn          func(context.Context, core.QueuedMessage) error
+	afterFn     func()
 	metric      Metric
 }
 

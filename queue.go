@@ -29,6 +29,7 @@ type (
 		worker       core.Worker
 		stopOnce     sync.Once
 		stopFlag     int32
+		afterFn      func()
 	}
 )
 
@@ -46,6 +47,7 @@ func NewQueue(opts ...Option) (*Queue, error) {
 		logger:       o.logger,
 		worker:       o.worker,
 		metric:       &metric{},
+		afterFn:      o.afterFn,
 	}
 
 	if q.worker == nil {
@@ -162,6 +164,9 @@ func (q *Queue) work(task core.QueuedMessage) {
 			q.metric.IncSuccessTask()
 		} else {
 			q.metric.IncFailureTask()
+		}
+		if q.afterFn != nil {
+			q.afterFn()
 		}
 	}()
 
