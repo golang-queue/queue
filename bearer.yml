@@ -1,0 +1,9 @@
+rule:
+  # Disable all default rules by setting this value to true.
+  disable-default-rules: false
+  # Specify the comma-separated ids of the rules you would like to run;
+  # skips all other rules.
+  only-rule: []
+  # Specify the comma-separated ids of the rules you would like to skip;
+  # runs all other rules.
+  skip-rule: ["CWE-242"]
