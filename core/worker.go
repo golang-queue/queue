@@ -4,19 +4,29 @@ import (
 	"context"
 )
 
-// Worker interface
+// Worker represents a worker that processes queued messages.
+// It provides methods to run the worker, shut it down, queue messages, and request messages from the queue.
 type Worker interface {
-	// Run is called to start the worker
+	// Run starts the worker and processes the given task in the provided context.
+	// It returns an error if the task cannot be processed.
 	Run(ctx context.Context, task QueuedMessage) error
-	// Shutdown is called if stop all worker
+
+	// Shutdown stops the worker and performs any necessary cleanup.
+	// It returns an error if the shutdown process fails.
 	Shutdown() error
-	// Queue to send message in Queue
+
+	// Queue adds a task to the worker's queue.
+	// It returns an error if the task cannot be added to the queue.
 	Queue(task QueuedMessage) error
-	// Request to get message from Queue
+
+	// Request retrieves a task from the worker's queue.
+	// It returns the queued message and an error if the retrieval fails.
 	Request() (QueuedMessage, error)
 }
 
-// QueuedMessage ...
+// QueuedMessage represents an interface for a message that can be queued.
+// It requires the implementation of a Bytes method, which returns the message
+// content as a slice of bytes.
 type QueuedMessage interface {
 	Bytes() []byte
 }
