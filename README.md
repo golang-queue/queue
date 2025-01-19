@@ -4,34 +4,34 @@
 [![Run Tests](https://github.com/golang-queue/queue/actions/workflows/go.yml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/go.yml)
 [![codecov](https://codecov.io/gh/golang-queue/queue/branch/master/graph/badge.svg?token=SSo3mHejOE)](https://codecov.io/gh/golang-queue/queue)
 
-Queue is a Golang library for spawning and managing a Goroutine pool, allowing you to create multiple workers according to the limited CPU number of machines.
+Queue is a Golang library for spawning and managing a Goroutine pool, allowing you to create multiple workers based on the limited CPU capacity of the machine.
 
 ## Features
 
-- [x] Support [buffered channel](https://gobyexample.com/channel-buffering) queue.
-- [x] Support [NSQ](https://nsq.io/) (A realtime distributed messaging platform) as backend.
-- [x] Support [NATS](https://nats.io/) (Connective Technology for Adaptive Edge & Distributed Systems) as backend.
-- [x] Support [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/) as backend.
-- [x] Support [Redis Streams](https://redis.io/docs/manual/data-types/streams/) as backend.
-- [x] Support [RabbitMQ](https://www.rabbitmq.com/) as backend.
+- [x] Supports [buffered channel](https://gobyexample.com/channel-buffering) queues.
+- [x] Supports [NSQ](https://nsq.io/) (a real-time distributed messaging platform) as a backend.
+- [x] Supports [NATS](https://nats.io/) (connective technology for adaptive edge and distributed systems) as a backend.
+- [x] Supports [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/) as a backend.
+- [x] Supports [Redis Streams](https://redis.io/docs/manual/data-types/streams/) as a backend.
+- [x] Supports [RabbitMQ](https://www.rabbitmq.com/) as a backend.
 
 ## Queue Scenario
 
-Simple Queue service using Ring Buffer as default backend.
+A simple queue service using a ring buffer as the default backend.
 
 ![queue01](./images/flow-01.svg)
 
-Change Queue service like NSQ, NATs or Redis.
+Easily switch the queue service to use NSQ, NATS, or Redis.
 
 ![queue02](./images/flow-02.svg)
 
-Multiple Producer and Consumer.
+Supports multiple producers and consumers.
 
 ![queue03](./images/flow-03.svg)
 
 ## Requirements
 
-Go version **1.18** above
+Go version **1.22** or above
 
 ## Installation
 
@@ -41,7 +41,7 @@ Install the stable version:
 go get github.com/golang-queue/queue
 ```
 
-Install the latest verison:
+Install the latest version:
 
 ```sh
 go get github.com/golang-queue/queue@master
@@ -49,9 +49,9 @@ go get github.com/golang-queue/queue@master
 
 ## Usage
 
-### Basic usage of Pool (use Task function)
+### Basic Usage of Pool (using the Task function)
 
-By calling `QueueTask()` method, it schedules the task executed by worker (goroutines) in the Pool.
+By calling the `QueueTask()` method, tasks are scheduled to be executed by workers (goroutines) in the pool.
 
 ```go
 package main
@@ -94,10 +94,9 @@ func main() {
 }
 ```
 
-### Basic usage of Pool (use message queue)
+### Basic Usage of Pool (using a message queue)
 
-Define the new message struct and implement the `Bytes()` func to encode message. Give the `WithFn` func
-to handle the message from Queue.
+Define a new message struct and implement the `Bytes()` function to encode the message. Use the `WithFn` function to handle the message from the queue.
 
 ```go
 package main
@@ -166,9 +165,9 @@ func main() {
 }
 ```
 
-## Using NSQ as Queue
+## Using NSQ as a Queue
 
-See the [NSQ documentation](https://github.com/golang-queue/nsq).
+Refer to the [NSQ documentation](https://github.com/golang-queue/nsq).
 
 ```go
 package main
@@ -247,9 +246,9 @@ func main() {
 }
 ```
 
-## Using NATs as Queue
+## Using NATS as a Queue
 
-See the [NATs documentation](https://github.com/golang-queue/nats)
+Refer to the [NATS documentation](https://github.com/golang-queue/nats).
 
 ```go
 package main
@@ -332,9 +331,9 @@ func main() {
 }
 ```
 
-## Using Redis(Pub/Sub) as Queue
+## Using Redis (Pub/Sub) as a Queue
 
-See the [redis documentation](https://github.com/golang-queue/redisdb)
+Refer to the [Redis documentation](https://github.com/golang-queue/redisdb).
 
 ```go
 package main
