@@ -2,11 +2,10 @@ package job
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/golang-queue/queue/core"
-
-	"github.com/bytedance/sonic"
 )
 
 // TaskFunc is the task function
@@ -94,7 +93,7 @@ func NewTask(task TaskFunc, opts ...AllowOption) Message {
 }
 
 func Encode(m *Message) []byte {
-	b, err := sonic.Marshal(m)
+	b, err := json.Marshal(m)
 	if err != nil {
 		panic(err)
 	}
@@ -113,7 +112,7 @@ func Encode(m *Message) []byte {
 //   - A pointer to the decoded Message struct.
 func Decode(b []byte) *Message {
 	var msg Message
-	err := sonic.Unmarshal(b, &msg)
+	err := json.Unmarshal(b, &msg)
 	if err != nil {
 		panic(err)
 	}
