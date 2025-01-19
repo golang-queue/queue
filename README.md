@@ -1,19 +1,19 @@
 # Queue
 
 [![CodeQL](https://github.com/golang-queue/queue/actions/workflows/codeql.yaml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/codeql.yaml)
-[![Run Tests](https://github.com/golang-queue/queue/actions/workflows/go.yml/badge.svg?branch=master)](https://github.com/golang-queue/queue/actions/workflows/go.yml)
+[![Run Tests](https://github.com/golang-queue/queue/actions/workflows/go.yml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/go.yml)
 [![codecov](https://codecov.io/gh/golang-queue/queue/branch/master/graph/badge.svg?token=SSo3mHejOE)](https://codecov.io/gh/golang-queue/queue)
 
 Queue is a Golang library for spawning and managing a Goroutine pool, allowing you to create multiple workers according to the limited CPU number of machines.
 
 ## Features
 
-* [x] Support [buffered channel](https://gobyexample.com/channel-buffering) queue.
-* [x] Support [NSQ](https://nsq.io/) (A realtime distributed messaging platform) as backend.
-* [x] Support [NATS](https://nats.io/) (Connective Technology for Adaptive Edge & Distributed Systems) as backend.
-* [x] Support [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/) as backend.
-* [x] Support [Redis Streams](https://redis.io/docs/manual/data-types/streams/) as backend.
-* [x] Support [RabbitMQ](https://www.rabbitmq.com/) as backend.
+- [x] Support [buffered channel](https://gobyexample.com/channel-buffering) queue.
+- [x] Support [NSQ](https://nsq.io/) (A realtime distributed messaging platform) as backend.
+- [x] Support [NATS](https://nats.io/) (Connective Technology for Adaptive Edge & Distributed Systems) as backend.
+- [x] Support [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/) as backend.
+- [x] Support [Redis Streams](https://redis.io/docs/manual/data-types/streams/) as backend.
+- [x] Support [RabbitMQ](https://www.rabbitmq.com/) as backend.
 
 ## Queue Scenario
 
