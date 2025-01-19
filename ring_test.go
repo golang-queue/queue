@@ -142,7 +142,7 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 	assert.NoError(t, q.Queue(m, job.AllowOption{Timeout: job.Time(100 * time.Millisecond)}))
 	q.Start()
 	time.Sleep(10 * time.Millisecond)
-	assert.Equal(t, 2, q.BusyWorkers())
+	assert.Equal(t, int64(2), q.BusyWorkers())
 	q.Release()
 }
 
@@ -231,10 +231,10 @@ func TestIncreaseWorkerCount(t *testing.T) {
 
 	q.Start()
 	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, 5, q.BusyWorkers())
+	assert.Equal(t, int64(5), q.BusyWorkers())
 	q.UpdateWorkerCount(10)
 	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, 10, q.BusyWorkers())
+	assert.Equal(t, int64(10), q.BusyWorkers())
 	q.Release()
 }
 
@@ -261,12 +261,12 @@ func TestDecreaseWorkerCount(t *testing.T) {
 
 	q.Start()
 	time.Sleep(20 * time.Millisecond)
-	assert.Equal(t, 5, q.BusyWorkers())
+	assert.Equal(t, int64(5), q.BusyWorkers())
 	q.UpdateWorkerCount(3)
 	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, 3, q.BusyWorkers())
+	assert.Equal(t, int64(3), q.BusyWorkers())
 	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, 2, q.BusyWorkers())
+	assert.Equal(t, int64(2), q.BusyWorkers())
 	q.Release()
 }
 

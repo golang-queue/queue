@@ -9,7 +9,7 @@ import (
 
 var (
 	defaultCapacity    = 0
-	defaultWorkerCount = runtime.NumCPU()
+	defaultWorkerCount = int64(runtime.NumCPU())
 	defaultNewLogger   = NewLogger()
 	defaultFn          = func(context.Context, core.QueuedMessage) error { return nil }
 	defaultMetric      = NewMetric()
@@ -29,7 +29,7 @@ func (f OptionFunc) apply(option *Options) {
 }
 
 // WithWorkerCount set worker count
-func WithWorkerCount(num int) Option {
+func WithWorkerCount(num int64) Option {
 	return OptionFunc(func(q *Options) {
 		if num <= 0 {
 			num = defaultWorkerCount
@@ -82,7 +82,7 @@ func WithAfterFn(afterFn func()) Option {
 
 // Options for custom args in Queue
 type Options struct {
-	workerCount int
+	workerCount int64
 	logger      Logger
 	queueSize   int
 	worker      core.Worker

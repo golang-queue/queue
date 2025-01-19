@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewPoolWithQueueTask(t *testing.T) {
-	totalN := 5
+	totalN := int64(5)
 	taskN := 100
 	rets := make(chan struct{}, taskN)
 
@@ -26,7 +26,7 @@ func TestNewPoolWithQueueTask(t *testing.T) {
 
 	// shutdown all, and now running worker is 0
 	p.Release()
-	assert.Equal(t, 0, p.BusyWorkers())
+	assert.Equal(t, int64(0), p.BusyWorkers())
 }
 
 func TestPoolNumber(t *testing.T) {
@@ -34,5 +34,5 @@ func TestPoolNumber(t *testing.T) {
 	p.Start()
 	// shutdown all, and now running worker is 0
 	p.Release()
-	assert.Equal(t, 0, p.BusyWorkers())
+	assert.Equal(t, int64(0), p.BusyWorkers())
 }
