@@ -1,7 +1,7 @@
 package queue
 
 // NewPool initializes a new pool
-func NewPool(size int, opts ...Option) *Queue {
+func NewPool(size int64, opts ...Option) *Queue {
 	o := []Option{
 		WithWorkerCount(size),
 		WithWorker(NewRing(opts...)),

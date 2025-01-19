@@ -48,7 +48,7 @@ func TestNewQueueWithZeroWorker(t *testing.T) {
 
 	q.Start()
 	time.Sleep(50 * time.Millisecond)
-	assert.Equal(t, 0, q.BusyWorkers())
+	assert.Equal(t, int64(0), q.BusyWorkers())
 	q.Release()
 }
 
@@ -74,7 +74,7 @@ func TestNewQueueWithDefaultWorker(t *testing.T) {
 
 	q.Start()
 	q.Release()
-	assert.Equal(t, 0, q.BusyWorkers())
+	assert.Equal(t, int64(0), q.BusyWorkers())
 }
 
 func TestHandleTimeout(t *testing.T) {
