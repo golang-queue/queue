@@ -6,7 +6,7 @@ require (
 	github.com/appleboy/com v0.2.1
 	github.com/jpillora/backoff v1.0.0
 	github.com/stretchr/testify v1.10.0
-	go.uber.org/goleak v1.2.1
+	go.uber.org/goleak v1.3.0
 	go.uber.org/mock v0.5.0
 )
 
