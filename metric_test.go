@@ -47,5 +47,6 @@ func TestMetricData(t *testing.T) {
 	assert.Equal(t, uint64(4), q.SubmittedTasks())
 	assert.Equal(t, uint64(2), q.SuccessTasks())
 	assert.Equal(t, uint64(2), q.FailureTasks())
+	assert.Equal(t, uint64(4), q.CompletedTasks())
 	q.Release()
 }

@@ -173,6 +173,7 @@ func (q *Queue) work(task core.QueuedMessage) {
 		if q.afterFn != nil {
 			q.afterFn()
 		}
+		q.metric.IncCompletedTask()
 	}()
 
 	if err = q.run(task); err != nil {
