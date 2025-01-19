@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/golang-queue/queue/core"
-	"github.com/vmihailenco/msgpack/v5"
+
+	"github.com/bytedance/sonic"
 )
 
 // TaskFunc is the task function
@@ -93,7 +94,7 @@ func NewTask(task TaskFunc, opts ...AllowOption) Message {
 }
 
 func Encode(m *Message) []byte {
-	b, err := msgpack.Marshal(m)
+	b, err := sonic.Marshal(m)
 	if err != nil {
 		panic(err)
 	}
@@ -112,7 +113,7 @@ func Encode(m *Message) []byte {
 //   - A pointer to the decoded Message struct.
 func Decode(b []byte) *Message {
 	var msg Message
-	err := msgpack.Unmarshal(b, &msg)
+	err := sonic.Unmarshal(b, &msg)
 	if err != nil {
 		panic(err)
 	}
