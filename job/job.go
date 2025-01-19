@@ -78,7 +78,6 @@ func NewMessage(m core.QueuedMessage, opts ...AllowOption) Message {
 	}
 }
 
-// NewTask create new task
 func NewTask(task TaskFunc, opts ...AllowOption) Message {
 	o := NewOptions(opts...)
 
@@ -93,7 +92,6 @@ func NewTask(task TaskFunc, opts ...AllowOption) Message {
 	}
 }
 
-// Encode for encoding the structure
 func Encode(m *Message) []byte {
 	b, err := msgpack.Marshal(m)
 	if err != nil {
@@ -103,7 +101,15 @@ func Encode(m *Message) []byte {
 	return b
 }
 
-// Decode for decoding the structure
+// Decode takes a byte slice and unmarshals it into a Message struct using msgpack.
+// If the unmarshalling process encounters an error, the function will panic.
+// It returns a pointer to the unmarshalled Message.
+//
+// Parameters:
+//   - b: A byte slice containing the msgpack-encoded data.
+//
+// Returns:
+//   - A pointer to the decoded Message struct.
 func Decode(b []byte) *Message {
 	var msg Message
 	err := msgpack.Unmarshal(b, &msg)
