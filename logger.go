@@ -53,6 +53,7 @@ func (l defaultLogger) Error(args ...interface{}) {
 
 func (l defaultLogger) Fatal(args ...interface{}) {
 	l.fatalLogger.Println(fmt.Sprint(args...))
+	os.Exit(1)
 }
 
 // NewEmptyLogger for simple logger.
