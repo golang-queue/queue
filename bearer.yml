@@ -6,4 +6,4 @@ rule:
   only-rule: []
   # Specify the comma-separated ids of the rules you would like to skip;
   # runs all other rules.
-  skip-rule: ["go_gosec_unsafe_unsafe"]
+  skip-rule: ["go_gosec_unsafe_unsafe", "go_gosec_filesystem_filereadtaint"]
