@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
-	"runtime"
 )
 
 // Logger interface is used throughout gorush
@@ -33,37 +31,26 @@ type defaultLogger struct {
 	fatalLogger *log.Logger
 }
 
+func (l defaultLogger) logWithCallerf(logger *log.Logger, format string, args ...interface{}) {
+	stack := stack(3)
+	logger.Printf("%s\n%s", stack, fmt.Sprintf(format, args...))
+}
+
+func (l defaultLogger) logWithCaller(logger *log.Logger, args ...interface{}) {
+	stack := stack(3)
+	logger.Println(stack, fmt.Sprint(args...))
+}
+
 func (l defaultLogger) Infof(format string, args ...interface{}) {
 	l.infoLogger.Printf(format, args...)
 }
 
-func (l defaultLogger) logWithCallerf(logger *log.Logger, format string, args ...interface{}) {
-	_, file, line, ok := runtime.Caller(2)
-	if ok {
-		shortFile := filepath.Base(file)
-		logger.Printf("%s:%d: %s", shortFile, line, fmt.Sprintf(format, args...))
-		return
-	}
-	logger.Printf(format, args...)
-}
-
-func (l defaultLogger) logWithCaller(logger *log.Logger, args ...interface{}) {
-	_, file, line, ok := runtime.Caller(2)
-	if ok {
-		shortFile := filepath.Base(file)
-		logger.Printf("%s:%d: %s", shortFile, line, fmt.Sprint(args...))
-		return
-	}
-	logger.Println(fmt.Sprint(args...))
-}
-
 func (l defaultLogger) Errorf(format string, args ...interface{}) {
-	l.logWithCallerf(l.errorLogger, format, args...)
+	l.errorLogger.Printf(format, args...)
 }
 
 func (l defaultLogger) Fatalf(format string, args ...interface{}) {
 	l.logWithCallerf(l.fatalLogger, format, args...)
-	os.Exit(1)
 }
 
 func (l defaultLogger) Info(args ...interface{}) {
@@ -71,12 +58,11 @@ func (l defaultLogger) Info(args ...interface{}) {
 }
 
 func (l defaultLogger) Error(args ...interface{}) {
-	l.logWithCaller(l.errorLogger, args...)
+	l.errorLogger.Println(fmt.Sprint(args...))
 }
 
 func (l defaultLogger) Fatal(args ...interface{}) {
 	l.logWithCaller(l.fatalLogger, args...)
-	os.Exit(1)
 }
 
 // NewEmptyLogger for simple logger.
