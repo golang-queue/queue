@@ -30,10 +30,10 @@ func main() {
 	rets := make(chan string, taskN)
 
 	// initial queue pool
-	q := queue.NewPool(5, queue.WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+	q := queue.NewPool(5, queue.WithFn(func(ctx context.Context, m core.TaskMessage) error {
 		v, ok := m.(*job)
 		if !ok {
-			if err := json.Unmarshal(m.Bytes(), &v); err != nil {
+			if err := json.Unmarshal(m.Payload(), &v); err != nil {
 				return err
 			}
 		}

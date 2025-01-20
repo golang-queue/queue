@@ -33,7 +33,7 @@ func TestCustomFuncAndWait(t *testing.T) {
 		message: "foo",
 	}
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			time.Sleep(500 * time.Millisecond)
 			return nil
 		}),
@@ -82,11 +82,11 @@ func TestJobReachTimeout(t *testing.T) {
 		message: "foo",
 	}
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			for {
 				select {
 				case <-ctx.Done():
-					log.Println("get data:", string(m.Bytes()))
+					log.Println("get data:", string(m.Payload()))
 					if errors.Is(ctx.Err(), context.Canceled) {
 						log.Println("queue has been shutdown and cancel the job")
 					} else if errors.Is(ctx.Err(), context.DeadlineExceeded) {
@@ -116,11 +116,11 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 	}
 	w := NewRing(
 		WithLogger(NewEmptyLogger()),
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			for {
 				select {
 				case <-ctx.Done():
-					log.Println("get data:", string(m.Bytes()))
+					log.Println("get data:", string(m.Payload()))
 					if errors.Is(ctx.Err(), context.Canceled) {
 						log.Println("queue has been shutdown and cancel the job")
 					} else if errors.Is(ctx.Err(), context.DeadlineExceeded) {
@@ -149,18 +149,18 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 func TestGoroutineLeak(t *testing.T) {
 	w := NewRing(
 		WithLogger(NewLogger()),
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			for {
 				select {
 				case <-ctx.Done():
 					if errors.Is(ctx.Err(), context.Canceled) {
-						log.Println("queue has been shutdown and cancel the job: " + string(m.Bytes()))
+						log.Println("queue has been shutdown and cancel the job: " + string(m.Payload()))
 					} else if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-						log.Println("job deadline exceeded: " + string(m.Bytes()))
+						log.Println("job deadline exceeded: " + string(m.Payload()))
 					}
 					return nil
 				default:
-					log.Println("get data:", string(m.Bytes()))
+					log.Println("get data:", string(m.Payload()))
 					time.Sleep(50 * time.Millisecond)
 					return nil
 				}
@@ -192,7 +192,7 @@ func TestGoroutinePanic(t *testing.T) {
 		message: "foo",
 	}
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			panic("missing something")
 		}),
 	)
@@ -210,7 +210,7 @@ func TestGoroutinePanic(t *testing.T) {
 func TestIncreaseWorkerCount(t *testing.T) {
 	w := NewRing(
 		WithLogger(NewEmptyLogger()),
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			time.Sleep(500 * time.Millisecond)
 			return nil
 		}),
@@ -240,7 +240,7 @@ func TestIncreaseWorkerCount(t *testing.T) {
 
 func TestDecreaseWorkerCount(t *testing.T) {
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			time.Sleep(100 * time.Millisecond)
 			return nil
 		}),
@@ -274,10 +274,10 @@ func TestHandleAllJobBeforeShutdownRing(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 
-	m := mocks.NewMockQueuedMessage(controller)
+	m := mocks.NewMockTaskMessage(controller)
 
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			time.Sleep(10 * time.Millisecond)
 			return nil
 		}),
@@ -307,15 +307,16 @@ func TestHandleAllJobBeforeShutdownRingInQueue(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 
-	m := mocks.NewMockQueuedMessage(controller)
+	m := mocks.NewMockTaskMessage(controller)
 	m.EXPECT().Bytes().Return([]byte("test")).AnyTimes()
+	m.EXPECT().Payload().Return([]byte("test")).AnyTimes()
 
 	messages := make(chan string, 10)
 
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			time.Sleep(10 * time.Millisecond)
-			messages <- string(m.Bytes())
+			messages <- string(m.Payload())
 			return nil
 		}),
 	)
@@ -347,13 +348,13 @@ func TestRetryCountWithNewMessage(t *testing.T) {
 	count := 1
 
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			if count%3 != 0 {
 				count++
 				return errors.New("count not correct")
 			}
 			close(keep)
-			messages <- string(m.Bytes())
+			messages <- string(m.Payload())
 			return nil
 		}),
 	)
@@ -464,12 +465,12 @@ func TestCancelRetryCountWithNewMessage(t *testing.T) {
 	count := 1
 
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			if count%3 != 0 {
 				count++
 				return errors.New("count not correct")
 			}
-			messages <- string(m.Bytes())
+			messages <- string(m.Payload())
 			return nil
 		}),
 	)
@@ -498,7 +499,7 @@ func TestCancelRetryCountWithNewMessage(t *testing.T) {
 
 func TestErrNoTaskInQueue(t *testing.T) {
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			return nil
 		}),
 	)

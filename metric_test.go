@@ -13,8 +13,8 @@ import (
 
 func TestMetricData(t *testing.T) {
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
-			switch string(m.Bytes()) {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
+			switch string(m.Payload()) {
 			case "foo1":
 				panic("missing something")
 			case "foo2":
