@@ -151,7 +151,7 @@ func (q *Queue) queue(m *job.Message) error {
 	return nil
 }
 
-func (q *Queue) work(task core.QueuedMessage) {
+func (q *Queue) work(task core.TaskMessage) {
 	var err error
 	// to handle panic cases from inside the worker
 	// in such case, we start a new goroutine
@@ -180,7 +180,7 @@ func (q *Queue) work(task core.QueuedMessage) {
 	}
 }
 
-func (q *Queue) run(task core.QueuedMessage) error {
+func (q *Queue) run(task core.TaskMessage) error {
 	switch t := task.(type) {
 	case *job.Message:
 		return q.handle(t)
@@ -296,7 +296,7 @@ func (q *Queue) schedule() {
 
 // start to start all worker
 func (q *Queue) start() {
-	tasks := make(chan core.QueuedMessage, 1)
+	tasks := make(chan core.TaskMessage, 1)
 
 	for {
 		// check worker number
