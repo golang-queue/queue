@@ -80,7 +80,7 @@ func TestNewQueueWithDefaultWorker(t *testing.T) {
 func TestHandleTimeout(t *testing.T) {
 	m := &job.Message{
 		Timeout: 100 * time.Millisecond,
-		Payload: []byte("foo"),
+		Body:    []byte("foo"),
 	}
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
@@ -112,7 +112,7 @@ func TestHandleTimeout(t *testing.T) {
 func TestJobComplete(t *testing.T) {
 	m := &job.Message{
 		Timeout: 100 * time.Millisecond,
-		Payload: []byte("foo"),
+		Body:    []byte("foo"),
 	}
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
@@ -132,7 +132,7 @@ func TestJobComplete(t *testing.T) {
 
 	m = &job.Message{
 		Timeout: 250 * time.Millisecond,
-		Payload: []byte("foo"),
+		Body:    []byte("foo"),
 	}
 
 	w = NewRing(
