@@ -31,13 +31,10 @@ func main() {
 
 	// initial queue pool
 	q := queue.NewPool(5, queue.WithFn(func(ctx context.Context, m core.TaskMessage) error {
-		v, ok := m.(*job)
-		if !ok {
-			if err := json.Unmarshal(m.Payload(), &v); err != nil {
-				return err
-			}
+		var v job
+		if err := json.Unmarshal(m.Payload(), &v); err != nil {
+			return err
 		}
-
 		rets <- "Hi, " + v.Name + ", " + v.Message
 		return nil
 	}), queue.WithLogger(zerolog.New()))
