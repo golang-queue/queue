@@ -131,11 +131,9 @@ func main() {
 
   // initial queue pool
   q := queue.NewPool(5, queue.WithFn(func(ctx context.Context, m core.TaskMessage) error {
-    v, ok := m.(*job)
-    if !ok {
-      if err := json.Unmarshal(m.Payload(), &v); err != nil {
-        return err
-      }
+    var v job
+    if err := json.Unmarshal(m.Payload(), &v); err != nil {
+      return err
     }
 
     rets <- "Hi, " + v.Name + ", " + v.Message
@@ -208,11 +206,9 @@ func main() {
     // concurrent job number
     nsq.WithMaxInFlight(10),
     nsq.WithRunFunc(func(ctx context.Context, m core.TaskMessage) error {
-      v, ok := m.(*job)
-      if !ok {
-        if err := json.Unmarshal(m.Payload(), &v); err != nil {
-          return err
-        }
+      var v job
+      if err := json.Unmarshal(m.Payload(), &v); err != nil {
+        return err
       }
 
       rets <- v.Message
@@ -287,11 +283,9 @@ func main() {
     nats.WithSubj("example"),
     nats.WithQueue("foobar"),
     nats.WithRunFunc(func(ctx context.Context, m core.TaskMessage) error {
-      v, ok := m.(*job)
-      if !ok {
-        if err := json.Unmarshal(m.Payload(), &v); err != nil {
-          return err
-        }
+      var v job
+      if err := json.Unmarshal(m.Payload(), &v); err != nil {
+        return err
       }
 
       rets <- v.Message
@@ -371,11 +365,9 @@ func main() {
     redisdb.WithAddr("127.0.0.1:6379"),
     redisdb.WithChannel("foobar"),
     redisdb.WithRunFunc(func(ctx context.Context, m core.TaskMessage) error {
-      v, ok := m.(*job)
-      if !ok {
-        if err := json.Unmarshal(m.Payload(), &v); err != nil {
-          return err
-        }
+      var v job
+      if err := json.Unmarshal(m.Payload(), &v); err != nil {
+        return err
       }
 
       rets <- v.Message
