@@ -11,7 +11,7 @@ var (
 	defaultCapacity    = 0
 	defaultWorkerCount = int64(runtime.NumCPU())
 	defaultNewLogger   = NewLogger()
-	defaultFn          = func(context.Context, core.QueuedMessage) error { return nil }
+	defaultFn          = func(context.Context, core.TaskMessage) error { return nil }
 	defaultMetric      = NewMetric()
 )
 
@@ -67,7 +67,7 @@ func WithWorker(w core.Worker) Option {
 }
 
 // WithFn set custom job function
-func WithFn(fn func(context.Context, core.QueuedMessage) error) Option {
+func WithFn(fn func(context.Context, core.TaskMessage) error) Option {
 	return OptionFunc(func(q *Options) {
 		q.fn = fn
 	})
@@ -86,7 +86,7 @@ type Options struct {
 	logger      Logger
 	queueSize   int
 	worker      core.Worker
-	fn          func(context.Context, core.QueuedMessage) error
+	fn          func(context.Context, core.TaskMessage) error
 	afterFn     func()
 	metric      Metric
 }

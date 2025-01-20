@@ -28,6 +28,10 @@ func (m mockMessage) Bytes() []byte {
 	return bytesconv.StrToBytes(m.message)
 }
 
+func (m mockMessage) Payload() []byte {
+	return bytesconv.StrToBytes(m.message)
+}
+
 func TestNewQueueWithZeroWorker(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
@@ -61,8 +65,9 @@ func TestNewQueueWithDefaultWorker(t *testing.T) {
 	assert.Nil(t, q)
 
 	w := mocks.NewMockWorker(controller)
-	m := mocks.NewMockQueuedMessage(controller)
+	m := mocks.NewMockTaskMessage(controller)
 	m.EXPECT().Bytes().Return([]byte("test")).AnyTimes()
+	m.EXPECT().Payload().Return([]byte("test")).AnyTimes()
 	w.EXPECT().Shutdown().Return(nil)
 	w.EXPECT().Request().Return(m, nil).AnyTimes()
 	w.EXPECT().Run(context.Background(), m).Return(nil).AnyTimes()
@@ -83,7 +88,7 @@ func TestHandleTimeout(t *testing.T) {
 		Body:    []byte("foo"),
 	}
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return nil
 		}),
@@ -115,7 +120,7 @@ func TestJobComplete(t *testing.T) {
 		Body:    []byte("foo"),
 	}
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			return errors.New("job completed")
 		}),
 	)
@@ -136,7 +141,7 @@ func TestJobComplete(t *testing.T) {
 	}
 
 	w = NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			time.Sleep(200 * time.Millisecond)
 			return errors.New("job completed")
 		}),
@@ -196,11 +201,11 @@ func TestMockWorkerAndMessage(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 
-	m := mocks.NewMockQueuedMessage(controller)
+	m := mocks.NewMockTaskMessage(controller)
 
 	w := mocks.NewMockWorker(controller)
 	w.EXPECT().Shutdown().Return(nil)
-	w.EXPECT().Request().DoAndReturn(func() (core.QueuedMessage, error) {
+	w.EXPECT().Request().DoAndReturn(func() (core.TaskMessage, error) {
 		return m, errors.New("nil")
 	})
 

@@ -41,7 +41,7 @@ func (m *MockWorker) EXPECT() *MockWorkerMockRecorder {
 }
 
 // Queue mocks base method.
-func (m *MockWorker) Queue(arg0 core.QueuedMessage) error {
+func (m *MockWorker) Queue(arg0 core.TaskMessage) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Queue", arg0)
 	ret0, _ := ret[0].(error)
@@ -55,10 +55,10 @@ func (mr *MockWorkerMockRecorder) Queue(arg0 any) *gomock.Call {
 }
 
 // Request mocks base method.
-func (m *MockWorker) Request() (core.QueuedMessage, error) {
+func (m *MockWorker) Request() (core.TaskMessage, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Request")
-	ret0, _ := ret[0].(core.QueuedMessage)
+	ret0, _ := ret[0].(core.TaskMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -70,7 +70,7 @@ func (mr *MockWorkerMockRecorder) Request() *gomock.Call {
 }
 
 // Run mocks base method.
-func (m *MockWorker) Run(arg0 context.Context, arg1 core.QueuedMessage) error {
+func (m *MockWorker) Run(arg0 context.Context, arg1 core.TaskMessage) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Run", arg0, arg1)
 	ret0, _ := ret[0].(error)

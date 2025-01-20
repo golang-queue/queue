@@ -12,8 +12,8 @@ import (
 var count = 1
 
 type testqueue interface {
-	Queue(task core.QueuedMessage) error
-	Request() (core.QueuedMessage, error)
+	Queue(task core.TaskMessage) error
+	Request() (core.TaskMessage, error)
 }
 
 func testQueue(b *testing.B, pool testqueue) {
@@ -94,7 +94,7 @@ func BenchmarkQueue(b *testing.B) {
 // 		Payload: []byte(`{"timeout":3600000000000}`),
 // 	}
 // 	w := NewRing(
-// 		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+// 		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 // 			return nil
 // 		}),
 // 	)
@@ -119,7 +119,7 @@ func BenchmarkRingWithTask(b *testing.B) {
 		},
 	}
 	w := NewRing(
-		WithFn(func(ctx context.Context, m core.QueuedMessage) error {
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
 			return nil
 		}),
 	)

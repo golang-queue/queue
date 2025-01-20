@@ -6,7 +6,6 @@ import (
 	"sync/atomic"
 
 	"github.com/golang-queue/queue/core"
-	"github.com/golang-queue/queue/job"
 )
 
 var _ core.Worker = (*Ring)(nil)
@@ -14,8 +13,8 @@ var _ core.Worker = (*Ring)(nil)
 // Ring for simple queue using buffer channel
 type Ring struct {
 	sync.Mutex
-	taskQueue []core.QueuedMessage
-	runFunc   func(context.Context, core.QueuedMessage) error
+	taskQueue []core.TaskMessage
+	runFunc   func(context.Context, core.TaskMessage) error
 	capacity  int
 	count     int
 	head      int
@@ -26,21 +25,21 @@ type Ring struct {
 	stopFlag  int32
 }
 
-type Data struct {
-	Payload []byte `json:"payload"`
-}
+// type Data struct {
+// 	Payload []byte `json:"payload"`
+// }
 
-func (d *Data) Bytes() []byte {
-	return d.Payload
-}
+// func (d *Data) Bytes() []byte {
+// 	return d.Payload
+// }
 
 // Run to execute new task
-func (s *Ring) Run(ctx context.Context, task core.QueuedMessage) error {
-	v, _ := task.(*job.Message)
-	data := &Data{
-		Payload: v.Body,
-	}
-	return s.runFunc(ctx, data)
+func (s *Ring) Run(ctx context.Context, task core.TaskMessage) error {
+	// v, _ := task.(*job.Message)
+	// data := &Data{
+	// 	Payload: v.Body,
+	// }
+	return s.runFunc(ctx, task)
 }
 
 // Shutdown the worker
@@ -61,7 +60,7 @@ func (s *Ring) Shutdown() error {
 }
 
 // Queue send task to the buffer channel
-func (s *Ring) Queue(task core.QueuedMessage) error { //nolint:stylecheck
+func (s *Ring) Queue(task core.TaskMessage) error { //nolint:stylecheck
 	if atomic.LoadInt32(&s.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
@@ -82,7 +81,7 @@ func (s *Ring) Queue(task core.QueuedMessage) error { //nolint:stylecheck
 }
 
 // Request a new task from channel
-func (s *Ring) Request() (core.QueuedMessage, error) {
+func (s *Ring) Request() (core.TaskMessage, error) {
 	if atomic.LoadInt32(&s.stopFlag) == 1 && s.count == 0 {
 		select {
 		case s.exit <- struct{}{}:
@@ -109,7 +108,7 @@ func (s *Ring) Request() (core.QueuedMessage, error) {
 }
 
 func (q *Ring) resize(n int) {
-	nodes := make([]core.QueuedMessage, n)
+	nodes := make([]core.TaskMessage, n)
 	if q.head < q.tail {
 		copy(nodes, q.taskQueue[q.head:q.tail])
 	} else {
@@ -126,7 +125,7 @@ func (q *Ring) resize(n int) {
 func NewRing(opts ...Option) *Ring {
 	o := NewOptions(opts...)
 	w := &Ring{
-		taskQueue: make([]core.QueuedMessage, 2),
+		taskQueue: make([]core.TaskMessage, 2),
 		capacity:  o.queueSize,
 		exit:      make(chan struct{}),
 		logger:    o.logger,
