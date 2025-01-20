@@ -127,7 +127,6 @@ func (q *Queue) Wait() {
 // Queue to queue single job with binary
 func (q *Queue) Queue(message core.QueuedMessage, opts ...job.AllowOption) error {
 	data := job.NewMessage(message, opts...)
-	data.Encode()
 
 	return q.queue(&data)
 }
@@ -160,7 +159,7 @@ func (q *Queue) work(task core.QueuedMessage) {
 		q.metric.DecBusyWorker()
 		e := recover()
 		if e != nil {
-			q.logger.Errorf("panic error: %v", e)
+			q.logger.Fatalf("panic error: %v", e)
 		}
 		q.schedule()
 
@@ -182,13 +181,12 @@ func (q *Queue) work(task core.QueuedMessage) {
 }
 
 func (q *Queue) run(task core.QueuedMessage) error {
-	data := task.(*job.Message)
-	if data.Task == nil {
-		data = job.Decode(task.Bytes())
-		data.Data = data.Payload
+	switch t := task.(type) {
+	case *job.Message:
+		return q.handle(t)
+	default:
+		return errors.New("invalid task type")
 	}
-
-	return q.handle(data)
 }
 
 func (q *Queue) handle(m *job.Message) error {

@@ -30,3 +30,8 @@ type Worker interface {
 type QueuedMessage interface {
 	Bytes() []byte
 }
+
+type TaskMessage interface {
+	QueuedMessage
+	Payload() []byte
+}

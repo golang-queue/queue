@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 
 	"github.com/golang-queue/queue/core"
+	"github.com/golang-queue/queue/job"
 )
 
 var _ core.Worker = (*Ring)(nil)
@@ -25,9 +26,21 @@ type Ring struct {
 	stopFlag  int32
 }
 
+type Data struct {
+	Payload []byte `json:"payload"`
+}
+
+func (d *Data) Bytes() []byte {
+	return d.Payload
+}
+
 // Run to execute new task
 func (s *Ring) Run(ctx context.Context, task core.QueuedMessage) error {
-	return s.runFunc(ctx, task)
+	v, _ := task.(*job.Message)
+	data := &Data{
+		Payload: v.Body,
+	}
+	return s.runFunc(ctx, data)
 }
 
 // Shutdown the worker

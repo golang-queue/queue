@@ -78,7 +78,6 @@ func BenchmarkQueue(b *testing.B) {
 	m := job.NewMessage(&mockMessage{
 		message: "foo",
 	})
-	m.Encode()
 
 	for n := 0; n < b.N; n++ {
 		if err := q.queue(&m); err != nil {

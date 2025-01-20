@@ -21,7 +21,7 @@ type Message struct {
 	Timeout time.Duration `json:"timeout" msgpack:"timeout"`
 
 	// Payload is the payload data of the task.
-	Payload []byte `json:"body" msgpack:"body"`
+	Body []byte `json:"body" msgpack:"body"`
 
 	// RetryCount set count of retry
 	// default is 0, no retry.
@@ -48,19 +48,30 @@ type Message struct {
 
 	// Jitter eases contention by randomizing backoff steps
 	Jitter bool `json:"jitter" msgpack:"jitter"`
-
-	// Data to save Unsafe cast
-	Data []byte
 }
 
-// Bytes get internal data
+// Payload returns the payload data of the Message.
+// It returns the byte slice of the payload.
+//
+// Returns:
+//   - A byte slice containing the payload data.
+func (m *Message) Payload() []byte {
+	return m.Body
+}
+
+// Bytes returns the byte slice of the Message struct.
+// If the marshalling process encounters an error, the function will panic.
+// It returns the marshalled byte slice.
+//
+// Returns:
+//   - A byte slice containing the msgpack-encoded data.
 func (m *Message) Bytes() []byte {
-	return m.Data
-}
+	b, err := json.Marshal(m)
+	if err != nil {
+		panic(err)
+	}
 
-// Encode for encoding the structure
-func (m *Message) Encode() {
-	m.Data = Encode(m)
+	return b
 }
 
 // NewMessage create new message
@@ -74,7 +85,7 @@ func NewMessage(m core.QueuedMessage, opts ...AllowOption) Message {
 		RetryMin:    o.retryMin,
 		RetryMax:    o.retryMax,
 		Timeout:     o.timeout,
-		Payload:     m.Bytes(),
+		Body:        m.Bytes(),
 	}
 }
 
@@ -92,6 +103,15 @@ func NewTask(task TaskFunc, opts ...AllowOption) Message {
 	}
 }
 
+// Encode takes a Message struct and marshals it into a byte slice using msgpack.
+// If the marshalling process encounters an error, the function will panic.
+// It returns the marshalled byte slice.
+//
+// Parameters:
+//   - m: A pointer to the Message struct to be encoded.
+//
+// Returns:
+//   - A byte slice containing the msgpack-encoded data.
 func Encode(m *Message) []byte {
 	b, err := json.Marshal(m)
 	if err != nil {
