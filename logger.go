@@ -33,7 +33,7 @@ type defaultLogger struct {
 
 func (l defaultLogger) logWithCallerf(logger *log.Logger, format string, args ...interface{}) {
 	stack := stack(3)
-	logger.Printf("%s\n%s", stack, fmt.Sprintf(format, args...))
+	logger.Printf("%s%s", stack, fmt.Sprintf(format, args...))
 }
 
 func (l defaultLogger) logWithCaller(logger *log.Logger, args ...interface{}) {
