@@ -14,7 +14,6 @@ type Metric interface {
 	IncSuccessTask()
 	IncFailureTask()
 	IncSubmittedTask()
-	IncCompletedTask()
 }
 
 var _ Metric = (*metric)(nil)
@@ -24,7 +23,6 @@ type metric struct {
 	successTasks   uint64
 	failureTasks   uint64
 	submittedTasks uint64
-	completedTasks uint64
 }
 
 // NewMetric for default metric structure
@@ -56,10 +54,6 @@ func (m *metric) IncSubmittedTask() {
 	atomic.AddUint64(&m.submittedTasks, 1)
 }
 
-func (m *metric) IncCompletedTask() {
-	atomic.AddUint64(&m.completedTasks, 1)
-}
-
 func (m *metric) SuccessTasks() uint64 {
 	return atomic.LoadUint64(&m.successTasks)
 }
@@ -73,5 +67,5 @@ func (m *metric) SubmittedTasks() uint64 {
 }
 
 func (m *metric) CompletedTasks() uint64 {
-	return atomic.LoadUint64(&m.completedTasks)
+	return atomic.LoadUint64(&m.successTasks) + atomic.LoadUint64(&m.failureTasks)
 }
