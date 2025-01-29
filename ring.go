@@ -25,20 +25,8 @@ type Ring struct {
 	stopFlag  int32
 }
 
-// type Data struct {
-// 	Payload []byte `json:"payload"`
-// }
-
-// func (d *Data) Bytes() []byte {
-// 	return d.Payload
-// }
-
 // Run to execute new task
 func (s *Ring) Run(ctx context.Context, task core.TaskMessage) error {
-	// v, _ := task.(*job.Message)
-	// data := &Data{
-	// 	Payload: v.Body,
-	// }
 	return s.runFunc(ctx, task)
 }
 
