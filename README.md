@@ -8,7 +8,7 @@ Queue is a Golang library for spawning and managing a Goroutine pool, allowing y
 
 ## Features
 
-- [x] Supports [buffered channel](https://gobyexample.com/channel-buffering) queues.
+- [x] Supports [Circular buffer](https://en.wikipedia.org/wiki/Circular_buffer) queues.
 - [x] Supports [NSQ](https://nsq.io/) (a real-time distributed messaging platform) as a backend.
 - [x] Supports [NATS](https://nats.io/) (connective technology for adaptive edge and distributed systems) as a backend.
 - [x] Supports [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/) as a backend.
