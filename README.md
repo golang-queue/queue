@@ -4,7 +4,7 @@
 [![Run Tests](https://github.com/golang-queue/queue/actions/workflows/go.yml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/go.yml)
 [![codecov](https://codecov.io/gh/golang-queue/queue/branch/master/graph/badge.svg?token=SSo3mHejOE)](https://codecov.io/gh/golang-queue/queue)
 
-Queue is a Golang library for spawning and managing a Goroutine pool, allowing you to create multiple workers based on the limited CPU capacity of the machine.
+Queue is a Golang library for spawning and managing a Goroutine pool, allowing you to create multiple workers based on the CPU capacity of the machine.
 
 ## Features
 
