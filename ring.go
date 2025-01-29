@@ -109,7 +109,7 @@ func (s *Ring) Request() (core.TaskMessage, error) {
 	s.head = (s.head + 1) % len(s.taskQueue)
 	s.count--
 
-	if n := len(s.taskQueue) / 2; n > 2 && s.count <= n {
+	if n := len(s.taskQueue) / 2; n >= 2 && s.count <= n {
 		s.resize(n)
 	}
 
