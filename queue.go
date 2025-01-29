@@ -20,6 +20,7 @@ type (
 	// A Queue is a message queue.
 	Queue struct {
 		sync.Mutex
+		ctx          context.Context
 		metric       *metric
 		logger       Logger
 		workerCount  int64
@@ -40,6 +41,7 @@ var ErrMissingWorker = errors.New("missing worker module")
 func NewQueue(opts ...Option) (*Queue, error) {
 	o := NewOptions(opts...)
 	q := &Queue{
+		ctx:          o.ctx,
 		routineGroup: newRoutineGroup(),
 		quit:         make(chan struct{}),
 		ready:        make(chan struct{}, 1),
@@ -193,7 +195,7 @@ func (q *Queue) handle(m *job.Message) error {
 	done := make(chan error, 1)
 	panicChan := make(chan interface{}, 1)
 	startTime := time.Now()
-	ctx, cancel := context.WithTimeout(context.Background(), m.Timeout)
+	ctx, cancel := context.WithTimeout(q.ctx, m.Timeout)
 	defer func() {
 		cancel()
 	}()

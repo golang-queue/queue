@@ -80,8 +80,16 @@ func WithAfterFn(afterFn func()) Option {
 	})
 }
 
+// WithContext set context
+func WithContext(ctx context.Context) Option {
+	return OptionFunc(func(q *Options) {
+		q.ctx = ctx
+	})
+}
+
 // Options for custom args in Queue
 type Options struct {
+	ctx         context.Context
 	workerCount int64
 	logger      Logger
 	queueSize   int
@@ -94,6 +102,7 @@ type Options struct {
 // NewOptions initialize the default value for the options
 func NewOptions(opts ...Option) *Options {
 	o := &Options{
+		ctx:         context.Background(),
 		workerCount: defaultWorkerCount,
 		queueSize:   defaultCapacity,
 		logger:      defaultNewLogger,
