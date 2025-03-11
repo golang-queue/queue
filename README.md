@@ -4,16 +4,16 @@
 [![Run Tests](https://github.com/golang-queue/queue/actions/workflows/go.yml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/go.yml)
 [![codecov](https://codecov.io/gh/golang-queue/queue/branch/master/graph/badge.svg?token=SSo3mHejOE)](https://codecov.io/gh/golang-queue/queue)
 
-Queue is a Golang library for spawning and managing a Goroutine pool, allowing you to create multiple workers based on the CPU capacity of the machine.
+Queue is a Golang library that helps you create and manage a pool of Goroutines (lightweight threads). It allows you to efficiently run multiple tasks in parallel, utilizing the CPU capacity of your machine.
 
 ## Features
 
 - [x] Supports [Circular buffer](https://en.wikipedia.org/wiki/Circular_buffer) queues.
-- [x] Supports [NSQ](https://nsq.io/) (a real-time distributed messaging platform) as a backend.
-- [x] Supports [NATS](https://nats.io/) (connective technology for adaptive edge and distributed systems) as a backend.
-- [x] Supports [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/) as a backend.
-- [x] Supports [Redis Streams](https://redis.io/docs/manual/data-types/streams/) as a backend.
-- [x] Supports [RabbitMQ](https://www.rabbitmq.com/) as a backend.
+- [x] Integrates with [NSQ](https://nsq.io/) for real-time distributed messaging.
+- [x] Integrates with [NATS](https://nats.io/) for adaptive edge and distributed systems.
+- [x] Integrates with [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/).
+- [x] Integrates with [Redis Streams](https://redis.io/docs/manual/data-types/streams/).
+- [x] Integrates with [RabbitMQ](https://www.rabbitmq.com/).
 
 ## Queue Scenario
 
@@ -35,13 +35,13 @@ Go version **1.22** or above
 
 ## Installation
 
-Install the stable version:
+To install the stable version:
 
 ```sh
 go get github.com/golang-queue/queue
 ```
 
-Install the latest version:
+To install the latest version:
 
 ```sh
 go get github.com/golang-queue/queue@master
@@ -51,7 +51,7 @@ go get github.com/golang-queue/queue@master
 
 ### Basic Usage of Pool (using the Task function)
 
-By calling the `QueueTask()` method, tasks are scheduled to be executed by workers (goroutines) in the pool.
+By calling the `QueueTask()` method, you can schedule tasks to be executed by workers (Goroutines) in the pool.
 
 ```go
 package main
@@ -68,13 +68,13 @@ func main() {
   taskN := 100
   rets := make(chan string, taskN)
 
-  // initial queue pool
+  // initialize the queue pool
   q := queue.NewPool(5)
-  // shutdown the service and notify all the worker
-  // wait all jobs are complete.
+  // shut down the service and notify all workers
+  // wait until all jobs are complete
   defer q.Release()
 
-  // assign tasks in queue
+  // assign tasks to the queue
   for i := 0; i < taskN; i++ {
     go func(i int) {
       if err := q.QueueTask(func(ctx context.Context) error {
@@ -86,7 +86,7 @@ func main() {
     }(i)
   }
 
-  // wait until all tasks done
+  // wait until all tasks are done
   for i := 0; i < taskN; i++ {
     fmt.Println("message:", <-rets)
     time.Sleep(20 * time.Millisecond)
@@ -96,7 +96,7 @@ func main() {
 
 ### Basic Usage of Pool (using a message queue)
 
-Define a new message struct and implement the `Bytes()` function to encode the message. Use the `WithFn` function to handle the message from the queue.
+Define a new message struct and implement the `Bytes()` function to encode the message. Use the `WithFn` function to handle messages from the queue.
 
 ```go
 package main
@@ -129,7 +129,7 @@ func main() {
   taskN := 100
   rets := make(chan string, taskN)
 
-  // initial queue pool
+  // initialize the queue pool
   q := queue.NewPool(5, queue.WithFn(func(ctx context.Context, m core.TaskMessage) error {
     var v job
     if err := json.Unmarshal(m.Payload(), &v); err != nil {
@@ -139,11 +139,11 @@ func main() {
     rets <- "Hi, " + v.Name + ", " + v.Message
     return nil
   }))
-  // shutdown the service and notify all the worker
-  // wait all jobs are complete.
+  // shut down the service and notify all workers
+  // wait until all jobs are complete
   defer q.Release()
 
-  // assign tasks in queue
+  // assign tasks to the queue
   for i := 0; i < taskN; i++ {
     go func(i int) {
       if err := q.Queue(&job{
@@ -155,7 +155,7 @@ func main() {
     }(i)
   }
 
-  // wait until all tasks done
+  // wait until all tasks are done
   for i := 0; i < taskN; i++ {
     fmt.Println("message:", <-rets)
     time.Sleep(50 * time.Millisecond)
@@ -165,7 +165,7 @@ func main() {
 
 ## Using NSQ as a Queue
 
-Refer to the [NSQ documentation](https://github.com/golang-queue/nsq).
+Refer to the [NSQ documentation](https://github.com/golang-queue/nsq) for more details.
 
 ```go
 package main
@@ -222,7 +222,7 @@ func main() {
     queue.WithWorker(w),
   )
 
-  // assign tasks in queue
+  // assign tasks to the queue
   for i := 0; i < taskN; i++ {
     go func(i int) {
       q.Queue(&job{
@@ -231,20 +231,20 @@ func main() {
     }(i)
   }
 
-  // wait until all tasks done
+  // wait until all tasks are done
   for i := 0; i < taskN; i++ {
     fmt.Println("message:", <-rets)
     time.Sleep(50 * time.Millisecond)
   }
 
-  // shutdown the service and notify all the worker
+  // shut down the service and notify all workers
   q.Release()
 }
 ```
 
 ## Using NATS as a Queue
 
-Refer to the [NATS documentation](https://github.com/golang-queue/nats).
+Refer to the [NATS documentation](https://github.com/golang-queue/nats) for more details.
 
 ```go
 package main
@@ -302,10 +302,10 @@ func main() {
     log.Fatal(err)
   }
 
-  // start the five worker
+  // start the workers
   q.Start()
 
-  // assign tasks in queue
+  // assign tasks to the queue
   for i := 0; i < taskN; i++ {
     go func(i int) {
       q.Queue(&job{
@@ -314,20 +314,20 @@ func main() {
     }(i)
   }
 
-  // wait until all tasks done
+  // wait until all tasks are done
   for i := 0; i < taskN; i++ {
     fmt.Println("message:", <-rets)
     time.Sleep(50 * time.Millisecond)
   }
 
-  // shutdown the service and notify all the worker
+  // shut down the service and notify all workers
   q.Release()
 }
 ```
 
 ## Using Redis (Pub/Sub) as a Queue
 
-Refer to the [Redis documentation](https://github.com/golang-queue/redisdb).
+Refer to the [Redis documentation](https://github.com/golang-queue/redisdb) for more details.
 
 ```go
 package main
@@ -384,10 +384,10 @@ func main() {
     log.Fatal(err)
   }
 
-  // start the five worker
+  // start the workers
   q.Start()
 
-  // assign tasks in queue
+  // assign tasks to the queue
   for i := 0; i < taskN; i++ {
     go func(i int) {
       q.Queue(&job{
@@ -396,13 +396,13 @@ func main() {
     }(i)
   }
 
-  // wait until all tasks done
+  // wait until all tasks are done
   for i := 0; i < taskN; i++ {
     fmt.Println("message:", <-rets)
     time.Sleep(50 * time.Millisecond)
   }
 
-  // shutdown the service and notify all the worker
+  // shut down the service and notify all workers
   q.Release()
 }
 ```
