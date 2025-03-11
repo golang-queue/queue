@@ -1,59 +1,59 @@
-# Queue
+# 队列
 
 [![CodeQL](https://github.com/golang-queue/queue/actions/workflows/codeql.yaml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/codeql.yaml)
 [![Run Tests](https://github.com/golang-queue/queue/actions/workflows/go.yml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/go.yml)
 [![codecov](https://codecov.io/gh/golang-queue/queue/branch/master/graph/badge.svg?token=SSo3mHejOE)](https://codecov.io/gh/golang-queue/queue)
 
-[繁體中文](./README.zh-tw.md) | [简体中文](./README.zh-cn.md)
+[English](./README.md) | [繁體中文](./README.zh-tw.md)
 
-Queue is a Golang library that helps you create and manage a pool of Goroutines (lightweight threads). It allows you to efficiently run multiple tasks in parallel, utilizing the CPU capacity of your machine.
+Queue 是一个 Golang 库，帮助您创建和管理 Goroutines（轻量级线程）池。它允许您高效地并行运行多个任务，利用机器的 CPU 容量。
 
-## Features
+## 特性
 
-- [x] Supports [Circular buffer](https://en.wikipedia.org/wiki/Circular_buffer) queues.
-- [x] Integrates with [NSQ](https://nsq.io/) for real-time distributed messaging.
-- [x] Integrates with [NATS](https://nats.io/) for adaptive edge and distributed systems.
-- [x] Integrates with [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/).
-- [x] Integrates with [Redis Streams](https://redis.io/docs/manual/data-types/streams/).
-- [x] Integrates with [RabbitMQ](https://www.rabbitmq.com/).
+- [x] 支持 [循环缓冲区](https://en.wikipedia.org/wiki/Circular_buffer) 队列。
+- [x] 集成 [NSQ](https://nsq.io/) 进行实时分布式消息传递。
+- [x] 集成 [NATS](https://nats.io/) 以适应边缘和分布式系统。
+- [x] 集成 [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/)。
+- [x] 集成 [Redis Streams](https://redis.io/docs/manual/data-types/streams/)。
+- [x] 集成 [RabbitMQ](https://www.rabbitmq.com/)。
 
-## Queue Scenario
+## 队列场景
 
-A simple queue service using a ring buffer as the default backend.
+使用环形缓冲区作为默认后端的简单队列服务。
 
 ![queue01](./images/flow-01.svg)
 
-Easily switch the queue service to use NSQ, NATS, or Redis.
+轻松切换队列服务以使用 NSQ、NATS 或 Redis。
 
 ![queue02](./images/flow-02.svg)
 
-Supports multiple producers and consumers.
+支持多个生产者和消费者。
 
 ![queue03](./images/flow-03.svg)
 
-## Requirements
+## 要求
 
-Go version **1.22** or above
+Go 版本 **1.22** 或以上
 
-## Installation
+## 安装
 
-To install the stable version:
+安装稳定版本：
 
 ```sh
 go get github.com/golang-queue/queue
 ```
 
-To install the latest version:
+安装最新版本：
 
 ```sh
 go get github.com/golang-queue/queue@master
 ```
 
-## Usage
+## 使用
 
-### Basic Usage of Pool (using the Task function)
+### 池的基本用法（使用 Task 函数）
 
-By calling the `QueueTask()` method, you can schedule tasks to be executed by workers (Goroutines) in the pool.
+通过调用 `QueueTask()` 方法，您可以安排任务由池中的工作者（Goroutines）执行。
 
 ```go
 package main
@@ -70,17 +70,17 @@ func main() {
   taskN := 100
   rets := make(chan string, taskN)
 
-  // initialize the queue pool
+  // 初始化队列池
   q := queue.NewPool(5)
-  // shut down the service and notify all workers
-  // wait until all jobs are complete
+  // 关闭服务并通知所有工作者
+  // 等待所有作业完成
   defer q.Release()
 
-  // assign tasks to the queue
+  // 将任务分配到队列
   for i := 0; i < taskN; i++ {
     go func(i int) {
       if err := q.QueueTask(func(ctx context.Context) error {
-        rets <- fmt.Sprintf("Hi Gopher, handle the job: %02d", +i)
+        rets <- fmt.Sprintf("Hi Gopher, 处理作业: %02d", +i)
         return nil
       }); err != nil {
         panic(err)
@@ -88,17 +88,17 @@ func main() {
     }(i)
   }
 
-  // wait until all tasks are done
+  // 等待所有任务完成
   for i := 0; i < taskN; i++ {
-    fmt.Println("message:", <-rets)
+    fmt.Println("消息:", <-rets)
     time.Sleep(20 * time.Millisecond)
   }
 }
 ```
 
-### Basic Usage of Pool (using a message queue)
+### 池的基本用法（使用消息队列）
 
-Define a new message struct and implement the `Bytes()` function to encode the message. Use the `WithFn` function to handle messages from the queue.
+定义一个新的消息结构并实现 `Bytes()` 函数来编码消息。使用 `WithFn` 函数处理来自队列的消息。
 
 ```go
 package main
@@ -131,7 +131,7 @@ func main() {
   taskN := 100
   rets := make(chan string, taskN)
 
-  // initialize the queue pool
+  // 初始化队列池
   q := queue.NewPool(5, queue.WithFn(func(ctx context.Context, m core.TaskMessage) error {
     var v job
     if err := json.Unmarshal(m.Payload(), &v); err != nil {
@@ -141,33 +141,33 @@ func main() {
     rets <- "Hi, " + v.Name + ", " + v.Message
     return nil
   }))
-  // shut down the service and notify all workers
-  // wait until all jobs are complete
+  // 关闭服务并通知所有工作者
+  // 等待所有作业完成
   defer q.Release()
 
-  // assign tasks to the queue
+  // 将任务分配到队列
   for i := 0; i < taskN; i++ {
     go func(i int) {
       if err := q.Queue(&job{
         Name:    "Gopher",
-        Message: fmt.Sprintf("handle the job: %d", i+1),
+        Message: fmt.Sprintf("处理作业: %d", i+1),
       }); err != nil {
         log.Println(err)
       }
     }(i)
   }
 
-  // wait until all tasks are done
+  // 等待所有任务完成
   for i := 0; i < taskN; i++ {
-    fmt.Println("message:", <-rets)
+    fmt.Println("消息:", <-rets)
     time.Sleep(50 * time.Millisecond)
   }
 }
 ```
 
-## Using NSQ as a Queue
+## 使用 NSQ 作为队列
 
-Refer to the [NSQ documentation](https://github.com/golang-queue/nsq) for more details.
+请参阅 [NSQ 文档](https://github.com/golang-queue/nsq) 了解更多详情。
 
 ```go
 package main
@@ -200,12 +200,12 @@ func main() {
   taskN := 100
   rets := make(chan string, taskN)
 
-  // define the worker
+  // 定义工作者
   w := nsq.NewWorker(
     nsq.WithAddr("127.0.0.1:4150"),
     nsq.WithTopic("example"),
     nsq.WithChannel("foobar"),
-    // concurrent job number
+    // 并发作业数量
     nsq.WithMaxInFlight(10),
     nsq.WithRunFunc(func(ctx context.Context, m core.TaskMessage) error {
       var v job
@@ -218,35 +218,35 @@ func main() {
     }),
   )
 
-  // define the queue
+  // 定义队列
   q := queue.NewPool(
     5,
     queue.WithWorker(w),
   )
 
-  // assign tasks to the queue
+  // 将任务分配到队列
   for i := 0; i < taskN; i++ {
     go func(i int) {
       q.Queue(&job{
-        Message: fmt.Sprintf("handle the job: %d", i+1),
+        Message: fmt.Sprintf("处理作业: %d", i+1),
       })
     }(i)
   }
 
-  // wait until all tasks are done
+  // 等待所有任务完成
   for i := 0; i < taskN; i++ {
-    fmt.Println("message:", <-rets)
+    fmt.Println("消息:", <-rets)
     time.Sleep(50 * time.Millisecond)
   }
 
-  // shut down the service and notify all workers
+  // 关闭服务并通知所有工作者
   q.Release()
 }
 ```
 
-## Using NATS as a Queue
+## 使用 NATS 作为队列
 
-Refer to the [NATS documentation](https://github.com/golang-queue/nats) for more details.
+请参阅 [NATS 文档](https://github.com/golang-queue/nats) 了解更多详情。
 
 ```go
 package main
@@ -279,7 +279,7 @@ func main() {
   taskN := 100
   rets := make(chan string, taskN)
 
-  // define the worker
+  // 定义工作者
   w := nats.NewWorker(
     nats.WithAddr("127.0.0.1:4222"),
     nats.WithSubj("example"),
@@ -295,7 +295,7 @@ func main() {
     }),
   )
 
-  // define the queue
+  // 定义队列
   q, err := queue.NewQueue(
     queue.WithWorkerCount(10),
     queue.WithWorker(w),
@@ -304,32 +304,32 @@ func main() {
     log.Fatal(err)
   }
 
-  // start the workers
+  // 启动工作者
   q.Start()
 
-  // assign tasks to the queue
+  // 将任务分配到队列
   for i := 0; i < taskN; i++ {
     go func(i int) {
       q.Queue(&job{
-        Message: fmt.Sprintf("handle the job: %d", i+1),
+        Message: fmt.Sprintf("处理作业: %d", i+1),
       })
     }(i)
   }
 
-  // wait until all tasks are done
+  // 等待所有任务完成
   for i := 0; i < taskN; i++ {
-    fmt.Println("message:", <-rets)
+    fmt.Println("消息:", <-rets)
     time.Sleep(50 * time.Millisecond)
   }
 
-  // shut down the service and notify all workers
+  // 关闭服务并通知所有工作者
   q.Release()
 }
 ```
 
-## Using Redis (Pub/Sub) as a Queue
+## 使用 Redis (Pub/Sub) 作为队列
 
-Refer to the [Redis documentation](https://github.com/golang-queue/redisdb) for more details.
+请参阅 [Redis 文档](https://github.com/golang-queue/redisdb) 了解更多详情。
 
 ```go
 package main
@@ -362,7 +362,7 @@ func main() {
   taskN := 100
   rets := make(chan string, taskN)
 
-  // define the worker
+  // 定义工作者
   w := redisdb.NewWorker(
     redisdb.WithAddr("127.0.0.1:6379"),
     redisdb.WithChannel("foobar"),
@@ -377,7 +377,7 @@ func main() {
     }),
   )
 
-  // define the queue
+  // 定义队列
   q, err := queue.NewQueue(
     queue.WithWorkerCount(10),
     queue.WithWorker(w),
@@ -386,25 +386,25 @@ func main() {
     log.Fatal(err)
   }
 
-  // start the workers
+  // 启动工作者
   q.Start()
 
-  // assign tasks to the queue
+  // 将任务分配到队列
   for i := 0; i < taskN; i++ {
     go func(i int) {
       q.Queue(&job{
-        Message: fmt.Sprintf("handle the job: %d", i+1),
+        Message: fmt.Sprintf("处理作业: %d", i+1),
       })
     }(i)
   }
 
-  // wait until all tasks are done
+  // 等待所有任务完成
   for i := 0; i < taskN; i++ {
-    fmt.Println("message:", <-rets)
+    fmt.Println("消息:", <-rets)
     time.Sleep(50 * time.Millisecond)
   }
 
-  // shut down the service and notify all workers
+  // 关闭服务并通知所有工作者
   q.Release()
 }
 ```
