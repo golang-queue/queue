@@ -20,16 +20,17 @@ type (
 	// A Queue is a message queue.
 	Queue struct {
 		sync.Mutex
-		metric       *metric
-		logger       Logger
-		workerCount  int64
-		routineGroup *routineGroup
-		quit         chan struct{}
-		ready        chan struct{}
-		worker       core.Worker
-		stopOnce     sync.Once
-		stopFlag     int32
-		afterFn      func()
+		metric        *metric
+		logger        Logger
+		workerCount   int64
+		routineGroup  *routineGroup
+		quit          chan struct{}
+		ready         chan struct{}
+		worker        core.Worker
+		stopOnce      sync.Once
+		stopFlag      int32
+		afterFn       func()
+		retryInterval time.Duration
 	}
 )
 
@@ -40,14 +41,15 @@ var ErrMissingWorker = errors.New("missing worker module")
 func NewQueue(opts ...Option) (*Queue, error) {
 	o := NewOptions(opts...)
 	q := &Queue{
-		routineGroup: newRoutineGroup(),
-		quit:         make(chan struct{}),
-		ready:        make(chan struct{}, 1),
-		workerCount:  o.workerCount,
-		logger:       o.logger,
-		worker:       o.worker,
-		metric:       &metric{},
-		afterFn:      o.afterFn,
+		routineGroup:  newRoutineGroup(),
+		quit:          make(chan struct{}),
+		ready:         make(chan struct{}, 1),
+		workerCount:   o.workerCount,
+		logger:        o.logger,
+		worker:        o.worker,
+		metric:        &metric{},
+		afterFn:       o.afterFn,
+		retryInterval: o.retryInterval,
 	}
 
 	if q.worker == nil {
@@ -296,6 +298,8 @@ func (q *Queue) schedule() {
 // start to start all worker
 func (q *Queue) start() {
 	tasks := make(chan core.TaskMessage, 1)
+	ticker := time.NewTicker(q.retryInterval)
+	defer ticker.Stop()
 
 	for {
 		// check worker number
@@ -320,8 +324,7 @@ func (q *Queue) start() {
 								close(tasks)
 								return
 							}
-						case <-time.After(time.Second):
-							// sleep 1 second to fetch new task
+						case <-ticker.C:
 						}
 					}
 				}

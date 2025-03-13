@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"runtime"
+	"time"
 
 	"github.com/golang-queue/queue/core"
 )
@@ -80,26 +81,35 @@ func WithAfterFn(afterFn func()) Option {
 	})
 }
 
+// WithRetryInterval sets the retry interval
+func WithRetryInterval(d time.Duration) Option {
+	return OptionFunc(func(q *Options) {
+		q.retryInterval = d
+	})
+}
+
 // Options for custom args in Queue
 type Options struct {
-	workerCount int64
-	logger      Logger
-	queueSize   int
-	worker      core.Worker
-	fn          func(context.Context, core.TaskMessage) error
-	afterFn     func()
-	metric      Metric
+	workerCount   int64
+	logger        Logger
+	queueSize     int
+	worker        core.Worker
+	fn            func(context.Context, core.TaskMessage) error
+	afterFn       func()
+	metric        Metric
+	retryInterval time.Duration
 }
 
 // NewOptions initialize the default value for the options
 func NewOptions(opts ...Option) *Options {
 	o := &Options{
-		workerCount: defaultWorkerCount,
-		queueSize:   defaultCapacity,
-		logger:      defaultNewLogger,
-		worker:      nil,
-		fn:          defaultFn,
-		metric:      defaultMetric,
+		workerCount:   defaultWorkerCount,
+		queueSize:     defaultCapacity,
+		logger:        defaultNewLogger,
+		worker:        nil,
+		fn:            defaultFn,
+		metric:        defaultMetric,
+		retryInterval: time.Second,
 	}
 
 	// Loop through each option
