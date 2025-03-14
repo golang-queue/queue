@@ -508,3 +508,45 @@ func TestErrNoTaskInQueue(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, ErrNoTaskInQueue, err)
 }
+
+func BenchmarkRingQueue(b *testing.B) {
+	b.Run("queue and request operations", func(b *testing.B) {
+		w := NewRing(WithQueueSize(1000))
+		m := mockMessage{message: "test"}
+
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				_ = w.Queue(&m)
+				_, _ = w.Request()
+			}
+		})
+	})
+
+	b.Run("concurrent queue operations", func(b *testing.B) {
+		w := NewRing(WithQueueSize(1000))
+		m := mockMessage{message: "test"}
+
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				_ = w.Queue(&m)
+			}
+		})
+	})
+
+	b.Run("resize operations", func(b *testing.B) {
+		w := NewRing()
+		m := mockMessage{message: "test"}
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			for j := 0; j < 100; j++ {
+				_ = w.Queue(&m)
+			}
+			for j := 0; j < 100; j++ {
+				_, _ = w.Request()
+			}
+		}
+	})
+}
