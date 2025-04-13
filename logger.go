@@ -32,13 +32,14 @@ type defaultLogger struct {
 }
 
 func (l defaultLogger) logWithCallerf(logger *log.Logger, format string, args ...any) {
-	stack := stack(3)
-	logger.Printf("%s%s", stack, fmt.Sprintf(format, args...))
+	stackInfo := stack(3) // Assuming stack(3) returns caller info string
+	// Prepend stack info to the arguments and adjust the format string
+	logger.Printf("%s "+format, append([]any{stackInfo}, args...)...)
 }
 
 func (l defaultLogger) logWithCaller(logger *log.Logger, args ...any) {
 	stack := stack(3)
-	logger.Println(stack, fmt.Sprint(args...))
+	logger.Println(append([]any{stack}, args...)...)
 }
 
 func (l defaultLogger) Infof(format string, args ...any) {
