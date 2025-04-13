@@ -6,7 +6,7 @@
 
 [繁體中文](./README.zh-tw.md) | [简体中文](./README.zh-cn.md)
 
-Queue is a Golang library that helps you create and manage a pool of Goroutines (lightweight threads). It allows you to efficiently run multiple tasks in parallel, utilizing the CPU capacity of your machine.
+Queue is a Golang library designed to help you create and manage a pool of Goroutines (lightweight threads). It allows you to efficiently run multiple tasks in parallel, utilizing the full CPU capacity of your machine.
 
 ## Features
 
