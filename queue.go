@@ -193,7 +193,7 @@ func (q *Queue) run(task core.TaskMessage) error {
 func (q *Queue) handle(m *job.Message) error {
 	// create channel with buffer size 1 to avoid goroutine leak
 	done := make(chan error, 1)
-	panicChan := make(chan interface{}, 1)
+	panicChan := make(chan any, 1)
 	startTime := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), m.Timeout)
 	defer func() {

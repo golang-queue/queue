@@ -8,12 +8,12 @@ import (
 
 // Logger interface is used throughout gorush
 type Logger interface {
-	Infof(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
-	Fatalf(format string, args ...interface{})
-	Info(args ...interface{})
-	Error(args ...interface{})
-	Fatal(args ...interface{})
+	Infof(format string, args ...any)
+	Errorf(format string, args ...any)
+	Fatalf(format string, args ...any)
+	Info(args ...any)
+	Error(args ...any)
+	Fatal(args ...any)
 }
 
 // NewLogger for simple logger.
@@ -31,37 +31,37 @@ type defaultLogger struct {
 	fatalLogger *log.Logger
 }
 
-func (l defaultLogger) logWithCallerf(logger *log.Logger, format string, args ...interface{}) {
+func (l defaultLogger) logWithCallerf(logger *log.Logger, format string, args ...any) {
 	stack := stack(3)
 	logger.Printf("%s%s", stack, fmt.Sprintf(format, args...))
 }
 
-func (l defaultLogger) logWithCaller(logger *log.Logger, args ...interface{}) {
+func (l defaultLogger) logWithCaller(logger *log.Logger, args ...any) {
 	stack := stack(3)
 	logger.Println(stack, fmt.Sprint(args...))
 }
 
-func (l defaultLogger) Infof(format string, args ...interface{}) {
+func (l defaultLogger) Infof(format string, args ...any) {
 	l.infoLogger.Printf(format, args...)
 }
 
-func (l defaultLogger) Errorf(format string, args ...interface{}) {
+func (l defaultLogger) Errorf(format string, args ...any) {
 	l.errorLogger.Printf(format, args...)
 }
 
-func (l defaultLogger) Fatalf(format string, args ...interface{}) {
+func (l defaultLogger) Fatalf(format string, args ...any) {
 	l.logWithCallerf(l.fatalLogger, format, args...)
 }
 
-func (l defaultLogger) Info(args ...interface{}) {
+func (l defaultLogger) Info(args ...any) {
 	l.infoLogger.Println(fmt.Sprint(args...))
 }
 
-func (l defaultLogger) Error(args ...interface{}) {
+func (l defaultLogger) Error(args ...any) {
 	l.errorLogger.Println(fmt.Sprint(args...))
 }
 
-func (l defaultLogger) Fatal(args ...interface{}) {
+func (l defaultLogger) Fatal(args ...any) {
 	l.logWithCaller(l.fatalLogger, args...)
 }
 
@@ -73,9 +73,9 @@ func NewEmptyLogger() Logger {
 // EmptyLogger no meesgae logger
 type emptyLogger struct{}
 
-func (l emptyLogger) Infof(format string, args ...interface{})  {}
-func (l emptyLogger) Errorf(format string, args ...interface{}) {}
-func (l emptyLogger) Fatalf(format string, args ...interface{}) {}
-func (l emptyLogger) Info(args ...interface{})                  {}
-func (l emptyLogger) Error(args ...interface{})                 {}
-func (l emptyLogger) Fatal(args ...interface{})                 {}
+func (l emptyLogger) Infof(format string, args ...any)  {}
+func (l emptyLogger) Errorf(format string, args ...any) {}
+func (l emptyLogger) Fatalf(format string, args ...any) {}
+func (l emptyLogger) Info(args ...any)                  {}
+func (l emptyLogger) Error(args ...any)                 {}
+func (l emptyLogger) Fatal(args ...any)                 {}

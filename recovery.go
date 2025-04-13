@@ -23,7 +23,7 @@ const (
 // When a buffer is no longer needed, it should be put back into the pool to be
 // reused.
 var bufferPool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		return new(bytes.Buffer)
 	},
 }
