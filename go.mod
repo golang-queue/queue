@@ -1,13 +1,14 @@
 module github.com/golang-queue/queue
 
 go 1.22
+toolchain go1.24.1
 
 require (
 	github.com/appleboy/com v0.3.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/goleak v1.3.0
-	go.uber.org/mock v0.5.1
+	go.uber.org/mock v0.5.2
 )
 
 require (
