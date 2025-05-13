@@ -31,7 +31,7 @@ jobs:
           go-version-file: "go.mod"
           check-latest: true
       - name: Setup golangci-lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v8
         with:
           version: v2.0
           args: --verbose
@@ -44,11 +44,15 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        go: [1.22, 1.23, 1.24]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: [1.23, 1.24]
         include:
           - os: ubuntu-latest
             go-build: ~/.cache/go-build
+          - os: macos-latest
+            go-build: ~/Library/Caches/go-build
+          - os: windows-latest
+            go-build: C:\Users\runneradmin\AppData\Local\go-build
     name: ${{ matrix.os }} @ Go ${{ matrix.go }}
     runs-on: ${{ matrix.os }}
     env:
