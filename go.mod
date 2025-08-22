@@ -7,7 +7,7 @@ require (
 	github.com/jpillora/backoff v1.0.0
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/goleak v1.3.0
-	go.uber.org/mock v0.5.2
+	go.uber.org/mock v0.6.0
 )
 
 require (
