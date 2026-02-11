@@ -1,9 +1,9 @@
 module github.com/golang-queue/queue
 
-go 1.23.0
+go 1.24.0
 
 require (
-	github.com/appleboy/com v0.4.0
+	github.com/appleboy/com v1.1.1
 	github.com/jpillora/backoff v1.0.0
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/goleak v1.3.0
