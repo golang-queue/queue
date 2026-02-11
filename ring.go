@@ -10,19 +10,28 @@ import (
 
 var _ core.Worker = (*Ring)(nil)
 
-// Ring represents a simple queue using a buffer channel.
+// Ring is an in-memory worker implementation using a dynamic circular buffer.
+// It implements the core.Worker interface and provides automatic resizing:
+//   - Doubles capacity when full
+//   - Halves capacity when less than 25% utilized
+//
+// The ring buffer uses two pointers (head and tail) to track the queue boundaries:
+//   - head: points to the next task to dequeue
+//   - tail: points to the next empty slot for enqueuing
+//   - When head == tail, the queue is empty
+//   - Both pointers wrap around using modulo arithmetic
 type Ring struct {
 	sync.Mutex
-	taskQueue []core.TaskMessage                            // taskQueue holds the tasks in the ring buffer.
-	runFunc   func(context.Context, core.TaskMessage) error // runFunc is the function responsible for processing tasks.
-	capacity  int                                           // capacity is the maximum number of tasks the queue can hold.
-	count     int                                           // count is the current number of tasks in the queue.
-	head      int                                           // head is the index of the first task in the queue.
-	tail      int                                           // tail is the index where the next task will be added.
-	exit      chan struct{}                                 // exit is used to signal when the queue is shutting down.
-	logger    Logger                                        // logger is used for logging messages.
-	stopOnce  sync.Once                                     // stopOnce ensures the shutdown process only runs once.
-	stopFlag  int32                                         // stopFlag indicates whether the queue is shutting down.
+	taskQueue []core.TaskMessage                            // Circular buffer storing queued tasks
+	runFunc   func(context.Context, core.TaskMessage) error // Function to execute when processing tasks
+	capacity  int                                           // Maximum queue size (0 = unlimited, grows dynamically)
+	count     int                                           // Current number of tasks in the queue
+	head      int                                           // Index of the first task (dequeue position)
+	tail      int                                           // Index where the next task will be added (enqueue position)
+	exit      chan struct{}                                 // Signals completion of shutdown after all tasks drain
+	logger    Logger                                        // Logger for debugging and error messages
+	stopOnce  sync.Once                                     // Ensures shutdown logic executes only once
+	stopFlag  int32                                         // Atomic flag: 0 = running, 1 = shutting down
 }
 
 // Run executes a new task using the provided context and task message.
@@ -55,24 +64,27 @@ func (s *Ring) Shutdown() error {
 	return nil
 }
 
-// Queue adds a task to the ring buffer queue.
-// It returns an error if the queue is shut down or has reached its maximum capacity.
+// Queue adds a task to the ring buffer.
+// The buffer grows dynamically (doubles in size) when full, unless capacity is set.
+// Returns ErrQueueShutdown if the queue is closing, or ErrMaxCapacity if at the size limit.
+//
+// Thread-safety: This method is safe for concurrent calls.
 func (s *Ring) Queue(task core.TaskMessage) error { //nolint:stylecheck
-	// Check if the queue is shut down
+	// Reject new tasks if shutdown has been initiated
 	if atomic.LoadInt32(&s.stopFlag) == 1 {
 		return ErrQueueShutdown
 	}
-	// Check if the queue has reached its maximum capacity
+	// Enforce maximum capacity limit if configured
 	if s.capacity > 0 && s.count >= s.capacity {
 		return ErrMaxCapacity
 	}
 
 	s.Lock()
-	// Resize the queue if necessary
+	// Grow the buffer if it's full (before adding the new task)
 	if s.count == len(s.taskQueue) {
 		s.resize(s.count * 2)
 	}
-	// Add the task to the queue
+	// Add task at tail position and advance tail pointer (with wraparound)
 	s.taskQueue[s.tail] = task
 	s.tail = (s.tail + 1) % len(s.taskQueue)
 	s.count++
@@ -81,19 +93,22 @@ func (s *Ring) Queue(task core.TaskMessage) error { //nolint:stylecheck
 	return nil
 }
 
-// Request retrieves the next task message from the ring queue.
-// If the queue has been stopped and is empty, it signals the exit channel
-// and returns an error indicating the queue has been closed.
-// If the queue is empty but not stopped, it returns an error indicating
-// there are no tasks in the queue.
-// If a task is successfully retrieved, it is removed from the queue,
-// and the queue may be resized if it is less than half full.
-// Returns the task message and nil on success, or an error if the queue
-// is empty or has been closed.
+// Request dequeues and returns the next task from the ring buffer.
+// The buffer shrinks automatically (halves in size) when less than 25% full.
+// Returns:
+//   - (task, nil) if a task is successfully dequeued
+//   - (nil, ErrNoTaskInQueue) if the queue is currently empty
+//   - (nil, ErrQueueHasBeenClosed) if shutdown is complete and the queue is empty
+//
+// During shutdown, this method signals the exit channel when the last task is dequeued,
+// allowing Shutdown() to complete.
+//
+// Thread-safety: This method is safe for concurrent calls.
 func (s *Ring) Request() (core.TaskMessage, error) {
+	// If shutting down and queue is empty, signal exit and return closed error
 	if atomic.LoadInt32(&s.stopFlag) == 1 && s.count == 0 {
 		select {
-		case s.exit <- struct{}{}:
+		case s.exit <- struct{}{}: // Non-blocking send to signal shutdown completion
 		default:
 		}
 		return nil, ErrQueueHasBeenClosed
@@ -101,14 +116,20 @@ func (s *Ring) Request() (core.TaskMessage, error) {
 
 	s.Lock()
 	defer s.Unlock()
+
+	// Return early if queue is empty (but not shutting down yet)
 	if s.count == 0 {
 		return nil, ErrNoTaskInQueue
 	}
+
+	// Dequeue task from head position
 	data := s.taskQueue[s.head]
-	s.taskQueue[s.head] = nil
-	s.head = (s.head + 1) % len(s.taskQueue)
+	s.taskQueue[s.head] = nil // Clear reference to allow GC
+	s.head = (s.head + 1) % len(s.taskQueue) // Advance head with wraparound
 	s.count--
 
+	// Shrink buffer if less than 25% full (to save memory)
+	// Minimum buffer size is 2 to maintain circular buffer structure
 	if n := len(s.taskQueue) / 2; n >= 2 && s.count <= n {
 		s.resize(n)
 	}
@@ -116,26 +137,43 @@ func (s *Ring) Request() (core.TaskMessage, error) {
 	return data, nil
 }
 
-// resize adjusts the size of the ring buffer to the specified capacity n.
-// It reallocates the underlying slice to the new size and copies the existing
-// elements to the new slice in the correct order. The head and tail pointers
-// are updated accordingly to maintain the correct order of elements in the
-// resized buffer.
+// resize changes the ring buffer capacity to n and reorganizes the elements.
+// This internal method handles the complexity of copying elements from a circular
+// buffer where head and tail may have wrapped around.
+//
+// The ring buffer can be in two states:
+//
+//	Case 1: head < tail (no wraparound)
+//	    [_ _ _ H X X X T _ _]  -> Tasks are contiguous from head to tail
+//
+//	Case 2: head >= tail (wraparound occurred)
+//	    [X X T _ _ _ _ H X X]  -> Tasks wrap: [head..end] + [0..tail]
+//
+// After resizing, all elements are reorganized to start at index 0 with no wraparound.
 //
 // Parameters:
 //
-//	n - the new capacity of the ring buffer.
+//	n - the new buffer capacity (must be >= count)
+//
+// Note: This method is NOT thread-safe and must be called while holding the lock.
 func (q *Ring) resize(n int) {
 	nodes := make([]core.TaskMessage, n)
+
 	if q.head < q.tail {
+		// Case 1: No wraparound - tasks are contiguous
+		// Simply copy [head:tail] to the beginning of new buffer
 		copy(nodes, q.taskQueue[q.head:q.tail])
 	} else {
+		// Case 2: Wraparound - tasks are split across the buffer
+		// Copy [head:end] to start of new buffer
 		copy(nodes, q.taskQueue[q.head:])
+		// Append [0:tail] immediately after
 		copy(nodes[len(q.taskQueue)-q.head:], q.taskQueue[:q.tail])
 	}
 
-	q.tail = q.count % n
-	q.head = 0
+	// Reset pointers: all tasks now start at index 0
+	q.tail = q.count % n // Position for next enqueue
+	q.head = 0           // Position for next dequeue
 	q.taskQueue = nodes
 }
 
