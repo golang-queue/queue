@@ -124,7 +124,7 @@ func (s *Ring) Request() (core.TaskMessage, error) {
 
 	// Dequeue task from head position
 	data := s.taskQueue[s.head]
-	s.taskQueue[s.head] = nil // Clear reference to allow GC
+	s.taskQueue[s.head] = nil                // Clear reference to allow GC
 	s.head = (s.head + 1) % len(s.taskQueue) // Advance head with wraparound
 	s.count--
 
