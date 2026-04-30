@@ -564,9 +564,13 @@ func TestBusyWorkersNeverExceedsWorkerCount(t *testing.T) {
 
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.TaskMessage) error {
-			<-gate
-			wg.Done()
-			return nil
+			defer wg.Done()
+			select {
+			case <-gate:
+				return nil
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 		}),
 	)
 	q, err := NewQueue(
@@ -603,9 +607,14 @@ func TestBusyWorkersNeverExceedsWorkerCount(t *testing.T) {
 		}
 	}()
 
-	// Release tasks in batches to create scheduling pressure.
+	// Release tasks with a timeout to prevent hanging on regression.
+	timeout := time.After(10 * time.Second)
 	for i := 0; i < totalTasks; i++ {
-		gate <- struct{}{}
+		select {
+		case gate <- struct{}{}:
+		case <-timeout:
+			t.Fatal("timed out sending gate tokens — possible scheduling deadlock")
+		}
 	}
 	wg.Wait()
 	close(stop)
