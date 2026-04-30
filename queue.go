@@ -30,7 +30,7 @@ type (
 		metric        *metric       // Metrics collector for tracking queue and worker stats
 		logger        Logger        // Logger for queue events and errors
 		workerCount   int64         // Number of worker goroutines to process jobs
-		activeSlots   int64         // Reserved slots gating dispatch; incremented before worker.Request(), unlike BusyWorkers which counts only running tasks
+		activeSlots   int64         // Reserved worker slots; see tryReserveSlot/releaseSlot
 		routineGroup  *routineGroup // Group to manage and wait for goroutines
 		quit          chan struct{} // Channel to signal shutdown to all goroutines
 		ready         chan struct{} // Channel to signal worker readiness
