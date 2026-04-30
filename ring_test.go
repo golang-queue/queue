@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -557,10 +558,14 @@ func TestBusyWorkersNeverExceedsWorkerCount(t *testing.T) {
 	const totalTasks = 100
 
 	var maxObserved int64
+	var wg sync.WaitGroup
+	wg.Add(totalTasks)
+	gate := make(chan struct{})
 
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.TaskMessage) error {
-			runtime.Gosched()
+			<-gate
+			wg.Done()
 			return nil
 		}),
 	)
@@ -573,15 +578,37 @@ func TestBusyWorkersNeverExceedsWorkerCount(t *testing.T) {
 	q.Start()
 	for i := 0; i < totalTasks; i++ {
 		assert.NoError(t, q.Queue(mockMessage{message: "task"}))
-		busy := q.BusyWorkers()
+	}
+
+	// Continuously monitor BusyWorkers while tasks execute.
+	stop := make(chan struct{})
+	monitorDone := make(chan struct{})
+	go func() {
+		defer close(monitorDone)
 		for {
-			old := atomic.LoadInt64(&maxObserved)
-			if busy <= old || atomic.CompareAndSwapInt64(&maxObserved, old, busy) {
-				break
+			select {
+			case <-stop:
+				return
+			default:
+				busy := q.BusyWorkers()
+				for {
+					old := atomic.LoadInt64(&maxObserved)
+					if busy <= old || atomic.CompareAndSwapInt64(&maxObserved, old, busy) {
+						break
+					}
+				}
+				runtime.Gosched()
 			}
 		}
+	}()
+
+	// Release tasks in batches to create scheduling pressure.
+	for i := 0; i < totalTasks; i++ {
+		gate <- struct{}{}
 	}
-	time.Sleep(2 * time.Second)
+	wg.Wait()
+	close(stop)
+	<-monitorDone
 	q.Release()
 
 	assert.LessOrEqual(t, maxObserved, int64(workerCount))
