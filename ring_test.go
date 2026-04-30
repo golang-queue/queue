@@ -585,11 +585,13 @@ func TestBusyWorkersNeverExceedsWorkerCount(t *testing.T) {
 	monitorDone := make(chan struct{})
 	go func() {
 		defer close(monitorDone)
+		ticker := time.NewTicker(100 * time.Microsecond)
+		defer ticker.Stop()
 		for {
 			select {
 			case <-stop:
 				return
-			default:
+			case <-ticker.C:
 				busy := q.BusyWorkers()
 				for {
 					old := atomic.LoadInt64(&maxObserved)
@@ -597,7 +599,6 @@ func TestBusyWorkersNeverExceedsWorkerCount(t *testing.T) {
 						break
 					}
 				}
-				runtime.Gosched()
 			}
 		}
 	}()
