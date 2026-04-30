@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -549,4 +550,39 @@ func BenchmarkRingQueue(b *testing.B) {
 			}
 		}
 	})
+}
+
+func TestBusyWorkersNeverExceedsWorkerCount(t *testing.T) {
+	const workerCount = 4
+	const totalTasks = 100
+
+	var maxObserved int64
+
+	w := NewRing(
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
+			runtime.Gosched()
+			return nil
+		}),
+	)
+	q, err := NewQueue(
+		WithWorker(w),
+		WithWorkerCount(workerCount),
+	)
+	assert.NoError(t, err)
+
+	q.Start()
+	for i := 0; i < totalTasks; i++ {
+		assert.NoError(t, q.Queue(mockMessage{message: "task"}))
+		busy := q.BusyWorkers()
+		for {
+			old := atomic.LoadInt64(&maxObserved)
+			if busy <= old || atomic.CompareAndSwapInt64(&maxObserved, old, busy) {
+				break
+			}
+		}
+	}
+	time.Sleep(2 * time.Second)
+	q.Release()
+
+	assert.LessOrEqual(t, maxObserved, int64(workerCount))
 }

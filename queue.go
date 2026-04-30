@@ -30,6 +30,7 @@ type (
 		metric        *metric       // Metrics collector for tracking queue and worker stats
 		logger        Logger        // Logger for queue events and errors
 		workerCount   int64         // Number of worker goroutines to process jobs
+		activeSlots   int64         // Number of reserved worker slots (scheduling guard)
 		routineGroup  *routineGroup // Group to manage and wait for goroutines
 		quit          chan struct{} // Channel to signal shutdown to all goroutines
 		ready         chan struct{} // Channel to signal worker readiness
@@ -185,6 +186,9 @@ func (q *Queue) work(task core.TaskMessage) {
 	// Defer block to handle panics, update metrics, and run afterFn callback.
 	defer func() {
 		q.metric.DecBusyWorker()
+		q.Lock()
+		q.activeSlots--
+		q.Unlock()
 		e := recover()
 		if e != nil {
 			q.logger.Fatalf("panic error: %v", e)
@@ -313,12 +317,12 @@ func (q *Queue) UpdateWorkerCount(num int64) {
 	q.schedule()
 }
 
-// schedule checks if more workers can be started based on the current busy count.
+// schedule checks if more workers can be started based on reserved slots.
 // If so, it signals readiness to start a new worker.
 func (q *Queue) schedule() {
 	q.Lock()
 	defer q.Unlock()
-	if q.BusyWorkers() >= q.workerCount {
+	if q.activeSlots >= q.workerCount {
 		return
 	}
 
@@ -350,6 +354,15 @@ func (q *Queue) start() {
 		case <-q.quit: // Shutdown signal received
 			return
 		}
+
+		// Reserve a slot under the mutex to close the TOCTOU gap.
+		q.Lock()
+		if q.activeSlots >= q.workerCount {
+			q.Unlock()
+			continue
+		}
+		q.activeSlots++
+		q.Unlock()
 
 		// Request a task from the worker in a background goroutine.
 		q.routineGroup.Run(func() {
@@ -386,6 +399,9 @@ func (q *Queue) start() {
 
 		task, ok := <-tasks
 		if !ok {
+			q.Lock()
+			q.activeSlots--
+			q.Unlock()
 			return
 		}
 
