@@ -30,7 +30,7 @@ type (
 		metric        *metric       // Metrics collector for tracking queue and worker stats
 		logger        Logger        // Logger for queue events and errors
 		workerCount   int64         // Number of worker goroutines to process jobs
-		activeSlots   int64         // Number of reserved worker slots (scheduling guard)
+		activeSlots   int64         // Reserved slots gating dispatch; incremented before worker.Request(), unlike BusyWorkers which counts only running tasks
 		routineGroup  *routineGroup // Group to manage and wait for goroutines
 		quit          chan struct{} // Channel to signal shutdown to all goroutines
 		ready         chan struct{} // Channel to signal worker readiness
@@ -186,14 +186,11 @@ func (q *Queue) work(task core.TaskMessage) {
 	// Defer block to handle panics, update metrics, and run afterFn callback.
 	defer func() {
 		q.metric.DecBusyWorker()
-		q.Lock()
-		q.activeSlots--
-		q.Unlock()
+		q.releaseSlot()
 		e := recover()
 		if e != nil {
 			q.logger.Fatalf("panic error: %v", e)
 		}
-		q.schedule()
 
 		// Update success or failure metrics based on execution result.
 		if err == nil && e == nil {
@@ -322,14 +319,40 @@ func (q *Queue) UpdateWorkerCount(num int64) {
 func (q *Queue) schedule() {
 	q.Lock()
 	defer q.Unlock()
+	q.signalReadyLocked()
+}
+
+// signalReadyLocked sends a non-blocking ready signal if a slot is available.
+// Caller must hold q.Lock().
+func (q *Queue) signalReadyLocked() {
 	if q.activeSlots >= q.workerCount {
 		return
 	}
-
 	select {
 	case q.ready <- struct{}{}:
 	default:
 	}
+}
+
+// tryReserveSlot reserves a worker slot if one is available under the mutex,
+// closing the TOCTOU gap between schedule() and dispatch.
+func (q *Queue) tryReserveSlot() bool {
+	q.Lock()
+	defer q.Unlock()
+	if q.activeSlots >= q.workerCount {
+		return false
+	}
+	q.activeSlots++
+	return true
+}
+
+// releaseSlot frees a reserved slot and signals readiness in one critical
+// section, saving a lock round-trip versus separate decrement + schedule().
+func (q *Queue) releaseSlot() {
+	q.Lock()
+	defer q.Unlock()
+	q.activeSlots--
+	q.signalReadyLocked()
 }
 
 /*
@@ -355,14 +378,9 @@ func (q *Queue) start() {
 			return
 		}
 
-		// Reserve a slot under the mutex to close the TOCTOU gap.
-		q.Lock()
-		if q.activeSlots >= q.workerCount {
-			q.Unlock()
+		if !q.tryReserveSlot() {
 			continue
 		}
-		q.activeSlots++
-		q.Unlock()
 
 		// Request a task from the worker in a background goroutine.
 		q.routineGroup.Run(func() {
@@ -399,9 +417,7 @@ func (q *Queue) start() {
 
 		task, ok := <-tasks
 		if !ok {
-			q.Lock()
-			q.activeSlots--
-			q.Unlock()
+			q.releaseSlot()
 			return
 		}
 
