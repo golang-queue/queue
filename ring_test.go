@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -549,4 +551,75 @@ func BenchmarkRingQueue(b *testing.B) {
 			}
 		}
 	})
+}
+
+func TestBusyWorkersNeverExceedsWorkerCount(t *testing.T) {
+	const workerCount = 4
+	const totalTasks = 100
+
+	var maxObserved int64
+	var wg sync.WaitGroup
+	wg.Add(totalTasks)
+	gate := make(chan struct{})
+
+	w := NewRing(
+		WithFn(func(ctx context.Context, m core.TaskMessage) error {
+			defer wg.Done()
+			select {
+			case <-gate:
+				return nil
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}),
+	)
+	q, err := NewQueue(
+		WithWorker(w),
+		WithWorkerCount(workerCount),
+	)
+	assert.NoError(t, err)
+
+	q.Start()
+	for i := 0; i < totalTasks; i++ {
+		assert.NoError(t, q.Queue(mockMessage{message: "task"}))
+	}
+
+	// Continuously monitor BusyWorkers while tasks execute.
+	stop := make(chan struct{})
+	monitorDone := make(chan struct{})
+	go func() {
+		defer close(monitorDone)
+		ticker := time.NewTicker(100 * time.Microsecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-stop:
+				return
+			case <-ticker.C:
+				busy := q.BusyWorkers()
+				for {
+					old := atomic.LoadInt64(&maxObserved)
+					if busy <= old || atomic.CompareAndSwapInt64(&maxObserved, old, busy) {
+						break
+					}
+				}
+			}
+		}
+	}()
+
+	// Release tasks with a timeout to prevent hanging on regression.
+	timeout := time.After(10 * time.Second)
+	for i := 0; i < totalTasks; i++ {
+		select {
+		case gate <- struct{}{}:
+		case <-timeout:
+			t.Fatal("timed out sending gate tokens — possible scheduling deadlock")
+		}
+	}
+	wg.Wait()
+	close(stop)
+	<-monitorDone
+	q.Release()
+
+	assert.LessOrEqual(t, maxObserved, int64(workerCount))
 }
