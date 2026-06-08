@@ -77,6 +77,6 @@ jobs:
           go test -v -run=^$ -count 5 -benchmem -bench . ./...
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           flags: ${{ matrix.os }},go-${{ matrix.go }}
