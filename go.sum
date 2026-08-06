@@ -1,5 +1,5 @@
-github.com/appleboy/com v1.2.0 h1:3jyA+yVofe/uzPHHa7Xrsj7rnDy1sZn/8pYHdzHB3GQ=
-github.com/appleboy/com v1.2.0/go.mod h1:XK2kV+JWz/gkzsDPotNJL+aS6XCy5GNlbiTWGvIhqIU=
+github.com/appleboy/com v1.2.1 h1:4bqaVFSxy1Q3mRotTIcF8TLryTet0652iNDNVV16skM=
+github.com/appleboy/com v1.2.1/go.mod h1:KKYavyU5ejOp8c4vW+daKMf6Dw2DxE9IjqmWAhy0huo=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
