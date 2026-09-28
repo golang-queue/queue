@@ -17,6 +17,11 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+const (
+	testMessageFoo  = "foo"
+	testMessageTest = "test"
+)
+
 func TestMaxCapacity(t *testing.T) {
 	w := NewRing(WithQueueSize(2))
 
@@ -30,7 +35,7 @@ func TestMaxCapacity(t *testing.T) {
 
 func TestCustomFuncAndWait(t *testing.T) {
 	m := mockMessage{
-		message: "foo",
+		message: testMessageFoo,
 	}
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.TaskMessage) error {
@@ -59,7 +64,7 @@ func TestCustomFuncAndWait(t *testing.T) {
 
 func TestEnqueueJobAfterShutdown(t *testing.T) {
 	m := mockMessage{
-		message: "foo",
+		message: testMessageFoo,
 	}
 	w := NewRing()
 	q, err := NewQueue(
@@ -79,7 +84,7 @@ func TestEnqueueJobAfterShutdown(t *testing.T) {
 
 func TestJobReachTimeout(t *testing.T) {
 	m := mockMessage{
-		message: "foo",
+		message: testMessageFoo,
 	}
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.TaskMessage) error {
@@ -112,7 +117,7 @@ func TestJobReachTimeout(t *testing.T) {
 
 func TestCancelJobAfterShutdown(t *testing.T) {
 	m := mockMessage{
-		message: "foo",
+		message: testMessageFoo,
 	}
 	w := NewRing(
 		WithLogger(NewEmptyLogger()),
@@ -189,7 +194,7 @@ func TestGoroutineLeak(t *testing.T) {
 
 func TestGoroutinePanic(t *testing.T) {
 	m := mockMessage{
-		message: "foo",
+		message: testMessageFoo,
 	}
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.TaskMessage) error {
@@ -512,7 +517,7 @@ func TestErrNoTaskInQueue(t *testing.T) {
 func BenchmarkRingQueue(b *testing.B) {
 	b.Run("queue and request operations", func(b *testing.B) {
 		w := NewRing(WithQueueSize(1000))
-		m := mockMessage{message: "test"}
+		m := mockMessage{message: testMessageTest}
 
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
@@ -525,7 +530,7 @@ func BenchmarkRingQueue(b *testing.B) {
 
 	b.Run("concurrent queue operations", func(b *testing.B) {
 		w := NewRing(WithQueueSize(1000))
-		m := mockMessage{message: "test"}
+		m := mockMessage{message: testMessageTest}
 
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
@@ -537,7 +542,7 @@ func BenchmarkRingQueue(b *testing.B) {
 
 	b.Run("resize operations", func(b *testing.B) {
 		w := NewRing()
-		m := mockMessage{message: "test"}
+		m := mockMessage{message: testMessageTest}
 
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {

@@ -76,7 +76,7 @@ func BenchmarkQueue(b *testing.B) {
 	b.ResetTimer()
 
 	m := job.NewMessage(&mockMessage{
-		message: "foo",
+		message: testMessageFoo,
 	})
 
 	for n := 0; n < b.N; n++ {
