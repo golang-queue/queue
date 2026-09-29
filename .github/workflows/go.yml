@@ -44,7 +44,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        go: ["1.26.x", "1.27.x"]
+        go: ["1.26", "1.27"]
         include:
           - os: ubuntu-latest
             go-build: ~/.cache/go-build
