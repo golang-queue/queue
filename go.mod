@@ -1,6 +1,6 @@
 module github.com/golang-queue/queue
 
-go 1.25
+go 1.26.8
 
 require (
 	github.com/appleboy/com v1.2.0

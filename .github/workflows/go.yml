@@ -17,6 +17,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  GOTOOLCHAIN: local
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -33,14 +36,15 @@ jobs:
       - name: Setup golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.7
+          version: v2.14.0
           args: --verbose
 
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        go: [1.25, 1.26]
+        go: ["1.26", "1.27"]
         include:
           - os: ubuntu-latest
             go-build: ~/.cache/go-build
@@ -50,24 +54,25 @@ jobs:
       GO111MODULE: on
       GOPROXY: https://proxy.golang.org
     steps:
-      - name: Set up Go ${{ matrix.go }}
-        uses: actions/setup-go@v7
-        with:
-          go-version: ${{ matrix.go }}
-
       - name: Checkout Code
         uses: actions/checkout@v7
         with:
           ref: ${{ github.ref }}
+
+      - name: Set up Go ${{ matrix.go }}
+        uses: actions/setup-go@v7
+        with:
+          go-version: ${{ matrix.go }}
+          check-latest: true
 
       - uses: actions/cache@v6
         with:
           path: |
             ${{ matrix.go-build }}
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ matrix.go }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go-
+            ${{ runner.os }}-go-${{ matrix.go }}-
       - name: Run Tests
         run: |
           go test -race -v -covermode=atomic -coverprofile=coverage.out
@@ -76,7 +81,26 @@ jobs:
         run: |
           go test -v -run=^$ -count 5 -benchmem -bench . ./...
 
+      - name: Build example modules
+        run: |
+          find _example -name go.mod -print0 | while IFS= read -r -d '' mod; do
+            (cd "$(dirname "$mod")" && go build -mod=readonly ./...)
+          done
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:
           flags: ${{ matrix.os }},go-${{ matrix.go }}
+
+  vulnerability-scanning:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH,MEDIUM'
