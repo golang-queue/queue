@@ -26,7 +26,7 @@ func TestMessageEncodeDecode(t *testing.T) {
 			Timeout:     Time(3 * time.Millisecond),
 			RetryMin:    Time(200 * time.Millisecond),
 			RetryMax:    Time(20 * time.Second),
-			RetryFactor: Float64(4.0),
+			RetryFactor: new(4.0),
 		},
 	)
 
@@ -38,5 +38,5 @@ func TestMessageEncodeDecode(t *testing.T) {
 	assert.Equal(t, "foo", string(out.Payload()))
 	assert.Equal(t, 200*time.Millisecond, out.RetryMin)
 	assert.Equal(t, 20*time.Second, out.RetryMax)
-	assert.Equal(t, 4.0, out.RetryFactor)
+	assert.InEpsilon(t, 4.0, out.RetryFactor, 1e-9)
 }

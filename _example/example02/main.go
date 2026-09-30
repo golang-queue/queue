@@ -7,9 +7,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/golang-queue/contrib/zerolog"
 	"github.com/golang-queue/queue"
 	"github.com/golang-queue/queue/core"
+
+	"github.com/golang-queue/contrib/zerolog"
 )
 
 type job struct {
