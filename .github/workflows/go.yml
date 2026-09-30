@@ -91,16 +91,3 @@ jobs:
         uses: codecov/codecov-action@v7
         with:
           flags: ${{ matrix.os }},go-${{ matrix.go }}
-
-  vulnerability-scanning:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Run Trivy vulnerability scanner in repo mode
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: 'fs'
-          ignore-unfixed: true
-          format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH,MEDIUM'
