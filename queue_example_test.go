@@ -19,7 +19,7 @@ func ExampleNewPool_queueTask() {
 	defer p.Release()
 
 	// assign tasks to asynchronous goroutine pool
-	for i := 0; i < taskN; i++ {
+	for i := range taskN {
 		idx := i
 		if err := p.QueueTask(func(context.Context) error {
 			// sleep and return the index
@@ -32,7 +32,7 @@ func ExampleNewPool_queueTask() {
 	}
 
 	// wait until all tasks done
-	for i := 0; i < taskN; i++ {
+	for range taskN {
 		fmt.Println("index:", <-rets)
 	}
 
@@ -56,7 +56,7 @@ func ExampleNewPool_queueTaskTimeout() {
 	defer q.Release()
 
 	// assign tasks to asynchronous goroutine pool
-	for i := 0; i < taskN; i++ {
+	for i := range taskN {
 		idx := i
 		if err := q.QueueTask(func(ctx context.Context) error {
 			// panic job

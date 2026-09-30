@@ -36,7 +36,7 @@ type (
 		notify        chan struct{} // Channel to notify workers of new jobs
 		worker        core.Worker   // The worker implementation that processes jobs
 		stopOnce      sync.Once     // Ensures shutdown is only performed once
-		stopFlag      int32         // Atomic flag indicating if shutdown has started
+		stopFlag      atomic.Int32  // Atomic flag indicating if shutdown has started
 		afterFn       func()        // Optional callback after each job execution
 		retryInterval time.Duration // Interval for retrying job requests
 	}
@@ -89,7 +89,7 @@ func (q *Queue) Start() {
 // It signals all goroutines to stop, shuts down the worker, and closes the quit channel.
 // Shutdown is idempotent and safe to call multiple times.
 func (q *Queue) Shutdown() {
-	if !atomic.CompareAndSwapInt32(&q.stopFlag, 0, 1) {
+	if !q.stopFlag.CompareAndSwap(0, 1) {
 		return
 	}
 
@@ -159,7 +159,7 @@ func (q *Queue) QueueTask(task job.TaskFunc, opts ...job.AllowOption) error {
 // queue is an internal helper to enqueue a job.Message into the worker.
 // It increments the submitted task metric and notifies workers if possible.
 func (q *Queue) queue(m *job.Message) error {
-	if atomic.LoadInt32(&q.stopFlag) == 1 {
+	if q.stopFlag.Load() == 1 {
 		return ErrQueueShutdown
 	}
 

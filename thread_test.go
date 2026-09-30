@@ -27,7 +27,7 @@ func TestRoutineGroupRun(t *testing.T) {
 		var counter int32
 		numRoutines := 10
 
-		for i := 0; i < numRoutines; i++ {
+		for range numRoutines {
 			g.Run(func() {
 				atomic.AddInt32(&counter, 1)
 				time.Sleep(10 * time.Millisecond)

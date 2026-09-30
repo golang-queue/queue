@@ -30,12 +30,9 @@ func newRoutineGroup() *routineGroup {
 //	})
 //	rg.Wait() // Wait for all goroutines to complete
 func (g *routineGroup) Run(fn func()) {
-	g.waitGroup.Add(1)
-
-	go func() {
-		defer g.waitGroup.Done()
+	g.waitGroup.Go(func() {
 		fn()
-	}()
+	})
 }
 
 // Wait blocks until all goroutines launched via Run() have completed.

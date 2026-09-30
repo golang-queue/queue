@@ -109,6 +109,8 @@ func NewOptions(opts ...AllowOption) Options {
 // Example:
 //
 //	opts := AllowOption{RetryCount: job.Int64(3)}
+//
+//nolint:modernize // pointer-returning helper kept intentionally; new(expr) would trigger the inline analyzer at every call site
 func Int64(val int64) *int64 {
 	return &val
 }
@@ -119,6 +121,8 @@ func Int64(val int64) *int64 {
 // Example:
 //
 //	opts := AllowOption{RetryFactor: job.Float64(1.5)}
+//
+//nolint:modernize // pointer-returning helper kept intentionally; new(expr) would trigger the inline analyzer at every call site
 func Float64(val float64) *float64 {
 	return &val
 }
@@ -132,6 +136,8 @@ func Float64(val float64) *float64 {
 //	    Timeout:    job.Time(5 * time.Minute),
 //	    RetryDelay: job.Time(2 * time.Second),
 //	}
+//
+//nolint:modernize // pointer-returning helper kept intentionally; new(expr) would trigger the inline analyzer at every call site
 func Time(v time.Duration) *time.Duration {
 	return &v
 }
@@ -142,6 +148,8 @@ func Time(v time.Duration) *time.Duration {
 // Example:
 //
 //	opts := AllowOption{Jitter: job.Bool(true)}
+//
+//nolint:modernize // pointer-returning helper kept intentionally; new(expr) would trigger the inline analyzer at every call site
 func Bool(val bool) *bool {
 	return &val
 }

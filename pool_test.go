@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewPoolWithQueueTask(t *testing.T) {
@@ -13,14 +14,14 @@ func TestNewPoolWithQueueTask(t *testing.T) {
 	rets := make(chan struct{}, taskN)
 
 	p := NewPool(totalN)
-	for i := 0; i < taskN; i++ {
-		assert.NoError(t, p.QueueTask(func(context.Context) error {
+	for range taskN {
+		require.NoError(t, p.QueueTask(func(context.Context) error {
 			rets <- struct{}{}
 			return nil
 		}))
 	}
 
-	for i := 0; i < taskN; i++ {
+	for range taskN {
 		<-rets
 	}
 

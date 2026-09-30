@@ -30,7 +30,7 @@ func testQueue(b *testing.B, pool testqueue) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		for i := 0; i < count; i++ {
+		for range count {
 			_ = pool.Queue(&message)
 			_, _ = pool.Request()
 		}

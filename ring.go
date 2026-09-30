@@ -31,7 +31,7 @@ type Ring struct {
 	exit      chan struct{}                                 // Signals completion of shutdown after all tasks drain
 	logger    Logger                                        // Logger for debugging and error messages
 	stopOnce  sync.Once                                     // Ensures shutdown logic executes only once
-	stopFlag  int32                                         // Atomic flag: 0 = running, 1 = shutting down
+	stopFlag  atomic.Int32                                  // Atomic flag: 0 = running, 1 = shutting down
 }
 
 // Run executes a new task using the provided context and task message.
@@ -47,7 +47,7 @@ func (s *Ring) Run(ctx context.Context, task core.TaskMessage) error {
 // It waits for all tasks to be processed before completing the shutdown.
 func (s *Ring) Shutdown() error {
 	// Attempt to set the stopFlag from 0 to 1. If it fails, the queue is already shut down.
-	if !atomic.CompareAndSwapInt32(&s.stopFlag, 0, 1) {
+	if !s.stopFlag.CompareAndSwap(0, 1) {
 		return ErrQueueShutdown
 	}
 
@@ -69,9 +69,9 @@ func (s *Ring) Shutdown() error {
 // Returns ErrQueueShutdown if the queue is closing, or ErrMaxCapacity if at the size limit.
 //
 // Thread-safety: This method is safe for concurrent calls.
-func (s *Ring) Queue(task core.TaskMessage) error { //nolint:stylecheck
+func (s *Ring) Queue(task core.TaskMessage) error {
 	// Reject new tasks if shutdown has been initiated
-	if atomic.LoadInt32(&s.stopFlag) == 1 {
+	if s.stopFlag.Load() == 1 {
 		return ErrQueueShutdown
 	}
 	// Enforce maximum capacity limit if configured
@@ -106,7 +106,7 @@ func (s *Ring) Queue(task core.TaskMessage) error { //nolint:stylecheck
 // Thread-safety: This method is safe for concurrent calls.
 func (s *Ring) Request() (core.TaskMessage, error) {
 	// If shutting down and queue is empty, signal exit and return closed error
-	if atomic.LoadInt32(&s.stopFlag) == 1 && s.count == 0 {
+	if s.stopFlag.Load() == 1 && s.count == 0 {
 		select {
 		case s.exit <- struct{}{}: // Non-blocking send to signal shutdown completion
 		default:
@@ -156,25 +156,25 @@ func (s *Ring) Request() (core.TaskMessage, error) {
 //	n - the new buffer capacity (must be >= count)
 //
 // Note: This method is NOT thread-safe and must be called while holding the lock.
-func (q *Ring) resize(n int) {
+func (s *Ring) resize(n int) {
 	nodes := make([]core.TaskMessage, n)
 
-	if q.head < q.tail {
+	if s.head < s.tail {
 		// Case 1: No wraparound - tasks are contiguous
 		// Simply copy [head:tail] to the beginning of new buffer
-		copy(nodes, q.taskQueue[q.head:q.tail])
+		copy(nodes, s.taskQueue[s.head:s.tail])
 	} else {
 		// Case 2: Wraparound - tasks are split across the buffer
 		// Copy [head:end] to start of new buffer
-		copy(nodes, q.taskQueue[q.head:])
+		copy(nodes, s.taskQueue[s.head:])
 		// Append [0:tail] immediately after
-		copy(nodes[len(q.taskQueue)-q.head:], q.taskQueue[:q.tail])
+		copy(nodes[len(s.taskQueue)-s.head:], s.taskQueue[:s.tail])
 	}
 
 	// Reset pointers: all tasks now start at index 0
-	q.tail = q.count % n // Position for next enqueue
-	q.head = 0           // Position for next dequeue
-	q.taskQueue = nodes
+	s.tail = s.count % n // Position for next enqueue
+	s.head = 0           // Position for next dequeue
+	s.taskQueue = nodes
 }
 
 // NewRing creates a new Ring instance with the provided options.
