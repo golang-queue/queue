@@ -1,6 +1,6 @@
 module example
 
-go 1.26.8
+go 1.26.10
 
 require (
 	github.com/golang-queue/contrib v1.1.0
