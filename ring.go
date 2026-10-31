@@ -70,6 +70,9 @@ func (s *Ring) Shutdown() error {
 //
 // Thread-safety: This method is safe for concurrent calls.
 func (s *Ring) Queue(task core.TaskMessage) error {
+	s.Lock()
+	defer s.Unlock()
+
 	// Reject new tasks if shutdown has been initiated
 	if s.stopFlag.Load() == 1 {
 		return ErrQueueShutdown
@@ -79,7 +82,6 @@ func (s *Ring) Queue(task core.TaskMessage) error {
 		return ErrMaxCapacity
 	}
 
-	s.Lock()
 	// Grow the buffer if it's full (before adding the new task)
 	if s.count == len(s.taskQueue) {
 		s.resize(s.count * 2)
@@ -88,7 +90,6 @@ func (s *Ring) Queue(task core.TaskMessage) error {
 	s.taskQueue[s.tail] = task
 	s.tail = (s.tail + 1) % len(s.taskQueue)
 	s.count++
-	s.Unlock()
 
 	return nil
 }
@@ -105,6 +106,9 @@ func (s *Ring) Queue(task core.TaskMessage) error {
 //
 // Thread-safety: This method is safe for concurrent calls.
 func (s *Ring) Request() (core.TaskMessage, error) {
+	s.Lock()
+	defer s.Unlock()
+
 	// If shutting down and queue is empty, signal exit and return closed error
 	if s.stopFlag.Load() == 1 && s.count == 0 {
 		select {
@@ -113,9 +117,6 @@ func (s *Ring) Request() (core.TaskMessage, error) {
 		}
 		return nil, ErrQueueHasBeenClosed
 	}
-
-	s.Lock()
-	defer s.Unlock()
 
 	// Return early if queue is empty (but not shutting down yet)
 	if s.count == 0 {

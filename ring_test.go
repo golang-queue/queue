@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -32,6 +33,93 @@ func TestMaxCapacity(t *testing.T) {
 
 	err := w.Queue(&mockMessage{})
 	assert.Equal(t, ErrMaxCapacity, err)
+}
+
+func TestConcurrentMaxCapacity(t *testing.T) {
+	for _, capacity := range []int{1, 2, 8} {
+		t.Run(fmt.Sprintf("capacity_%d", capacity), func(t *testing.T) {
+			const producers = 64
+			w := NewRing(WithQueueSize(capacity))
+			start := make(chan struct{})
+			results := make(chan error, producers)
+			var workers sync.WaitGroup
+
+			for range producers {
+				workers.Go(func() {
+					<-start
+					results <- w.Queue(&mockMessage{})
+				})
+			}
+			close(start)
+			workers.Wait()
+			close(results)
+
+			accepted := 0
+			for err := range results {
+				if err == nil {
+					accepted++
+				} else {
+					require.ErrorIs(t, err, ErrMaxCapacity)
+				}
+			}
+			require.Equal(t, capacity, accepted)
+			require.Equal(t, capacity, w.count)
+
+			for range capacity {
+				_, err := w.Request()
+				require.NoError(t, err)
+			}
+			_, err := w.Request()
+			require.ErrorIs(t, err, ErrNoTaskInQueue)
+			require.NoError(t, w.Queue(&mockMessage{}))
+		})
+	}
+}
+
+func TestConcurrentRequestsDuringShutdown(t *testing.T) {
+	const (
+		tasks     = 256
+		consumers = 8
+	)
+	w := NewRing()
+	for range tasks {
+		require.NoError(t, w.Queue(&mockMessage{}))
+	}
+	// Set the shutdown state directly to isolate concurrent draining.
+	w.stopFlag.Store(1)
+	start := make(chan struct{})
+	results := make(chan error, tasks+consumers)
+	var workers sync.WaitGroup
+
+	for range consumers {
+		workers.Go(func() {
+			<-start
+			for {
+				_, err := w.Request()
+				results <- err
+				if err != nil {
+					return
+				}
+			}
+		})
+	}
+	close(start)
+	workers.Wait()
+	close(results)
+
+	drained := 0
+	for err := range results {
+		if err == nil {
+			drained++
+		} else {
+			require.ErrorIs(t, err, ErrQueueHasBeenClosed)
+		}
+	}
+	require.Equal(t, tasks, drained)
+	task, err := w.Request()
+	require.Nil(t, task)
+	require.ErrorIs(t, err, ErrQueueHasBeenClosed)
+	require.ErrorIs(t, w.Queue(&mockMessage{}), ErrQueueShutdown)
 }
 
 func TestCustomFuncAndWait(t *testing.T) {
