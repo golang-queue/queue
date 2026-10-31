@@ -1,0 +1,67 @@
+# baseline
+# baseline commit: 9721be66093a0e2889129e4751154d8388698b98
+# 2026-10-31T10:45:24.614465+08:00
+# go test -run ^$ -bench ^(BenchmarkRingBoundary|BenchmarkQueueEndToEnd|BenchmarkQueueAfterFnEndToEnd)$ -benchmem -benchtime=500ms -count=2 -cpu=12 .
+# performance_test.go SHA256: a57ed948549c3348af240f0c69a8bd652cf8b752d72a93208cf892b4a5ffc231
+# queue.go SHA256: fd7b78f7269d316ffa25bfe4ebd0a81664431d6d08534df8e29fc357e6545fdf
+# ring.go SHA256: 9d2cf12d3f5a02c7cebcc75c2d032122243384063d3b1f837fbe0d0eb4b9600f
+
+# Round 1
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkRingBoundary/backlog=64-12 	 1707652	       339.7 ns/op	    3456 B/op	       2 allocs/op
+BenchmarkRingBoundary/backlog=64-12 	 1729177	       362.8 ns/op	    3456 B/op	       2 allocs/op
+BenchmarkRingBoundary/backlog=1024-12         	  161654	      3559 ns/op	   51200 B/op	       2 allocs/op
+BenchmarkRingBoundary/backlog=1024-12         	  165234	      3538 ns/op	   51200 B/op	       2 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12           	  232165	      2550 ns/op	    1000 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12           	  231847	      2535 ns/op	    1000 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12           	  403672	      1558 ns/op	    1001 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12           	  395530	      1544 ns/op	    1001 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12          	  280562	      2086 ns/op	    1002 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12          	  281010	      2116 ns/op	    1002 B/op	      17 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12              	  393162	      1552 ns/op	    1001 B/op	      17 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12              	  407179	      1688 ns/op	    1001 B/op	      17 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	8.581s
+
+# Round 2
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkRingBoundary/backlog=64-12 	 1528264	       405.3 ns/op	    3456 B/op	       2 allocs/op
+BenchmarkRingBoundary/backlog=64-12 	 1663270	       336.9 ns/op	    3456 B/op	       2 allocs/op
+BenchmarkRingBoundary/backlog=1024-12         	  177080	      3332 ns/op	   51200 B/op	       2 allocs/op
+BenchmarkRingBoundary/backlog=1024-12         	  179100	      3431 ns/op	   51200 B/op	       2 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12           	  230928	      2526 ns/op	     999 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12           	  235040	      2540 ns/op	    1000 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12           	  398450	      1653 ns/op	    1001 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12           	  371175	      1639 ns/op	    1001 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12          	  268393	      2006 ns/op	    1001 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12          	  302671	      2044 ns/op	    1001 B/op	      17 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12              	  360284	      1536 ns/op	    1001 B/op	      17 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12              	  379545	      1645 ns/op	    1001 B/op	      17 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	8.341s
+
+# Round 3
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkRingBoundary/backlog=64-12 	 1761234	       364.3 ns/op	    3456 B/op	       2 allocs/op
+BenchmarkRingBoundary/backlog=64-12 	 1764464	       334.4 ns/op	    3456 B/op	       2 allocs/op
+BenchmarkRingBoundary/backlog=1024-12         	  181333	      3465 ns/op	   51200 B/op	       2 allocs/op
+BenchmarkRingBoundary/backlog=1024-12         	  172911	      3442 ns/op	   51200 B/op	       2 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12           	  236456	      2511 ns/op	    1000 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12           	  234081	      2557 ns/op	    1000 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12           	  389548	      1658 ns/op	    1001 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12           	  376849	      1582 ns/op	    1001 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12          	  276811	      2118 ns/op	    1002 B/op	      17 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12          	  299121	      1894 ns/op	    1001 B/op	      17 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12              	  372774	      1677 ns/op	    1002 B/op	      17 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12              	  386558	      1663 ns/op	    1002 B/op	      17 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	8.411s
