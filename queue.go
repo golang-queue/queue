@@ -35,6 +35,7 @@ type (
 		ready         chan struct{} // Channel to signal worker readiness
 		notify        chan struct{} // Channel to notify workers of new jobs
 		worker        core.Worker   // The worker implementation that processes jobs
+		startOnce     sync.Once     // Ensures only one dispatcher requests tasks
 		stopOnce      sync.Once     // Ensures shutdown is only performed once
 		stopFlag      atomic.Int32  // Atomic flag indicating if shutdown has started
 		afterFn       func()        // Optional callback after each job execution
@@ -71,7 +72,7 @@ func NewQueue(opts ...Option) (*Queue, error) {
 	return q, nil
 }
 
-// Start launches all worker goroutines and begins processing jobs.
+// Start launches the dispatcher and workers once and begins processing jobs.
 // If workerCount is zero, Start is a no-op.
 func (q *Queue) Start() {
 	q.Lock()
@@ -80,8 +81,8 @@ func (q *Queue) Start() {
 	if count == 0 {
 		return
 	}
-	q.routineGroup.Run(func() {
-		q.start()
+	q.startOnce.Do(func() {
+		q.routineGroup.Run(q.start)
 	})
 }
 
@@ -198,7 +199,10 @@ func (q *Queue) work(task core.TaskMessage) {
 			q.metric.IncFailureTask()
 		}
 		if q.afterFn != nil {
-			q.afterFn()
+			// Completion callbacks have never occupied a worker slot. Keep them
+			// independent so a callback can wait for another queued task, while
+			// still making Release wait for all callbacks to finish.
+			q.routineGroup.Run(q.afterFn)
 		}
 	}()
 
@@ -313,86 +317,99 @@ func (q *Queue) UpdateWorkerCount(num int64) {
 	q.schedule()
 }
 
-// schedule checks if more workers can be started based on the current busy count.
-// If so, it signals readiness to start a new worker.
+// schedule wakes the dispatcher after a completion or worker-count update.
+// Notifications may coalesce; the dispatcher always rechecks the current limit.
 func (q *Queue) schedule() {
-	q.Lock()
-	defer q.Unlock()
-	if q.BusyWorkers() >= q.workerCount {
-		return
-	}
-
 	select {
 	case q.ready <- struct{}{}:
 	default:
 	}
 }
 
-/*
-start launches the main worker loop, which manages job scheduling and execution.
+// consume reuses a worker goroutine until it is retired or dispatch has stopped.
+// Retiring a busy worker does not interrupt its current task.
+func (q *Queue) consume(tasks <-chan core.TaskMessage, retire <-chan struct{}) {
+	for {
+		// Prefer retirement before accepting another task.
+		select {
+		case <-retire:
+			return
+		default:
+		}
+		select {
+		case <-retire:
+			return
+		case task, ok := <-tasks:
+			if !ok {
+				return
+			}
+			q.work(task)
+		}
+	}
+}
 
-- It uses a ticker to periodically retry job requests if the queue is empty.
-- For each available worker slot, it requests a new task from the worker.
-- If a task is available, it is sent to the tasks channel and processed by a new goroutine.
-- The loop exits when the quit channel is closed.
-*/
+// start serializes backend requests and dispatches tasks to reusable workers.
+// Only the dispatcher owns the worker set; completed tasks and count updates wake
+// it to recheck capacity. The handler goroutine in handle still enforces timeout.
 func (q *Queue) start() {
-	tasks := make(chan core.TaskMessage, 1)
+	tasks := make(chan core.TaskMessage)
+	defer close(tasks)
 	ticker := time.NewTicker(q.retryInterval)
 	defer ticker.Stop()
 
+	var workers []chan struct{}
 	for {
-		// Ensure the number of busy workers does not exceed the configured worker count.
-		q.schedule()
+		q.Lock()
+		count := q.workerCount
+		q.Unlock()
 
-		select {
-		case <-q.ready: // Wait for a worker slot to become available
-		case <-q.quit: // Shutdown signal received
-			return
+		// A nonpositive dynamic count pauses dispatch without interrupting work.
+		count = max(count, 0)
+		for int64(len(workers)) > count {
+			last := len(workers) - 1
+			close(workers[last])
+			workers[last] = nil
+			workers = workers[:last]
+		}
+		for int64(len(workers)) < count {
+			retire := make(chan struct{})
+			workers = append(workers, retire)
+			q.routineGroup.Run(func() { q.consume(tasks, retire) })
 		}
 
-		// Request a task from the worker in a background goroutine.
-		q.routineGroup.Run(func() {
-			for {
-				t, err := q.worker.Request()
-				if t == nil || err != nil {
-					if err != nil {
-						select {
-						case <-q.quit:
-							if !errors.Is(err, ErrNoTaskInQueue) {
-								close(tasks)
-								return
-							}
-						case <-ticker.C:
-						case <-q.notify:
-						}
-					}
-				}
-				if t != nil {
-					tasks <- t
-					return
-				}
-
-				select {
-				case <-q.quit:
-					if !errors.Is(err, ErrNoTaskInQueue) {
-						close(tasks)
-						return
-					}
-				default:
-				}
+		if q.BusyWorkers() >= count {
+			select {
+			case <-q.ready:
+				continue
+			case <-q.quit:
+				return
 			}
-		})
-
-		task, ok := <-tasks
-		if !ok {
+		}
+		select {
+		case <-q.quit:
 			return
+		default:
 		}
 
-		// Start processing the new task in a separate goroutine.
+		// Request was already serialized by the old dispatcher waiting for each
+		// result. Calling it here removes a goroutine and channel hop per task.
+		task, err := q.worker.Request()
+		if task == nil || err != nil {
+			select {
+			case <-q.quit:
+				return
+			case <-ticker.C:
+			case <-q.notify:
+			case <-q.ready:
+			}
+			if task == nil {
+				continue
+			}
+		}
+
+		// Once dequeued, the task must be handed off even during shutdown.
+		// The workers remain alive until this dispatcher closes tasks.
 		q.metric.IncBusyWorker()
-		q.routineGroup.Run(func() {
-			q.work(task)
-		})
+		tasks <- task
 	}
 }
