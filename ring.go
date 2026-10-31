@@ -13,7 +13,7 @@ var _ core.Worker = (*Ring)(nil)
 // Ring is an in-memory worker implementation using a dynamic circular buffer.
 // It implements the core.Worker interface and provides automatic resizing:
 //   - Doubles capacity when full
-//   - Halves capacity when less than 25% utilized
+//   - Halves capacity when at most 25% utilized
 //
 // The ring buffer uses two pointers (head and tail) to track the queue boundaries:
 //   - head: points to the next task to dequeue
@@ -95,7 +95,7 @@ func (s *Ring) Queue(task core.TaskMessage) error {
 }
 
 // Request dequeues and returns the next task from the ring buffer.
-// The buffer shrinks automatically (halves in size) when less than 25% full.
+// The buffer shrinks automatically (halves in size) when at most 25% full.
 // Returns:
 //   - (task, nil) if a task is successfully dequeued
 //   - (nil, ErrNoTaskInQueue) if the queue is currently empty
@@ -129,9 +129,9 @@ func (s *Ring) Request() (core.TaskMessage, error) {
 	s.head = (s.head + 1) % len(s.taskQueue) // Advance head with wraparound
 	s.count--
 
-	// Shrink buffer if less than 25% full (to save memory)
+	// Shrink buffer if at most 25% full (to save memory)
 	// Minimum buffer size is 2 to maintain circular buffer structure
-	if n := len(s.taskQueue) / 2; n >= 2 && s.count <= n {
+	if n := len(s.taskQueue) / 2; n >= 2 && s.count <= len(s.taskQueue)/4 {
 		s.resize(n)
 	}
 
