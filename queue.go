@@ -225,10 +225,12 @@ func (q *Queue) run(task core.TaskMessage) error {
 // handle executes a job.Message, supporting retries, timeouts, and panic recovery.
 // Returns an error if the job fails or times out.
 func (q *Queue) handle(m *job.Message) error {
-	// done: receives the result of the job execution
-	// panicChan: receives any panic that occurs in the job goroutine
-	done := make(chan error, 1)
-	panicChan := make(chan any, 1)
+	// One buffered result lets the handler finish even after timeout returns.
+	type result struct {
+		err        error
+		panicValue any
+	}
+	done := make(chan result, 1)
 	startTime := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), m.Timeout)
 	defer func() {
@@ -237,10 +239,10 @@ func (q *Queue) handle(m *job.Message) error {
 
 	// Run the job in a separate goroutine to support timeout and panic recovery.
 	go func() {
-		// Defer block to catch panics and send to panicChan
+		// Forward panic through the same result channel.
 		defer func() {
 			if p := recover(); p != nil {
-				panicChan <- p
+				done <- result{panicValue: p}
 			}
 		}()
 
@@ -283,12 +285,10 @@ func (q *Queue) handle(m *job.Message) error {
 			}
 		}
 
-		done <- err
+		done <- result{err: err}
 	}()
 
 	select {
-	case p := <-panicChan:
-		panic(p)
 	case <-ctx.Done(): // Timeout reached
 		return ctx.Err()
 	case <-q.quit: // Queue is shutting down
@@ -298,13 +298,17 @@ func (q *Queue) handle(m *job.Message) error {
 		select {
 		case <-time.After(leftTime):
 			return context.DeadlineExceeded
-		case err := <-done: // Job finished
-			return err
-		case p := <-panicChan:
-			panic(p)
+		case r := <-done: // Job finished
+			if r.panicValue != nil {
+				panic(r.panicValue)
+			}
+			return r.err
 		}
-	case err := <-done: // Job finished
-		return err
+	case r := <-done: // Job finished
+		if r.panicValue != nil {
+			panic(r.panicValue)
+		}
+		return r.err
 	}
 }
 
