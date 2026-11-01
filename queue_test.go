@@ -6,12 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/appleboy/com/bytesconv"
 	"github.com/golang-queue/queue/core"
 	"github.com/golang-queue/queue/job"
 	"github.com/golang-queue/queue/mocks"
 
+	"github.com/appleboy/com/bytesconv"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 	"go.uber.org/mock/gomock"
 )
@@ -37,7 +38,7 @@ func TestNewQueueWithZeroWorker(t *testing.T) {
 	defer controller.Finish()
 
 	q, err := NewQueue()
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, q)
 
 	w := mocks.NewMockWorker(controller)
@@ -47,7 +48,7 @@ func TestNewQueueWithZeroWorker(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(0),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, q)
 
 	q.Start()
@@ -61,7 +62,7 @@ func TestNewQueueWithDefaultWorker(t *testing.T) {
 	defer controller.Finish()
 
 	q, err := NewQueue()
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, q)
 
 	w := mocks.NewMockWorker(controller)
@@ -74,7 +75,7 @@ func TestNewQueueWithDefaultWorker(t *testing.T) {
 	q, err = NewQueue(
 		WithWorker(w),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, q)
 
 	q.Start()
@@ -97,11 +98,11 @@ func TestHandleTimeout(t *testing.T) {
 	q, err := NewQueue(
 		WithWorker(w),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, q)
 
 	err = q.handle(m)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, context.DeadlineExceeded, err)
 
 	done := make(chan error)
@@ -110,7 +111,7 @@ func TestHandleTimeout(t *testing.T) {
 	}()
 
 	err = <-done
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, context.DeadlineExceeded, err)
 }
 
@@ -128,11 +129,11 @@ func TestJobComplete(t *testing.T) {
 	q, err := NewQueue(
 		WithWorker(w),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, q)
 
 	err = q.handle(m)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, errors.New("job completed"), err)
 
 	m = &job.Message{
@@ -150,11 +151,11 @@ func TestJobComplete(t *testing.T) {
 	q, err = NewQueue(
 		WithWorker(w),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, q)
 
 	err = q.handle(m)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, errors.New("job completed"), err)
 }
 
@@ -170,11 +171,11 @@ func TestTaskJobComplete(t *testing.T) {
 	q, err := NewQueue(
 		WithWorker(w),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, q)
 
 	err = q.handle(m)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, errors.New("job completed"), err)
 
 	m = &job.Message{
@@ -184,7 +185,7 @@ func TestTaskJobComplete(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, q.handle(m))
+	require.NoError(t, q.handle(m))
 
 	// job timeout
 	m = &job.Message{
@@ -213,7 +214,7 @@ func TestMockWorkerAndMessage(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(1),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, q)
 	q.Start()
 	time.Sleep(50 * time.Millisecond)

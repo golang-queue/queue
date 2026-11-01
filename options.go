@@ -123,7 +123,8 @@ func WithFn(fn func(context.Context, core.TaskMessage) error) Option {
 
 // WithAfterFn sets a callback function that will be executed after each job completes.
 // This callback runs regardless of whether the job succeeded or failed.
-// It executes after metrics are updated but before the worker picks up the next task.
+// It executes after metrics are updated without occupying a worker slot.
+// Callbacks may overlap; Release waits for them to finish.
 // Useful for cleanup, logging, or triggering post-processing workflows.
 //
 // Example:

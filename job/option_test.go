@@ -14,7 +14,7 @@ func TestOptions(t *testing.T) {
 			RetryCount: Int64(100),
 			RetryDelay: Time(30 * time.Millisecond),
 			Timeout:    Time(3 * time.Millisecond),
-			Jitter:     Bool(true),
+			Jitter:     new(true),
 		},
 	)
 
@@ -23,6 +23,6 @@ func TestOptions(t *testing.T) {
 	assert.Equal(t, 3*time.Millisecond, o.timeout)
 	assert.Equal(t, 100*time.Millisecond, o.retryMin)
 	assert.Equal(t, 10*time.Second, o.retryMax)
-	assert.Equal(t, 2.0, o.retryFactor)
+	assert.InEpsilon(t, 2.0, o.retryFactor, 1e-9)
 	assert.True(t, o.jitter)
 }
