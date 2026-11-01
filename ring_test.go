@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -14,23 +15,116 @@ import (
 	"github.com/golang-queue/queue/mocks"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+)
+
+const (
+	testMessageFoo  = "foo"
+	testMessageTest = "test"
 )
 
 func TestMaxCapacity(t *testing.T) {
 	w := NewRing(WithQueueSize(2))
 
-	assert.NoError(t, w.Queue(&mockMessage{}))
-	assert.NoError(t, w.Queue(&mockMessage{}))
-	assert.Error(t, w.Queue(&mockMessage{}))
+	require.NoError(t, w.Queue(&mockMessage{}))
+	require.NoError(t, w.Queue(&mockMessage{}))
+	require.Error(t, w.Queue(&mockMessage{}))
 
 	err := w.Queue(&mockMessage{})
 	assert.Equal(t, ErrMaxCapacity, err)
 }
 
+func TestConcurrentMaxCapacity(t *testing.T) {
+	for _, capacity := range []int{1, 2, 8} {
+		t.Run(fmt.Sprintf("capacity_%d", capacity), func(t *testing.T) {
+			const producers = 64
+			w := NewRing(WithQueueSize(capacity))
+			start := make(chan struct{})
+			results := make(chan error, producers)
+			var workers sync.WaitGroup
+
+			for range producers {
+				workers.Go(func() {
+					<-start
+					results <- w.Queue(&mockMessage{})
+				})
+			}
+			close(start)
+			workers.Wait()
+			close(results)
+
+			accepted := 0
+			for err := range results {
+				if err == nil {
+					accepted++
+				} else {
+					require.ErrorIs(t, err, ErrMaxCapacity)
+				}
+			}
+			require.Equal(t, capacity, accepted)
+			require.Equal(t, capacity, w.count)
+
+			for range capacity {
+				_, err := w.Request()
+				require.NoError(t, err)
+			}
+			_, err := w.Request()
+			require.ErrorIs(t, err, ErrNoTaskInQueue)
+			require.NoError(t, w.Queue(&mockMessage{}))
+		})
+	}
+}
+
+func TestConcurrentRequestsDuringShutdown(t *testing.T) {
+	const (
+		tasks     = 256
+		consumers = 8
+	)
+	w := NewRing()
+	for range tasks {
+		require.NoError(t, w.Queue(&mockMessage{}))
+	}
+	// Set the shutdown state directly to isolate concurrent draining.
+	w.stopFlag.Store(1)
+	start := make(chan struct{})
+	results := make(chan error, tasks+consumers)
+	var workers sync.WaitGroup
+
+	for range consumers {
+		workers.Go(func() {
+			<-start
+			for {
+				_, err := w.Request()
+				results <- err
+				if err != nil {
+					return
+				}
+			}
+		})
+	}
+	close(start)
+	workers.Wait()
+	close(results)
+
+	drained := 0
+	for err := range results {
+		if err == nil {
+			drained++
+		} else {
+			require.ErrorIs(t, err, ErrQueueHasBeenClosed)
+		}
+	}
+	require.Equal(t, tasks, drained)
+	task, err := w.Request()
+	require.Nil(t, task)
+	require.ErrorIs(t, err, ErrQueueHasBeenClosed)
+	require.ErrorIs(t, w.Queue(&mockMessage{}), ErrQueueShutdown)
+}
+
 func TestCustomFuncAndWait(t *testing.T) {
 	m := mockMessage{
-		message: "foo",
+		message: testMessageFoo,
 	}
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.TaskMessage) error {
@@ -43,11 +137,11 @@ func TestCustomFuncAndWait(t *testing.T) {
 		WithWorkerCount(2),
 		WithLogger(NewLogger()),
 	)
-	assert.NoError(t, err)
-	assert.NoError(t, q.Queue(m))
-	assert.NoError(t, q.Queue(m))
-	assert.NoError(t, q.Queue(m))
-	assert.NoError(t, q.Queue(m))
+	require.NoError(t, err)
+	require.NoError(t, q.Queue(m))
+	require.NoError(t, q.Queue(m))
+	require.NoError(t, q.Queue(m))
+	require.NoError(t, q.Queue(m))
 	q.Start()
 	time.Sleep(100 * time.Millisecond)
 	assert.Equal(t, 2, int(q.metric.BusyWorkers()))
@@ -59,27 +153,27 @@ func TestCustomFuncAndWait(t *testing.T) {
 
 func TestEnqueueJobAfterShutdown(t *testing.T) {
 	m := mockMessage{
-		message: "foo",
+		message: testMessageFoo,
 	}
 	w := NewRing()
 	q, err := NewQueue(
 		WithWorker(w),
 		WithWorkerCount(2),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	q.Start()
 	time.Sleep(50 * time.Millisecond)
 	q.Shutdown()
 	// can't queue task after shutdown
 	err = q.Queue(m)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, ErrQueueShutdown, err)
 	q.Wait()
 }
 
 func TestJobReachTimeout(t *testing.T) {
 	m := mockMessage{
-		message: "foo",
+		message: testMessageFoo,
 	}
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.TaskMessage) error {
@@ -103,8 +197,8 @@ func TestJobReachTimeout(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(2),
 	)
-	assert.NoError(t, err)
-	assert.NoError(t, q.Queue(m, job.AllowOption{Timeout: job.Time(30 * time.Millisecond)}))
+	require.NoError(t, err)
+	require.NoError(t, q.Queue(m, job.AllowOption{Timeout: job.Time(30 * time.Millisecond)}))
 	q.Start()
 	time.Sleep(50 * time.Millisecond)
 	q.Release()
@@ -112,7 +206,7 @@ func TestJobReachTimeout(t *testing.T) {
 
 func TestCancelJobAfterShutdown(t *testing.T) {
 	m := mockMessage{
-		message: "foo",
+		message: testMessageFoo,
 	}
 	w := NewRing(
 		WithLogger(NewEmptyLogger()),
@@ -137,9 +231,9 @@ func TestCancelJobAfterShutdown(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(2),
 	)
-	assert.NoError(t, err)
-	assert.NoError(t, q.Queue(m, job.AllowOption{Timeout: job.Time(100 * time.Millisecond)}))
-	assert.NoError(t, q.Queue(m, job.AllowOption{Timeout: job.Time(100 * time.Millisecond)}))
+	require.NoError(t, err)
+	require.NoError(t, q.Queue(m, job.AllowOption{Timeout: job.Time(100 * time.Millisecond)}))
+	require.NoError(t, q.Queue(m, job.AllowOption{Timeout: job.Time(100 * time.Millisecond)}))
 	q.Start()
 	time.Sleep(10 * time.Millisecond)
 	assert.Equal(t, int64(2), q.BusyWorkers())
@@ -154,7 +248,9 @@ func TestGoroutineLeak(t *testing.T) {
 				select {
 				case <-ctx.Done():
 					if errors.Is(ctx.Err(), context.Canceled) {
-						log.Println("queue has been shutdown and cancel the job: " + string(m.Payload()))
+						log.Println(
+							"queue has been shutdown and cancel the job: " + string(m.Payload()),
+						)
 					} else if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 						log.Println("job deadline exceeded: " + string(m.Payload()))
 					}
@@ -172,24 +268,25 @@ func TestGoroutineLeak(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(10),
 	)
-	assert.NoError(t, err)
-	for i := 0; i < 400; i++ {
+	require.NoError(t, err)
+	for i := range 400 {
 		m := mockMessage{
 			message: fmt.Sprintf("new message: %d", i+1),
 		}
 
-		assert.NoError(t, q.Queue(m))
+		require.NoError(t, q.Queue(m))
 	}
 
 	q.Start()
 	time.Sleep(1 * time.Second)
 	q.Release()
+	//nolint:forbidigo // intentional diagnostic output for this goroutine-leak check
 	fmt.Println("number of goroutines:", runtime.NumGoroutine())
 }
 
 func TestGoroutinePanic(t *testing.T) {
 	m := mockMessage{
-		message: "foo",
+		message: testMessageFoo,
 	}
 	w := NewRing(
 		WithFn(func(ctx context.Context, m core.TaskMessage) error {
@@ -200,8 +297,8 @@ func TestGoroutinePanic(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(2),
 	)
-	assert.NoError(t, err)
-	assert.NoError(t, q.Queue(m))
+	require.NoError(t, err)
+	require.NoError(t, q.Queue(m))
 	q.Start()
 	time.Sleep(10 * time.Millisecond)
 	q.Release()
@@ -220,13 +317,13 @@ func TestIncreaseWorkerCount(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(5),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	for i := 1; i <= 10; i++ {
 		m := mockMessage{
 			message: fmt.Sprintf("new message: %d", i),
 		}
-		assert.NoError(t, q.Queue(m))
+		require.NoError(t, q.Queue(m))
 	}
 
 	q.Start()
@@ -250,13 +347,13 @@ func TestDecreaseWorkerCount(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(5),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	for i := 1; i <= 10; i++ {
 		m := mockMessage{
 			message: fmt.Sprintf("test message: %d", i),
 		}
-		assert.NoError(t, q.Queue(m))
+		require.NoError(t, q.Queue(m))
 	}
 
 	q.Start()
@@ -284,8 +381,8 @@ func TestHandleAllJobBeforeShutdownRing(t *testing.T) {
 	)
 
 	done := make(chan struct{})
-	assert.NoError(t, w.Queue(m))
-	assert.NoError(t, w.Queue(m))
+	require.NoError(t, w.Queue(m))
+	require.NoError(t, w.Queue(m))
 	go func() {
 		assert.NoError(t, w.Shutdown())
 		done <- struct{}{}
@@ -293,13 +390,13 @@ func TestHandleAllJobBeforeShutdownRing(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 	task, err := w.Request()
 	assert.NotNil(t, task)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	task, err = w.Request()
 	assert.NotNil(t, task)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	task, err = w.Request()
 	assert.Nil(t, task)
-	assert.True(t, errors.Is(err, ErrQueueHasBeenClosed))
+	require.ErrorIs(t, err, ErrQueueHasBeenClosed)
 	<-done
 }
 
@@ -326,11 +423,11 @@ func TestHandleAllJobBeforeShutdownRingInQueue(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(1),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.NoError(t, q.Queue(m))
-	assert.NoError(t, q.Queue(m))
-	assert.Len(t, messages, 0)
+	require.NoError(t, q.Queue(m))
+	require.NoError(t, q.Queue(m))
+	assert.Empty(t, messages)
 	q.Start()
 	q.Release()
 	assert.Len(t, messages, 2)
@@ -364,16 +461,16 @@ func TestRetryCountWithNewMessage(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(1),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.NoError(t, q.Queue(
+	require.NoError(t, q.Queue(
 		m,
 		job.AllowOption{
 			RetryCount: job.Int64(3),
 			RetryDelay: job.Time(50 * time.Millisecond),
 		},
 	))
-	assert.Len(t, messages, 0)
+	assert.Empty(t, messages)
 	q.Start()
 	// wait retry twice.
 	<-keep
@@ -392,11 +489,11 @@ func TestRetryCountWithNewTask(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(1),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	keep := make(chan struct{})
 
-	assert.NoError(t, q.QueueTask(
+	require.NoError(t, q.QueueTask(
 		func(ctx context.Context) error {
 			if count%3 != 0 {
 				count++
@@ -410,7 +507,7 @@ func TestRetryCountWithNewTask(t *testing.T) {
 			RetryCount: job.Int64(3),
 		},
 	))
-	assert.Len(t, messages, 0)
+	assert.Empty(t, messages)
 	q.Start()
 	// wait retry twice.
 	<-keep
@@ -429,9 +526,9 @@ func TestCancelRetryCountWithNewTask(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(1),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.NoError(t, q.QueueTask(
+	require.NoError(t, q.QueueTask(
 		func(ctx context.Context) error {
 			if count%3 != 0 {
 				count++
@@ -446,11 +543,11 @@ func TestCancelRetryCountWithNewTask(t *testing.T) {
 			RetryDelay: job.Time(100 * time.Millisecond),
 		},
 	))
-	assert.Len(t, messages, 0)
+	assert.Empty(t, messages)
 	q.Start()
 	time.Sleep(50 * time.Millisecond)
 	q.Release()
-	assert.Len(t, messages, 0)
+	assert.Empty(t, messages)
 	assert.Equal(t, 2, count)
 }
 
@@ -480,20 +577,20 @@ func TestCancelRetryCountWithNewMessage(t *testing.T) {
 		WithWorker(w),
 		WithWorkerCount(1),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.NoError(t, q.Queue(
+	require.NoError(t, q.Queue(
 		m,
 		job.AllowOption{
 			RetryCount: job.Int64(3),
 			RetryDelay: job.Time(100 * time.Millisecond),
 		},
 	))
-	assert.Len(t, messages, 0)
+	assert.Empty(t, messages)
 	q.Start()
 	time.Sleep(50 * time.Millisecond)
 	q.Release()
-	assert.Len(t, messages, 0)
+	assert.Empty(t, messages)
 	assert.Equal(t, 2, count)
 }
 
@@ -505,14 +602,14 @@ func TestErrNoTaskInQueue(t *testing.T) {
 	)
 	task, err := w.Request()
 	assert.Nil(t, task)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, ErrNoTaskInQueue, err)
 }
 
 func BenchmarkRingQueue(b *testing.B) {
 	b.Run("queue and request operations", func(b *testing.B) {
 		w := NewRing(WithQueueSize(1000))
-		m := mockMessage{message: "test"}
+		m := mockMessage{message: testMessageTest}
 
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
@@ -525,7 +622,7 @@ func BenchmarkRingQueue(b *testing.B) {
 
 	b.Run("concurrent queue operations", func(b *testing.B) {
 		w := NewRing(WithQueueSize(1000))
-		m := mockMessage{message: "test"}
+		m := mockMessage{message: testMessageTest}
 
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
@@ -537,14 +634,14 @@ func BenchmarkRingQueue(b *testing.B) {
 
 	b.Run("resize operations", func(b *testing.B) {
 		w := NewRing()
-		m := mockMessage{message: "test"}
+		m := mockMessage{message: testMessageTest}
 
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			for j := 0; j < 100; j++ {
+			for range 100 {
 				_ = w.Queue(&m)
 			}
-			for j := 0; j < 100; j++ {
+			for range 100 {
 				_, _ = w.Request()
 			}
 		}

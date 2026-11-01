@@ -53,10 +53,10 @@ var _ Metric = (*metric)(nil)
 // It uses atomic operations to ensure thread-safe updates and reads.
 // All counters start at zero and are never decremented (except busyWorkers).
 type metric struct {
-	busyWorkers    int64  // Current number of active workers (can go up and down)
-	successTasks   uint64 // Cumulative count of successful tasks (monotonically increasing)
-	failureTasks   uint64 // Cumulative count of failed tasks (monotonically increasing)
-	submittedTasks uint64 // Cumulative count of submitted tasks (monotonically increasing)
+	busyWorkers    atomic.Int64  // Current number of active workers (can go up and down)
+	successTasks   atomic.Uint64 // Cumulative count of successful tasks (monotonically increasing)
+	failureTasks   atomic.Uint64 // Cumulative count of failed tasks (monotonically increasing)
+	submittedTasks atomic.Uint64 // Cumulative count of submitted tasks (monotonically increasing)
 }
 
 // NewMetric creates a new metric collector with all counters initialized to zero.
@@ -68,56 +68,56 @@ func NewMetric() Metric {
 // IncBusyWorker atomically increments the busy worker count by 1.
 // Thread-safe for concurrent calls.
 func (m *metric) IncBusyWorker() {
-	atomic.AddInt64(&m.busyWorkers, 1)
+	m.busyWorkers.Add(1)
 }
 
 // DecBusyWorker atomically decrements the busy worker count by 1.
 // Uses ^int64(0) which equals -1 in two's complement representation.
 // Thread-safe for concurrent calls.
 func (m *metric) DecBusyWorker() {
-	atomic.AddInt64(&m.busyWorkers, ^int64(0))
+	m.busyWorkers.Add(^int64(0))
 }
 
 // BusyWorkers atomically reads and returns the current number of busy workers.
 // Thread-safe for concurrent calls.
 func (m *metric) BusyWorkers() int64 {
-	return atomic.LoadInt64(&m.busyWorkers)
+	return m.busyWorkers.Load()
 }
 
 // IncSuccessTask atomically increments the successful task counter by 1.
 // Thread-safe for concurrent calls.
 func (m *metric) IncSuccessTask() {
-	atomic.AddUint64(&m.successTasks, 1)
+	m.successTasks.Add(1)
 }
 
 // IncFailureTask atomically increments the failed task counter by 1.
 // Thread-safe for concurrent calls.
 func (m *metric) IncFailureTask() {
-	atomic.AddUint64(&m.failureTasks, 1)
+	m.failureTasks.Add(1)
 }
 
 // IncSubmittedTask atomically increments the submitted task counter by 1.
 // Thread-safe for concurrent calls.
 func (m *metric) IncSubmittedTask() {
-	atomic.AddUint64(&m.submittedTasks, 1)
+	m.submittedTasks.Add(1)
 }
 
 // SuccessTasks atomically reads and returns the total number of successful tasks.
 // Thread-safe for concurrent calls.
 func (m *metric) SuccessTasks() uint64 {
-	return atomic.LoadUint64(&m.successTasks)
+	return m.successTasks.Load()
 }
 
 // FailureTasks atomically reads and returns the total number of failed tasks.
 // Thread-safe for concurrent calls.
 func (m *metric) FailureTasks() uint64 {
-	return atomic.LoadUint64(&m.failureTasks)
+	return m.failureTasks.Load()
 }
 
 // SubmittedTasks atomically reads and returns the total number of submitted tasks.
 // Thread-safe for concurrent calls.
 func (m *metric) SubmittedTasks() uint64 {
-	return atomic.LoadUint64(&m.submittedTasks)
+	return m.submittedTasks.Load()
 }
 
 // CompletedTasks calculates and returns the total number of completed tasks.
@@ -126,5 +126,5 @@ func (m *metric) SubmittedTasks() uint64 {
 // so the result represents an approximate snapshot in time.
 // Thread-safe for concurrent calls.
 func (m *metric) CompletedTasks() uint64 {
-	return atomic.LoadUint64(&m.successTasks) + atomic.LoadUint64(&m.failureTasks)
+	return m.successTasks.Load() + m.failureTasks.Load()
 }

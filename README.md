@@ -3,6 +3,7 @@
 [![CodeQL](https://github.com/golang-queue/queue/actions/workflows/codeql.yaml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/codeql.yaml)
 [![Run Tests](https://github.com/golang-queue/queue/actions/workflows/go.yml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/go.yml)
 [![codecov](https://codecov.io/gh/golang-queue/queue/branch/master/graph/badge.svg?token=SSo3mHejOE)](https://codecov.io/gh/golang-queue/queue)
+[![Trivy Security Scan](https://github.com/golang-queue/queue/actions/workflows/security.yml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/security.yml)
 
 [繁體中文](./README.zh-tw.md) | [简体中文](./README.zh-cn.md)
 

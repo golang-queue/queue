@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang-queue/contrib/zerolog"
 	"github.com/golang-queue/queue"
+
+	"github.com/golang-queue/contrib/zerolog"
 )
 
 func main() {
