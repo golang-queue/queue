@@ -1,0 +1,120 @@
+
+# Round 1, 2026-11-01T22:24:33.396558
+# ['go', 'test', '-run', '^$', '-bench', '^BenchmarkQueueEndToEnd$/^workers=4$', '-benchmem', '-benchtime=1s', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkQueueEndToEnd/workers=4-12         	  761044	      1363 ns/op	     726 B/op	       9 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	1.215s
+
+# Round 1, 2026-11-01T22:24:34.837088
+# ['go', 'test', '-run', '^$', '-bench', '^BenchmarkQueueBurstProducers$/^producers=4$/^retained=false$', '-benchmem', '-benchtime=1s', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  847994	      1412 ns/op	     727 B/op	       9 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	2.287s
+
+# Round 2, 2026-11-01T22:24:47.207597
+# ['go', 'test', '-run', '^$', '-bench', '^BenchmarkQueueEndToEnd$/^workers=4$', '-benchmem', '-benchtime=1s', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkQueueEndToEnd/workers=4-12         	  870998	      1304 ns/op	     726 B/op	       9 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	1.328s
+
+# Round 2, 2026-11-01T22:24:48.748672
+# ['go', 'test', '-run', '^$', '-bench', '^BenchmarkQueueBurstProducers$/^producers=4$/^retained=false$', '-benchmem', '-benchtime=1s', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  819793	      1471 ns/op	     727 B/op	       9 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	2.321s
+
+# Round 3, 2026-11-01T22:24:51.288601
+# ['go', 'test', '-run', '^$', '-bench', '^BenchmarkQueueEndToEnd$/^workers=4$', '-benchmem', '-benchtime=1s', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkQueueEndToEnd/workers=4-12         	  760422	      1351 ns/op	     726 B/op	       9 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	1.227s
+
+# Round 3, 2026-11-01T22:24:52.735962
+# ['go', 'test', '-run', '^$', '-bench', '^BenchmarkQueueBurstProducers$/^producers=4$/^retained=false$', '-benchmem', '-benchtime=1s', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  852685	      1457 ns/op	     727 B/op	       9 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	2.277s
+
+# Round 4, 2026-11-01T22:25:05.451919
+# ['go', 'test', '-run', '^$', '-bench', '^BenchmarkQueueEndToEnd$/^workers=4$', '-benchmem', '-benchtime=1s', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkQueueEndToEnd/workers=4-12         	  856459	      1427 ns/op	     726 B/op	       9 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	2.340s
+
+# Round 4, 2026-11-01T22:25:08.004882
+# ['go', 'test', '-run', '^$', '-bench', '^BenchmarkQueueBurstProducers$/^producers=4$/^retained=false$', '-benchmem', '-benchtime=1s', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  739393	      1423 ns/op	     727 B/op	       9 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	1.253s
+
+# Round 5, 2026-11-01T22:25:09.475491
+# ['go', 'test', '-run', '^$', '-bench', '^BenchmarkQueueEndToEnd$/^workers=4$', '-benchmem', '-benchtime=1s', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkQueueEndToEnd/workers=4-12         	  929649	      1265 ns/op	     726 B/op	       9 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	2.269s
+
+# Round 5, 2026-11-01T22:25:11.957250
+# ['go', 'test', '-run', '^$', '-bench', '^BenchmarkQueueBurstProducers$/^producers=4$/^retained=false$', '-benchmem', '-benchtime=1s', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  870865	      1358 ns/op	     727 B/op	       9 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	2.238s
+
+# Round 6, 2026-11-01T22:25:23.457914
+# ['go', 'test', '-run', '^$', '-bench', '^BenchmarkQueueEndToEnd$/^workers=4$', '-benchmem', '-benchtime=1s', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkQueueEndToEnd/workers=4-12         	  918351	      1297 ns/op	     726 B/op	       9 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	2.370s
+
+# Round 6, 2026-11-01T22:25:26.037799
+# ['go', 'test', '-run', '^$', '-bench', '^BenchmarkQueueBurstProducers$/^producers=4$/^retained=false$', '-benchmem', '-benchtime=1s', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  807738	      1418 ns/op	     727 B/op	       9 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	1.322s

@@ -1,0 +1,58 @@
+{
+  "baseline": {
+    "BenchmarkQueueEndToEnd/workers=4-12": {
+      "samples_ns": [
+        1363.0,
+        1304.0,
+        1351.0,
+        1427.0,
+        1265.0,
+        1297.0
+      ],
+      "median": 1327.5,
+      "min": 1265.0,
+      "max": 1427.0
+    },
+    "BenchmarkQueueBurstProducers/producers=4/retained=false-12": {
+      "samples_ns": [
+        1412.0,
+        1471.0,
+        1457.0,
+        1423.0,
+        1358.0,
+        1418.0
+      ],
+      "median": 1420.5,
+      "min": 1358.0,
+      "max": 1471.0
+    }
+  },
+  "combined": {
+    "BenchmarkQueueEndToEnd/workers=4-12": {
+      "samples_ns": [
+        1285.0,
+        1389.0,
+        1359.0,
+        1402.0,
+        1309.0,
+        1394.0
+      ],
+      "median": 1374.0,
+      "min": 1285.0,
+      "max": 1402.0
+    },
+    "BenchmarkQueueBurstProducers/producers=4/retained=false-12": {
+      "samples_ns": [
+        1410.0,
+        1428.0,
+        1326.0,
+        1428.0,
+        1414.0,
+        1544.0
+      ],
+      "median": 1421.0,
+      "min": 1326.0,
+      "max": 1544.0
+    }
+  }
+}

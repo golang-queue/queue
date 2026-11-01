@@ -1,0 +1,100 @@
+
+# Round 1: ['go', 'test', '-run', '^$', '-bench', '^(BenchmarkHandleRetry|BenchmarkQueueEndToEnd|BenchmarkQueueAfterFnEndToEnd|BenchmarkRingBurstDrain|BenchmarkQueueBurstProducers)$', '-benchmem', '-benchtime=300ms', '-count=3', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkRingBurstDrain/retained=false-12         	   23605	     14055 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=false-12         	   25783	     14184 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=false-12         	   25678	     14050 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=true-12          	   25772	     13945 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=true-12          	   25915	     14035 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=true-12          	   25334	     14061 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=false-12         	  266343	      1345 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=false-12         	  265754	      1452 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=false-12         	  261768	      1432 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=true-12          	  261030	      1351 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=true-12          	  252322	      1442 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=true-12          	  284739	      1460 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  244804	      1417 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  228836	      1407 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  241516	      1475 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=true-12          	  247149	      1543 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=true-12          	  248818	      1561 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=true-12          	  237507	      1503 ns/op	     727 B/op	       9 allocs/op
+BenchmarkHandleRetry/retries=0-12                                  	  437007	       796.5 ns/op	     576 B/op	       8 allocs/op
+BenchmarkHandleRetry/retries=0-12                                  	  451837	       785.5 ns/op	     576 B/op	       8 allocs/op
+BenchmarkHandleRetry/retries=0-12                                  	  501886	       766.2 ns/op	     576 B/op	       8 allocs/op
+BenchmarkHandleRetry/retries=1-12                                  	  311948	      1129 ns/op	     856 B/op	      12 allocs/op
+BenchmarkHandleRetry/retries=1-12                                  	  317568	      1136 ns/op	     856 B/op	      12 allocs/op
+BenchmarkHandleRetry/retries=1-12                                  	  307116	      1137 ns/op	     856 B/op	      12 allocs/op
+BenchmarkHandleRetry/retries=3-12                                  	  202774	      1785 ns/op	    1416 B/op	      20 allocs/op
+BenchmarkHandleRetry/retries=3-12                                  	  198894	      1774 ns/op	    1416 B/op	      20 allocs/op
+BenchmarkHandleRetry/retries=3-12                                  	  209308	      1783 ns/op	    1416 B/op	      20 allocs/op
+BenchmarkHandleRetry/retries=10-12                                 	   92758	      3830 ns/op	    3376 B/op	      48 allocs/op
+BenchmarkHandleRetry/retries=10-12                                 	   91801	      3881 ns/op	    3376 B/op	      48 allocs/op
+BenchmarkHandleRetry/retries=10-12                                 	   92510	      3873 ns/op	    3376 B/op	      48 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12                                	  288028	      1209 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12                                	  303657	      1212 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12                                	  292414	      1199 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12                                	  242575	      1422 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12                                	  276072	      1506 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12                                	  252380	      1449 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12                               	  184822	      1925 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12                               	  196460	      1978 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12                               	  160813	      2086 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12                                   	  216685	      1712 ns/op	     766 B/op	      11 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12                                   	  212546	      1717 ns/op	     766 B/op	      11 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12                                   	  216584	      1505 ns/op	     766 B/op	      11 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	17.349s
+
+# Round 2: ['go', 'test', '-run', '^$', '-bench', '^(BenchmarkHandleRetry|BenchmarkQueueEndToEnd|BenchmarkQueueAfterFnEndToEnd|BenchmarkRingBurstDrain|BenchmarkQueueBurstProducers)$', '-benchmem', '-benchtime=300ms', '-count=3', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkRingBurstDrain/retained=false-12         	   24957	     14403 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=false-12         	   25207	     14402 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=false-12         	   24310	     14449 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=true-12          	   25306	     14397 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=true-12          	   25212	     14501 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=true-12          	   25014	     14566 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=false-12         	  247491	      1370 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=false-12         	  296893	      1298 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=false-12         	  274621	      1315 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=true-12          	  277650	      1272 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=true-12          	  306274	      1370 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=true-12          	  274818	      1309 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  266371	      1369 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  266102	      1535 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  251109	      1394 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=true-12          	  275982	      1417 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=true-12          	  275528	      1397 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=true-12          	  258381	      1462 ns/op	     727 B/op	       9 allocs/op
+BenchmarkHandleRetry/retries=0-12                                  	  482842	       740.1 ns/op	     576 B/op	       8 allocs/op
+BenchmarkHandleRetry/retries=0-12                                  	  478311	       738.4 ns/op	     576 B/op	       8 allocs/op
+BenchmarkHandleRetry/retries=0-12                                  	  499866	       734.3 ns/op	     576 B/op	       8 allocs/op
+BenchmarkHandleRetry/retries=1-12                                  	  350870	      1034 ns/op	     856 B/op	      12 allocs/op
+BenchmarkHandleRetry/retries=1-12                                  	  339878	      1032 ns/op	     856 B/op	      12 allocs/op
+BenchmarkHandleRetry/retries=1-12                                  	  360026	      1028 ns/op	     856 B/op	      12 allocs/op
+BenchmarkHandleRetry/retries=3-12                                  	  217180	      1635 ns/op	    1416 B/op	      20 allocs/op
+BenchmarkHandleRetry/retries=3-12                                  	  217836	      1615 ns/op	    1416 B/op	      20 allocs/op
+BenchmarkHandleRetry/retries=3-12                                  	  224864	      1613 ns/op	    1416 B/op	      20 allocs/op
+BenchmarkHandleRetry/retries=10-12                                 	  101126	      3519 ns/op	    3376 B/op	      48 allocs/op
+BenchmarkHandleRetry/retries=10-12                                 	  103508	      3569 ns/op	    3376 B/op	      48 allocs/op
+BenchmarkHandleRetry/retries=10-12                                 	  100224	      3580 ns/op	    3376 B/op	      48 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12                                	  324015	      1194 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12                                	  294860	      1140 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12                                	  307320	      1131 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12                                	  284756	      1297 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12                                	  256518	      1343 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12                                	  298252	      1403 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12                               	  207580	      1718 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12                               	  210848	      1794 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12                               	  210601	      1752 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12                                   	  280666	      1411 ns/op	     766 B/op	      11 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12                                   	  289572	      1318 ns/op	     766 B/op	      11 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12                                   	  277629	      1281 ns/op	     766 B/op	      11 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	17.638s

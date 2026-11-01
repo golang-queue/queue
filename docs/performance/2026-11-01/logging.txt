@@ -1,0 +1,92 @@
+
+# Round 1, 2026-11-01T22:22:30.147043
+# ['go', 'test', '-run', '^$', '-bench', '^(BenchmarkHandleRetry|BenchmarkQueueEndToEnd|BenchmarkQueueAfterFnEndToEnd|BenchmarkRingBurstDrain|BenchmarkQueueBurstProducers)$', '-benchmem', '-benchtime=300ms', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkRingBurstDrain/retained=false-12         	   23188	     13854 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=true-12          	   25768	     14294 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=false-12         	  270619	      1343 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=true-12          	  257908	      1387 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  234274	      1561 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=true-12          	  262272	      1453 ns/op	     727 B/op	       9 allocs/op
+BenchmarkHandleRetry/retries=0-12                                  	  442380	       782.6 ns/op	     576 B/op	       8 allocs/op
+BenchmarkHandleRetry/retries=1-12                                  	  313786	      1090 ns/op	     824 B/op	      11 allocs/op
+BenchmarkHandleRetry/retries=3-12                                  	  190357	      1977 ns/op	     824 B/op	      11 allocs/op
+BenchmarkHandleRetry/retries=10-12                                 	   87452	      4064 ns/op	     824 B/op	      11 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12                                	  306158	      1196 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12                                	  266751	      1424 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12                               	  199336	      1817 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12                                   	  263986	      1476 ns/op	     766 B/op	      11 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	5.956s
+
+# Round 2, 2026-11-01T22:23:00.770724
+# ['go', 'test', '-run', '^$', '-bench', '^(BenchmarkHandleRetry|BenchmarkQueueEndToEnd|BenchmarkQueueAfterFnEndToEnd|BenchmarkRingBurstDrain|BenchmarkQueueBurstProducers)$', '-benchmem', '-benchtime=300ms', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkRingBurstDrain/retained=false-12         	   24153	     14515 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=true-12          	   24879	     14166 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=false-12         	  256844	      1457 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=true-12          	  255770	      1361 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  266577	      1480 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=true-12          	  262560	      1412 ns/op	     727 B/op	       9 allocs/op
+BenchmarkHandleRetry/retries=0-12                                  	  453585	       777.1 ns/op	     576 B/op	       8 allocs/op
+BenchmarkHandleRetry/retries=1-12                                  	  339148	      1048 ns/op	     824 B/op	      11 allocs/op
+BenchmarkHandleRetry/retries=3-12                                  	  186278	      1950 ns/op	     824 B/op	      11 allocs/op
+BenchmarkHandleRetry/retries=10-12                                 	   85728	      4134 ns/op	     824 B/op	      11 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12                                	  301003	      1175 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12                                	  263035	      1403 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12                               	  202408	      1831 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12                                   	  253057	      1322 ns/op	     766 B/op	      11 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	5.722s
+
+# Round 3, 2026-11-01T22:23:30.624045
+# ['go', 'test', '-run', '^$', '-bench', '^(BenchmarkHandleRetry|BenchmarkQueueEndToEnd|BenchmarkQueueAfterFnEndToEnd|BenchmarkRingBurstDrain|BenchmarkQueueBurstProducers)$', '-benchmem', '-benchtime=300ms', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkRingBurstDrain/retained=false-12         	   24672	     14139 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=true-12          	   24586	     14727 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=false-12         	  245457	      1566 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=true-12          	  250617	      1531 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  239944	      1377 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=true-12          	  251965	      1427 ns/op	     727 B/op	       9 allocs/op
+BenchmarkHandleRetry/retries=0-12                                  	  502182	       736.9 ns/op	     576 B/op	       8 allocs/op
+BenchmarkHandleRetry/retries=1-12                                  	  341782	      1021 ns/op	     824 B/op	      11 allocs/op
+BenchmarkHandleRetry/retries=3-12                                  	  187906	      1910 ns/op	     824 B/op	      11 allocs/op
+BenchmarkHandleRetry/retries=10-12                                 	   91276	      3976 ns/op	     824 B/op	      11 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12                                	  321880	      1146 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12                                	  269452	      1247 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12                               	  208645	      1776 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12                                   	  249208	      1379 ns/op	     766 B/op	      11 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	5.703s
+
+# Round 4, 2026-11-01T22:23:36.542673
+# ['go', 'test', '-run', '^$', '-bench', '^(BenchmarkHandleRetry|BenchmarkQueueEndToEnd|BenchmarkQueueAfterFnEndToEnd|BenchmarkRingBurstDrain|BenchmarkQueueBurstProducers)$', '-benchmem', '-benchtime=300ms', '-count=1', '-cpu=12', '.']
+goos: darwin
+goarch: arm64
+pkg: github.com/golang-queue/queue
+cpu: Apple M4 Pro
+BenchmarkRingBurstDrain/retained=false-12         	   24909	     14276 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkRingBurstDrain/retained=true-12          	   24598	     14234 ns/op	        32.00 retained-B	   55968 B/op	      18 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=false-12         	  256406	      1344 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=1/retained=true-12          	  279430	      1340 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=false-12         	  249990	      1379 ns/op	     727 B/op	       9 allocs/op
+BenchmarkQueueBurstProducers/producers=4/retained=true-12          	  235564	      1681 ns/op	     727 B/op	       9 allocs/op
+BenchmarkHandleRetry/retries=0-12                                  	  471766	       749.3 ns/op	     576 B/op	       8 allocs/op
+BenchmarkHandleRetry/retries=1-12                                  	  350589	      1065 ns/op	     824 B/op	      11 allocs/op
+BenchmarkHandleRetry/retries=3-12                                  	  191136	      1898 ns/op	     824 B/op	      11 allocs/op
+BenchmarkHandleRetry/retries=10-12                                 	   91230	      3903 ns/op	     824 B/op	      11 allocs/op
+BenchmarkQueueEndToEnd/workers=1-12                                	  320517	      1117 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=4-12                                	  272664	      1334 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueEndToEnd/workers=12-12                               	  199788	      1814 ns/op	     726 B/op	       9 allocs/op
+BenchmarkQueueAfterFnEndToEnd-12                                   	  274263	      1337 ns/op	     766 B/op	      11 allocs/op
+PASS
+ok  	github.com/golang-queue/queue	6.036s
