@@ -21,6 +21,7 @@ var _ core.Worker = (*Ring)(nil)
 //   - When head == tail, the queue is empty
 //   - Both pointers wrap around using modulo arithmetic
 type Ring struct {
+	minCapacity int // Minimum retained slots, configured at construction
 	sync.Mutex
 	taskQueue []core.TaskMessage                            // Circular buffer storing queued tasks
 	runFunc   func(context.Context, core.TaskMessage) error // Function to execute when processing tasks
@@ -131,8 +132,11 @@ func (s *Ring) Request() (core.TaskMessage, error) {
 
 	// Shrink buffer if at most 25% full (to save memory)
 	// Minimum buffer size is 2 to maintain circular buffer structure
-	if n := len(s.taskQueue) / 2; n >= 2 && s.count <= len(s.taskQueue)/4 {
-		s.resize(n)
+	if n := len(
+		s.taskQueue,
+	) / 2; len(s.taskQueue) > s.minCapacity &&
+		s.count <= len(s.taskQueue)/4 {
+		s.resize(max(n, s.minCapacity))
 	}
 
 	return data, nil
@@ -179,7 +183,7 @@ func (s *Ring) resize(n int) {
 }
 
 // NewRing creates a new Ring instance with the provided options.
-// It initializes the task queue with a default size of 2, sets the capacity
+// It initializes the task queue with at least 2 slots (or WithQueueMinCapacity), sets the capacity
 // based on the provided options, and configures the logger and run function.
 // The function returns a pointer to the newly created Ring instance.
 //
@@ -192,12 +196,17 @@ func (s *Ring) resize(n int) {
 //	*Ring - A pointer to the newly created Ring instance.
 func NewRing(opts ...Option) *Ring {
 	o := NewOptions(opts...)
+	minCapacity := max(2, o.queueMinCapacity)
+	if o.queueSize > 0 {
+		minCapacity = max(2, min(minCapacity, o.queueSize))
+	}
 	w := &Ring{
-		taskQueue: make([]core.TaskMessage, 2),
-		capacity:  o.queueSize,
-		exit:      make(chan struct{}),
-		logger:    o.logger,
-		runFunc:   o.fn,
+		minCapacity: minCapacity,
+		taskQueue:   make([]core.TaskMessage, minCapacity),
+		capacity:    o.queueSize,
+		exit:        make(chan struct{}),
+		logger:      o.logger,
+		runFunc:     o.fn,
 	}
 
 	return w
