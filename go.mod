@@ -4,7 +4,7 @@ go 1.26.10
 
 require (
 	github.com/appleboy/com v1.2.1
-	github.com/jpillora/backoff v1.0.0
+	github.com/jpillora/backoff v1.1.0
 	github.com/stretchr/testify v1.12.1
 	go.uber.org/goleak v1.3.0
 	go.uber.org/mock v0.6.0
