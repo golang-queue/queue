@@ -8,7 +8,7 @@ import (
 
 func BenchmarkNewTask(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		NewTask(func(context.Context) error {
 			return nil
 		},
@@ -23,7 +23,7 @@ func BenchmarkNewTask(b *testing.B) {
 
 func BenchmarkNewMessage(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = NewMessage(mockMessage{
 			message: "foo",
 		},
@@ -38,7 +38,7 @@ func BenchmarkNewMessage(b *testing.B) {
 
 func BenchmarkNewOption(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = NewOptions(
 			AllowOption{
 				RetryCount: Int64(100),

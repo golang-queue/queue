@@ -33,8 +33,7 @@ func BenchmarkHandleRetry(b *testing.B) {
 				},
 			}
 			b.ReportAllocs()
-			b.ResetTimer()
-			for range b.N {
+			for b.Loop() {
 				attempts = 0
 				m.RetryCount = retries
 				if err := q.handle(&m); err != nil {

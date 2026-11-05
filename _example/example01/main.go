@@ -21,19 +21,19 @@ func main() {
 	defer q.Release()
 
 	// assign tasks in queue
-	for i := 0; i < taskN; i++ {
-		go func(i int) {
+	for i := range taskN {
+		go func() {
 			if err := q.QueueTask(func(ctx context.Context) error {
 				rets <- fmt.Sprintf("Hi Gopher, handle the job: %02d", +i)
 				return nil
 			}); err != nil {
 				panic(err)
 			}
-		}(i)
+		}()
 	}
 
 	// wait until all tasks done
-	for i := 0; i < taskN; i++ {
+	for range taskN {
 		fmt.Println("message:", <-rets)
 		time.Sleep(20 * time.Millisecond)
 	}

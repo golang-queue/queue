@@ -22,8 +22,7 @@ func BenchmarkRingBoundary(b *testing.B) {
 				}
 			}
 			b.ReportAllocs()
-			b.ResetTimer()
-			for range b.N {
+			for b.Loop() {
 				if err := w.Queue(&m); err != nil {
 					b.Fatal(err)
 				}
