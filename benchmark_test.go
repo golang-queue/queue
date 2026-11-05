@@ -53,13 +53,12 @@ func BenchmarkQueueTask(b *testing.B) {
 		WithLogger(emptyLogger{}),
 	)
 	b.ReportAllocs()
-	b.ResetTimer()
 
 	m := job.NewTask(func(context.Context) error {
 		return nil
 	})
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		if err := q.queue(&m); err != nil {
 			b.Fatal(err)
 		}
@@ -73,13 +72,12 @@ func BenchmarkQueue(b *testing.B) {
 		WithLogger(emptyLogger{}),
 	)
 	b.ReportAllocs()
-	b.ResetTimer()
 
 	m := job.NewMessage(&mockMessage{
 		message: testMessageFoo,
 	})
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		if err := q.queue(&m); err != nil {
 			b.Fatal(err)
 		}
@@ -129,7 +127,7 @@ func BenchmarkRingWithTask(b *testing.B) {
 		WithLogger(emptyLogger{}),
 	)
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		_ = q.run(&task)
 	}
 }

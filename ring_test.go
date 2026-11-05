@@ -636,8 +636,7 @@ func BenchmarkRingQueue(b *testing.B) {
 		w := NewRing()
 		m := mockMessage{message: testMessageTest}
 
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			for range 100 {
 				_ = w.Queue(&m)
 			}
