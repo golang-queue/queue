@@ -2,7 +2,7 @@
 
 [![CodeQL](https://github.com/golang-queue/queue/actions/workflows/codeql.yaml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/codeql.yaml)
 [![Run Tests](https://github.com/golang-queue/queue/actions/workflows/go.yml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/go.yml)
-[![codecov](https://codecov.io/gh/golang-queue/queue/branch/master/graph/badge.svg?token=SSo3mHejOE)](https://codecov.io/gh/golang-queue/queue)
+[![codecov](https://codecov.io/gh/golang-queue/queue/branch/main/graph/badge.svg?token=SSo3mHejOE)](https://codecov.io/gh/golang-queue/queue)
 [![Trivy Security Scan](https://github.com/golang-queue/queue/actions/workflows/security.yml/badge.svg)](https://github.com/golang-queue/queue/actions/workflows/security.yml)
 
 [English](./README.md) | [繁體中文](./README.zh-tw.md)
@@ -55,7 +55,7 @@ go get github.com/golang-queue/queue@latest
 安装开发分支：
 
 ```sh
-go get github.com/golang-queue/queue@master
+go get github.com/golang-queue/queue@main
 ```
 
 ## 使用
