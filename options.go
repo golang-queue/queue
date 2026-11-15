@@ -61,6 +61,17 @@ func WithQueueSize(num int) Option {
 	})
 }
 
+// WithQueueMinCapacity sets the Ring buffer's initial and minimum retained slots.
+// Values below 2 use 2 (the default). A positive WithQueueSize limit caps this
+// setting, except that the buffer always has at least 2 slots. The pending-task
+// limit is unchanged. Retaining slots reduces burst allocations at the cost of
+// idle memory; dequeued task references are still cleared. Other backends ignore it.
+func WithQueueMinCapacity(num int) Option {
+	return OptionFunc(func(q *Options) {
+		q.queueMinCapacity = num
+	})
+}
+
 // WithLogger sets a custom logger for queue events and errors.
 // By default, the queue uses a standard logger that writes to stderr.
 // Use NewEmptyLogger() to disable logging entirely.
@@ -155,14 +166,15 @@ func WithRetryInterval(d time.Duration) Option {
 // Options holds the configuration parameters for a Queue.
 // Use the With* functions to configure these options when creating a queue.
 type Options struct {
-	workerCount   int64                                         // Number of concurrent worker goroutines
-	logger        Logger                                        // Logger for queue events
-	queueSize     int                                           // Maximum queue capacity, 0 means unlimited
-	worker        core.Worker                                   // Worker implementation for queue backend
-	fn            func(context.Context, core.TaskMessage) error // Task handler function
-	afterFn       func()                                        // Callback executed after each job
-	metric        Metric                                        // Metrics collector
-	retryInterval time.Duration                                 // Polling interval when queue is empty
+	queueMinCapacity int                                           // Initial and minimum retained Ring slots; normalized by NewRing
+	workerCount      int64                                         // Number of concurrent worker goroutines
+	logger           Logger                                        // Logger for queue events
+	queueSize        int                                           // Maximum queue capacity, 0 means unlimited
+	worker           core.Worker                                   // Worker implementation for queue backend
+	fn               func(context.Context, core.TaskMessage) error // Task handler function
+	afterFn          func()                                        // Callback executed after each job
+	metric           Metric                                        // Metrics collector
+	retryInterval    time.Duration                                 // Polling interval when queue is empty
 }
 
 // NewOptions creates an Options struct with default values and applies any provided options.

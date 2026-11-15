@@ -35,6 +35,21 @@ type Logger interface {
 	Fatal(args ...any)
 }
 
+// InfoLogger optionally lets a Logger disable informational messages before the
+// queue constructs variadic arguments. Loggers without it remain enabled.
+// InfoEnabled must be safe to call concurrently; it is checked on every retry.
+type InfoLogger interface {
+	Logger
+	InfoEnabled() bool
+}
+
+func infoEnabled(l Logger) bool {
+	if l, ok := l.(InfoLogger); ok {
+		return l.InfoEnabled()
+	}
+	return true
+}
+
 // NewLogger creates a standard logger that writes to stderr with timestamps.
 // This is the default logger used by queues unless overridden with WithLogger.
 //
@@ -127,3 +142,6 @@ func (l emptyLogger) Fatalf(format string, args ...any) {}
 func (l emptyLogger) Info(args ...any)                  {}
 func (l emptyLogger) Error(args ...any)                 {}
 func (l emptyLogger) Fatal(args ...any)                 {}
+
+// InfoEnabled disables informational argument construction for the no-op logger.
+func (l emptyLogger) InfoEnabled() bool { return false }
